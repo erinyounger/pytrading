@@ -1,11 +1,12 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-　　
 """
-@Description    ：macd_signal
+@Description    ：MACD趋势交易策略
 @Author  ：EEric
 @Email  : yflying7@gmail.com
 @Date    ：2022/11/6 22:42 
 """
+import talib
 import pandas as pd
 
 from gm.api import *
@@ -13,6 +14,8 @@ from pytrading.logger import logger
 from pytrading.strategy.base import StrategyBase
 from pytrading.model.order_enum import OrderAction, Order
 from pytrading.model.strategy_enum import TrendingType
+from pytrading.utils import cmp_time_str, is_live_mode
+from pytrading.utils.talib_util import ATR_CN, ATR
 
 
 class MACDPoint:
@@ -59,7 +62,7 @@ class XPointType:
         return self.type == "GoldenX"
 
 
-class MACDSignalStrategy(StrategyBase):
+class MacdStrategy(StrategyBase):
     """交易信号"""
     order = None  # type: Order
     side = None  # 交易方向，OrderSide_Unknown - 不操作，  OrderSide_Buy - 买入，  OrderSide_Sell - 卖出
@@ -77,9 +80,45 @@ class MACDSignalStrategy(StrategyBase):
     trending_type = None  # 股票趋势类型
     percent_volume = 0.0  # type: float
 
-    def __init__(self):
+    def __init__(self, short, long, period):
+        super(MacdStrategy, self).__init__()
+        self.short = short
+        self.long = long
+        self.period = period
         self.side = OrderSide_Unknown
         self.trending_type = TrendingType.TrendingUnknown
+
+    def setup(self, context):
+        """初始化策略"""
+        subscribe(context.symbol, frequency='1d', count=self.period)  # 订阅历史行情数据
+        schedule(schedule_func=self.run_schedule, date_rule='1d', time_rule='14:59:00') # 实时订阅数据
+
+    def run_schedule(self, context):
+        """执行定时策略"""
+        context.order_controller.setup(context=context)
+        order = self.run(context)
+        if order:
+            context.order_controller.run_order(order)
+
+    def run(self, context):
+        """执行策略"""
+        bar_date_time = context.now.strftime("%Y-%m-%d %H:%M:%S")
+        # 获取通过subscribe订阅的数据, count取1000，最终计算出来的macd才能与交易软件一致
+        data = context.data(context.symbol, frequency='1d', count=self.period, fields='open,close,bob,high,low')
+        close_price = data["close"].values
+        high_price = data["high"].values
+        low_price = data["low"].values
+        # 利用15分钟价格与前几天close价格计算MACD
+        dif, dea, macd = talib.MACD(close_price, fastperiod=self.short, slowperiod=self.long, signalperiod=9)
+        macd_point = MACDPoint(datetime=bar_date_time, diff=dif, dea=dea, macd=macd)
+        macd_point.set_position(context.order_controller.volume, context.order_controller.volume_available_now)
+        order = self.macd_strategy(macd_point)
+        # if order:
+        # atr1 = talib.ATR(high_price, low_price, close_price)[-1]
+        # atr2 = ATR_CN(data).values[-1]
+        # atr3 = ATR(high_price, low_price, close_price)[-1]
+        # logger.info("Date:{} ATR1: {} ATR2: {} ATR3: {}".format(bar_date_time, atr1, atr2, atr3))
+        return order
 
     def create_golden_x(self, diff, dea, macd):
         """创建金叉"""
@@ -230,7 +269,7 @@ class MACDSignalStrategy(StrategyBase):
             self.set_clear()
             return OrderAction.order_close_all()
 
-    def run_macd(self, macd_point: MACDPoint):
+    def macd_strategy(self, macd_point: MACDPoint):
         """MACD趋势交易具体实现"""
 
         # 初始化趋势交易状态，确认并且设置0轴线下是否出现第一个金叉，第一观察点出现

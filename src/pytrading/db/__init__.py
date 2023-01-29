@@ -11,7 +11,7 @@ from pytrading.db.mysql import MySQLClient
 
 MONGODB_SETTINGS = {
     "db": "py_trading",
-    "host": "192.168.3.100:27017",
+    "host": "192.168.3.4:27017",
     "username": "admin",
     "password": "admin"
 }

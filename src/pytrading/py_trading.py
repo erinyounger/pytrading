@@ -33,7 +33,7 @@ class PyTrading:
         return sz300_symbols
 
     def run_macd_strategy(self):
-        f_name = os.path.join(self.run_strategy_path, "run_macd_strategy.py").replace('\\', '/')
+        f_name = os.path.join(self.run_strategy_path, "run_strategy.py").replace('\\', '/')
         symbol_list = SYMBOLS_LIST if len(SYMBOLS_LIST) else self.get_symbols()
         run_queue = Queue()
 

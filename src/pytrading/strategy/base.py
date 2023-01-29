@@ -9,4 +9,15 @@
 
 
 class StrategyBase:
-    pass
+    def __init__(self):
+        pass
+
+    def setup(self, context):
+        """初始化策略"""
+        pass
+
+    def run(self, context):
+        """执行策略，返回Order"""
+
+    def run_schedule(self, context):
+        """执行定时策略"""

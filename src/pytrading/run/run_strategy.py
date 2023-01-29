@@ -1,12 +1,11 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-　　
 """
-@Description    ：run_macd_strategy
+@Description    ：策略执行入口
 @Author  ：EEric
 @Email  : yflying7@gmail.com
 @Date    ：2022/11/15 0:00 
 """
-import talib
 from optparse import OptionParser
 
 from gm.api import *
@@ -15,68 +14,32 @@ import sys
 import os
 
 from pytrading.controller.order_controller import OrderController
-from pytrading.model.order_enum import OrderAction
 from pytrading.strategy.strategy_macd import MacdStrategy, MACDPoint
 from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import STRATEGY_ID, TOKEN
-from pytrading.utils import cmp_time_str, is_live_mode
 
-Order_Controller = OrderController()
+order_controller = OrderController()
 
 
 def init(context):
-    # 日内回转每次交易数量
-
-    Order_Controller.setup(context=context)
-
-    context.short = 12  # 短周期均线
-    context.long = 26  # 长周期均线
-    # 回溯历史周期(MACD(12,26,9))
-    context.period = 1000  # 订阅数据滑窗长度
-    context.ins_strategy = MacdStrategy(short=12, long=26)
-    subscribe(context.symbol, frequency='1d', count=context.period)  # 订阅历史行情数据
-    if is_live_mode():
-        subscribe(context.symbol, frequency='900s', count=1)  # 实时订阅数据
-    # schedule(schedule_func=algo, date_rule='1d', time_rule='14:30:00')
+    # 1.初始化订单实例
+    order_controller.setup(context=context)
+    # 2.初始化策略实例
+    context.ins_strategy = MacdStrategy(short=12, long=26, period=3000)
+    context.ins_strategy.setup(context)
 
 
-def algo(context):
-    Order_Controller.setup(context=context)
-    order = OrderAction.order_volume(OrderSide_Buy, trade_n=100)
-    Order_Controller.order(order)
-    print("Order100 Symbol: {}".format(Order_Controller.symbol))
-
-
-def on_bar(context, bars):
-    time_date = context.now
-    # bar = bars[0]
-    bar_date_time = context.now.strftime("%Y-%m-%d %H:%M:%S")
-    end_time = bar_date_time[:10] + " 15:00:00"
-    # 全部在盘内交易，为实盘准备
-    if is_live_mode() and cmp_time_str(bar_date_time, end_time):
-        return
-    Order_Controller.setup(context=context)
-    # 获取通过subscribe订阅的数据, count取1000，最终计算出来的mcad才能与交易软件一致
-    his_close_prices = context.data(context.symbol, frequency='1d', count=context.period, fields='close,bob')
-    # 回溯历史周期(MACD(12,26,9))
-    if is_live_mode():
-        cur_price = context.data(context.symbol, frequency='900s', count=1, fields='close,bob')
-        real_close_prices = his_close_prices["close"].values + cur_price["close"].values
-    else:
-        real_close_prices = his_close_prices["close"].values
-    # 利用15分钟价格与前几天close价格计算MACD
-    dif, dea, macd = talib.MACD(real_close_prices, fastperiod=context.short,
-                                slowperiod=context.long, signalperiod=9)
-    macd_point = MACDPoint(datetime=bar_date_time, diff=dif, dea=dea, macd=macd)
-    macd_point.set_position(Order_Controller.volume, Order_Controller.volume_available_now)
-    # order = context.strategy_instance.run_order_100(macd_point)
-    # order = context.strategy_instance.run_bak(macd_point)
-    order = context.ins_strategy.run_macd(macd_point)
-    # order = context.strategy_instance.run_double_averages(macd_point)
-    if order:
-        Order_Controller.order(order)
-    # print("on_bar time: ", time_date)
+# def on_bar(context, bars):
+#     # 1.没个bar初始化订单实例
+#     order_controller.setup(context=context)
+#
+#     # 2.执行策略
+#     order = context.ins_strategy.run(context)
+#
+#     # 3.买单
+#     if order:
+#         order_controller.run_order(order)
 
 
 def on_order_status(context, order):
@@ -107,16 +70,19 @@ def on_order_status(context, order):
 
 def on_backtest_finished(context, indicator):
     """回测结束"""
-    back_test_obj = BackTest()
-    back_test_obj.symbol = context.symbol
-    back_test_obj.init_attr(**indicator)
-    stock_info = get_instruments(symbols=context.symbol, df=False)
-    if len(stock_info) > 0:
-        back_test_obj.name = stock_info[0]["sec_name"]
-    back_test_obj.trending_type = context.ins_strategy.trending_type
-    back_test_obj.backtest_start_time = context.backtest_start_time
-    back_test_obj.backtest_end_time = context.backtest_end_time
-    back_test_obj.save()
+    try:
+        back_test_obj = BackTest()
+        back_test_obj.symbol = context.symbol
+        back_test_obj.init_attr(**indicator)
+        stock_info = get_instruments(symbols=context.symbol, df=False)
+        if len(stock_info) > 0:
+            back_test_obj.name = stock_info[0]["sec_name"]
+        back_test_obj.trending_type = context.ins_strategy.trending_type
+        back_test_obj.backtest_start_time = context.backtest_start_time
+        back_test_obj.backtest_end_time = context.backtest_end_time
+        back_test_obj.save()
+    except Exception as ex:
+        logger.exception(ex)
     logger.info(f"Back Test End, Symbol: {context.symbol}")
 
 
@@ -143,7 +109,7 @@ def run_cli():
     cli_parser = OptionParser()
     cli_parser.add_option("--symbol", action="store",
                           dest="symbol",
-                          default="SZSE.002487",
+                          default="SZSE.000625",
                           help="股票标的")
     cli_parser.add_option("--start_time", action="store",
                           dest="start_time",

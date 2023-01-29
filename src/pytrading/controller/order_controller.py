@@ -39,6 +39,7 @@ class OrderController:
             self.account_id = context.account(account_id=ACCOUNT_ID_LIVE).id
         else:
             self.account_id = context.account().id
+        context.order_controller = self
         logger.info("SetUp Order Controller Success, symbol: {}, account_id: {}".format(self.symbol, self.account_id))
 
     @property
@@ -83,6 +84,15 @@ class OrderController:
         """当前可用资金"""
         return self.__cash["available"]
 
+    @property
+    def cash_all(self):
+        """账户总资金"""
+        return self.__cash["nav"]
+
+    def get_volume_by_atr(self, percent: float, atr: float):
+        """通过ATR获取影响总仓位百分比的交易量，返回多少手"""
+        return int(self.cash_all * percent / atr / 100)
+
     def buy(self):
         """买入"""
 
@@ -95,7 +105,7 @@ class OrderController:
     def all_sell(self):
         """清仓"""
 
-    def order(self, order: Order):
+    def run_order(self, order: Order):
         pos_effect = PositionEffect_Open if order.side == OrderSide_Buy else PositionEffect_Close
         if OrderAction.order_volume_type == order.order_type:
             order_volume(symbol=self.symbol, volume=order.trade_n,
