@@ -19,6 +19,7 @@ from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import STRATEGY_ID, TOKEN
 from pytrading.utils import is_live_mode
+from pytrading import StrategyType
 
 order_controller = OrderController()
 
@@ -27,8 +28,11 @@ def init(context):
     # 1.初始化订单实例
     order_controller.setup(context=context)
     # 2.初始化策略实例
-    context.ins_strategy = MacdStrategy(short=12, long=26, period=3000)
-    context.ins_strategy.setup(context)
+    if context.strategy_name == StrategyType.MACD:
+        """MACD趋势策略"""
+        logger.info(f"Run Strategy Name: {context.strategy_name}")
+        context.stgy_instance = MacdStrategy(short=12, long=26, period=3000)
+        context.stgy_instance.setup(context)
 
 
 def on_bar(context, bars):
@@ -39,7 +43,7 @@ def on_bar(context, bars):
     order_controller.setup(context=context)
 
     # 2.执行策略
-    order = context.ins_strategy.run(context)
+    order = context.stgy_instance.run(context)
 
     # 3.买单
     if order:
@@ -94,9 +98,10 @@ def on_error(context, code, info):
     print('code:{}, info:{}'.format(code, info))
 
 
-def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, mode=MODE_BACKTEST):
+def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, strategy_name, mode=MODE_BACKTEST):
     from gm.model.storage import context
     context.symbol = symbol
+    context.strategy_name = strategy_name
     run(strategy_id=strategy_id,
         filename=os.path.basename(__file__),
         mode=mode,
@@ -131,6 +136,10 @@ def run_cli():
                           dest="strategy_id",
                           default=STRATEGY_ID,
                           help="策略ID")
+    cli_parser.add_option("--strategy_name", action="store",
+                          dest="strategy_name",
+                          default=StrategyType.MACD,
+                          help="策略ID")
     (arg_options, cli_args) = cli_parser.parse_args()
 
     # 清楚接收的参数，避免影响run接收参数
@@ -139,6 +148,7 @@ def run_cli():
                  arg_options.symbol,
                  backtest_start_time=arg_options.start_time,
                  backtest_end_time=arg_options.end_time,
+                 strategy_name=arg_options.strategy_name,
                  mode=arg_options.mode)
 
 

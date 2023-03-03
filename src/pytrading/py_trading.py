@@ -7,12 +7,14 @@
 @Date    ：2022/11/4 22:16 
 """
 import os
+import sys
 
 from gm.api import *
 from pytrading.logger import logger
-from pytrading.config import PYTHON_INTERPRETER, SYMBOLS_LIST, TOKEN, TRADING_MODE, APP_ROOT_DIR
+from pytrading.config import SYMBOLS_LIST, TOKEN, TRADING_MODE, APP_ROOT_DIR
 from pytrading.utils.thread_pool import ThreadPool, Queue
-from pytrading.utils import exec_process, clear_disk_space
+from pytrading.utils import clear_disk_space
+from pytrading.utils.process import exec_process
 
 
 class PyTrading:
@@ -21,10 +23,10 @@ class PyTrading:
 
     def run(self, strategy_name):
         clear_disk_space(template_dir=os.path.join(APP_ROOT_DIR, "gmcache"))
-        if strategy_name == "macd_strategy":
-            return self.run_macd_strategy()
+        return self.run_strategy(strategy_name)
 
     def get_symbols(self):
+        """批量获取股票列表"""
         set_token(TOKEN)
         # 沪深300：SHSE.000300
         # 中证500：SHSE.000905
@@ -34,7 +36,8 @@ class PyTrading:
         logger.info("Get SHSE.000300 Symbols: {}".format(len(sz300_symbols)))
         return sz300_symbols
 
-    def run_macd_strategy(self):
+    def run_strategy(self, strategy_name=None):
+        """执行策略"""
         f_name = os.path.join(self.run_strategy_path, "run_strategy.py").replace('\\', '/')
         symbol_list = SYMBOLS_LIST if len(SYMBOLS_LIST) else self.get_symbols()
         run_queue = Queue()
@@ -43,16 +46,15 @@ class PyTrading:
         end_time = '2023-01-31 15:00:00'
 
         for _syb in symbol_list:
-            # if _syb in EXCLUDED_SYMBOLS:
-            #     continue
-            cmd = ["cmd", "/c", PYTHON_INTERPRETER, f_name,
+            cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,
                    f"--symbol={_syb}",
                    f"--start_time=\"{start_time}\"",
                    f"--end_time=\"{end_time}\"",
+                   f"--strategy_name={strategy_name}",
                    f"--mode={TRADING_MODE}"]
-            args = (" ".join(cmd),)
+            cmd_args = (" ".join(cmd),)
             kwargs = {}
-            run_queue.put((exec_process, args, kwargs))
+            run_queue.put((exec_process, cmd_args, kwargs))
         size = len(symbol_list) if TRADING_MODE == MODE_LIVE else None
         threader = ThreadPool(run_queue, size=size)
         threader.run()

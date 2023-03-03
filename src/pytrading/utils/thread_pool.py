@@ -13,7 +13,7 @@ from queue import Queue
 class ThreadPool:
     def __init__(self, queue: Queue, size=None):
         self.queue = queue
-        size = size if size else multiprocessing.cpu_count()*4
+        size = size if size else multiprocessing.cpu_count()*1
         self.process_pool = multiprocessing.Pool(size)
 
     def run(self):
