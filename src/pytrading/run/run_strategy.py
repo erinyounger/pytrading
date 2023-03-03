@@ -19,7 +19,7 @@ from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import STRATEGY_ID, TOKEN
 from pytrading.utils import is_live_mode
-from pytrading import StrategyType
+from pytrading.model.strategy_enum import StrategyType
 
 order_controller = OrderController()
 

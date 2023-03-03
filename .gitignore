@@ -3,4 +3,4 @@
 /workspace.xml
 .idea/
 /**/gmcache/*
-/logs*
+/logs/*
