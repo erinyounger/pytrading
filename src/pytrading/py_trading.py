@@ -26,10 +26,12 @@ class PyTrading:
 
     def get_symbols(self):
         set_token(TOKEN)
-        sz300_df = get_constituents(index='SHSE.000300', fields='symbol, weight', df=True)
+        # 沪深300：SHSE.000300
+        # 中证500：SHSE.000905
+        sz300_df = get_constituents(index='SHSE.000905', fields='symbol, weight', df=True)
         # sz300_symbols = list(sz300_df[sz300_df.weight < 0.5].symbol.values)
         sz300_symbols = list(sz300_df.symbol.values)
-        logger.info("Get SHSE.000300 Weight < 0.5 Symbols: {}".format(len(sz300_symbols)))
+        logger.info("Get SHSE.000300 Symbols: {}".format(len(sz300_symbols)))
         return sz300_symbols
 
     def run_macd_strategy(self):
@@ -38,7 +40,7 @@ class PyTrading:
         run_queue = Queue()
 
         start_time = '2022-01-01 09:00:00'
-        end_time = '2022-12-30 15:00:00'
+        end_time = '2023-01-31 15:00:00'
 
         for _syb in symbol_list:
             # if _syb in EXCLUDED_SYMBOLS:

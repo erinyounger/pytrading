@@ -12,7 +12,7 @@ logger = logging.getLogger("pytrading")
 ch_handler = logging.StreamHandler()
 fh_handler = logging.FileHandler(log_file)
 
-formatter = logging.Formatter('[%(asctime)s][%(name)-4s][%(filename)s line:%(lineno)d][%(levelname)-4s][%(thread)d\t] > %(message)s')
+formatter = logging.Formatter('[%(asctime)s][%(name)-4s][%(filename)s line:%(lineno)d][%(levelname)-4s][%(thread)d] > %(message)s')
 ch_handler.setFormatter(formatter)
 fh_handler.setFormatter(formatter)
 

@@ -14,10 +14,11 @@ import sys
 import os
 
 from pytrading.controller.order_controller import OrderController
-from pytrading.strategy.strategy_macd import MacdStrategy, MACDPoint
+from pytrading.strategy.strategy_macd import MacdStrategy
 from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import STRATEGY_ID, TOKEN
+from pytrading.utils import is_live_mode
 
 order_controller = OrderController()
 
@@ -30,16 +31,19 @@ def init(context):
     context.ins_strategy.setup(context)
 
 
-# def on_bar(context, bars):
-#     # 1.没个bar初始化订单实例
-#     order_controller.setup(context=context)
-#
-#     # 2.执行策略
-#     order = context.ins_strategy.run(context)
-#
-#     # 3.买单
-#     if order:
-#         order_controller.run_order(order)
+def on_bar(context, bars):
+    # 实盘交易时，需要在盘中定时交易，回测时使用on_bar
+    if is_live_mode():
+        return
+    # 1.没个bar初始化订单实例
+    order_controller.setup(context=context)
+
+    # 2.执行策略
+    order = context.ins_strategy.run(context)
+
+    # 3.买单
+    if order:
+        order_controller.run_order(order)
 
 
 def on_order_status(context, order):

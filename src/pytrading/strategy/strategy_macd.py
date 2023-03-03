@@ -91,7 +91,8 @@ class MacdStrategy(StrategyBase):
     def setup(self, context):
         """初始化策略"""
         subscribe(context.symbol, frequency='1d', count=self.period)  # 订阅历史行情数据
-        schedule(schedule_func=self.run_schedule, date_rule='1d', time_rule='14:59:00') # 实时订阅数据
+        if is_live_mode():
+            schedule(schedule_func=self.run_schedule, date_rule='1d', time_rule='14:59:00')     # 实时订阅数据
 
     def run_schedule(self, context):
         """执行定时策略"""
@@ -269,8 +270,20 @@ class MacdStrategy(StrategyBase):
             self.set_clear()
             return OrderAction.order_close_all()
 
+    def macd_strategy_1030(self, macd_point: MACDPoint):
+        """MACD趋势交易策略: 优化算法，增加资金管理和止盈清仓策略"""
+        # 初始化趋势交易状态，确认并且设置0轴线下是否出现第一个金叉，第一观察点出现
+        if self.check_and_set_first_golden_x(macd_point):
+            # 趋势交易初始化成功，本次直接退出
+            return
+        # 0. 非趋势交易状态，直接退出
+        if self.trending_type == TrendingType.TrendingUnknown:
+            return
+        diff, dea, macd = macd_point.get_macd()
+
+
     def macd_strategy(self, macd_point: MACDPoint):
-        """MACD趋势交易具体实现"""
+        """MACD趋势交易具体实现: 多级加仓和多级减仓，策略有点繁琐"""
 
         # 初始化趋势交易状态，确认并且设置0轴线下是否出现第一个金叉，第一观察点出现
         if self.check_and_set_first_golden_x(macd_point):
