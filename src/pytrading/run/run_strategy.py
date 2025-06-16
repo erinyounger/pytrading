@@ -139,7 +139,7 @@ def run_cli():
     cli_parser.add_option("--strategy_name", action="store",
                           dest="strategy_name",
                           default=StrategyType.MACD,
-                          help="策略ID")
+                          help="策略名称")
     (arg_options, cli_args) = cli_parser.parse_args()
 
     # 清楚接收的参数，避免影响run接收参数

@@ -66,7 +66,7 @@ def start_process(cmd, env: dict = None, cwd: str = None):
                                    universal_newlines=True,
                                    creationflags=subprocess_flag
                                    )
-        logger.info("Run cmd: {}， Pid: {}, name: {}".format(cmd, subproc.pid, get_process_name(subproc.pid)))
+        logger.info("Run cmd: {}, Pid: {}, name: {}".format(cmd, subproc.pid, get_process_name(subproc.pid)))
         return subproc
     except Exception as ex:
         logger.exception("Run cmd: {} fail. \n {}".format(cmd, traceback.print_exception(())))
