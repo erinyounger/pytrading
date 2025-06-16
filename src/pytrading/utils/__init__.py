@@ -37,7 +37,7 @@ def is_live_mode():
     return TRADING_MODE == MODE_LIVE
 
 
-def clear_disk_space(logic_path="E:\\", usage_limit=0.6, template_dir=None):
+def clear_disk_space(logic_path="D:\\", usage_limit=0.6, template_dir=None):
     disk_percent = psutil.disk_usage(path=logic_path).percent
     if disk_percent > usage_limit and template_dir and os.path.exists(template_dir):
         shutil.rmtree(template_dir)

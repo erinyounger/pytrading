@@ -1,5 +1,6 @@
 gm==3.0.145
 psutil==5.9.4
+ta-lib==0.4.24
 
 sqlalchemy==1.3.24
 mysql-connector==2.2.9

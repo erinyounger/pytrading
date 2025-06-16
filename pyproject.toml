@@ -1,0 +1,18 @@
+[project]
+name = "pytrading"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "bson>=0.5.10",
+    "gm>=3.0.177",
+    "mongoengine>=0.29.1",
+    "psutil>=7.0.0",
+    "pymongo>=4.13.1",
+    "sqlalchemy>=2.0.41",
+    "ta-lib",
+]
+
+[tool.uv.sources]
+ta-lib = { path = "bin/ta_lib-0.6.4-cp39-cp39-win_amd64.whl" }

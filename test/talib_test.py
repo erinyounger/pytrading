@@ -75,7 +75,7 @@ def run_strategy(short, long):
         backtest_commission_ratio回测佣金比例
         backtest_slippage_ratio回测滑点比例
     '''
-    run(strategy_id='043d5609-53a2-11ed-b6cc-00ffc033e1eb',
+    run(strategy_id='2766b70e-4a90-11f0-a867-745d22cbd33f',
         filename='main.py',
         mode=MODE_BACKTEST,
         token='2cc0e58f40011fc98b77fdb8ead7c6d007208a59',
@@ -102,10 +102,10 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
     info = []
-    for pro in a_list:
-        print('pro', pro.get()[0])
-        info.append(pro.get()[0])
-    print(info)
-    info = pd.DataFrame(np.array(info),
-                        columns=['pnl_ratio', 'pnl_ratio_annual', 'sharp_ratio', 'max_drawdown', 'short', 'long'])
-    info.to_csv('info.csv', index=False)
+    # for pro in a_list:
+    #     print('pro', pro.get()[0])
+    #     info.append(pro.get()[0])
+    # print(info)
+    # info = pd.DataFrame(np.array(info),
+    #                     columns=['pnl_ratio', 'pnl_ratio_annual', 'sharp_ratio', 'max_drawdown', 'short', 'long'])
+    # info.to_csv('info.csv', index=False)
