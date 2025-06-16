@@ -28,12 +28,8 @@ TOKEN = '2cc0e58f40011fc98b77fdb8ead7c6d007208a59'
 ACCOUNT_ID_LIVE = "75dddca9-52e8-11ed-a31f-00163e12c161"
 
 # ----------------------- 交易标的设置 ------------------------
-SYMBOLS_LIST = []   # 为空是默认获取沪深300所有股票
-# SYMBOLS_LIST = """
-# SZSE.002459
-# SZSE.002920
-# SZSE.002709
-# SHSE.600150
-# SZSE.000625
-# SHSE.600795
-# """.strip().splitlines()
+# SYMBOLS_LIST = []   # 为空是默认获取沪深300所有股票
+SYMBOLS_LIST = """
+SZSE.002459
+SZSE.002920
+""".strip().splitlines()
