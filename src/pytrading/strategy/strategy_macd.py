@@ -19,40 +19,64 @@ from pytrading.utils.talib_util import ATR_CN, ATR
 
 
 class MACDPoint:
-    datetime = None
-    diff = 0
-    dea = 0
-    macd = 0
-
-    volume = 0  # 总持仓量
-    available_now = 0  # 当前可用仓位
-
+    """
+    MACD指标点类，用于存储MACD指标数据和持仓信息
+    """
+    
     def __init__(self, datetime, diff: pd.DataFrame, dea: pd.DataFrame, macd: pd.DataFrame):
+        """
+        初始化MACD指标点
+        
+        Args:
+            datetime: 时间戳
+            diff: MACD差值
+            dea: DEA线值
+            macd: MACD柱状图值
+        """
         self.datetime = datetime
         self.diff = diff
         self.dea = dea
         self.macd = macd
+        
+        # 持仓相关属性
+        self.volume = 0  # 总持仓量
+        self.available_now = 0  # 当前可用仓位
 
     def get_macd(self):
+        """
+        获取MACD指标值
+        
+        Returns:
+            tuple: (diff, dea, macd) MACD指标的三元组
+        """
         return self.diff, self.dea, self.macd
 
     def get_datetime(self):
+        """
+        获取时间戳
+        
+        Returns:
+            时间戳
+        """
         return self.datetime
 
     def set_position(self, volume, available_now):
+        """
+        设置持仓信息
+        
+        Args:
+            volume: 总持仓量
+            available_now: 当前可用仓位
+        """
         self.volume = volume
         self.available_now = available_now
 
 
 class XPointType:
     """金/死叉定义"""
-    type = "GoldenX"  # 叉类型：GoldenX - 金叉，   DeadX - 死叉，  Axis0 - 零轴线
-    diff = 0
-    dea = 0
-    macd = 0
-
+    
     def __init__(self, xtype, diff, dea, macd):
-        self.type = xtype
+        self.type = xtype  # 叉类型：GoldenX - 金叉，   DeadX - 死叉，  Axis0 - 零轴线
         self.diff = diff
         self.dea = dea
         self.macd = macd
@@ -64,29 +88,29 @@ class XPointType:
 
 class MacdStrategy(StrategyBase):
     """交易信号"""
-    order = None  # type: Order
-    side = None  # 交易方向，OrderSide_Unknown - 不操作，  OrderSide_Buy - 买入，  OrderSide_Sell - 卖出
-    order_type = OrderAction.order_unknown  # 交易单类型
-
-    _clear = False  # 清仓标记
-
-    first_golden_x = None  # 信号1：0轴线下方第一个金叉
-    zero_axis_point = None  # 信号2：0轴线
-    second_golden_x = None  # 信号3：第二个金叉
-
-    first_dead_x = None  # 第一个死叉
-    second_dead_x = None  # 第二个死叉
-
-    trending_type = None  # 股票趋势类型
-    percent_volume = 0.0  # type: float
 
     def __init__(self, short, long, period):
         super(MacdStrategy, self).__init__()
         self.short = short
         self.long = long
         self.period = period
-        self.side = OrderSide_Unknown
-        self.trending_type = TrendingType.TrendingUnknown
+        
+        # 交易相关属性
+        self.order = None  # type: Order
+        self.side = OrderSide_Unknown  # 交易方向，OrderSide_Unknown - 不操作，  OrderSide_Buy - 买入，  OrderSide_Sell - 卖出
+        self.order_type = OrderAction.order_unknown  # 交易单类型
+        self._clear = False  # 清仓标记
+
+        # 信号相关属性
+        self.first_golden_x = None  # 信号1：0轴线下方第一个金叉
+        self.zero_axis_point = None  # 信号2：0轴线
+        self.second_golden_x = None  # 信号3：第二个金叉
+        self.first_dead_x = None  # 第一个死叉
+        self.second_dead_x = None  # 第二个死叉
+
+        # 趋势相关属性
+        self.trending_type = TrendingType.TrendingUnknown  # 股票趋势类型
+        self.percent_volume = 0.0  # type: float
 
     def setup(self, context):
         """初始化策略"""
