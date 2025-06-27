@@ -12,7 +12,7 @@ from gm.model.storage import Context
 from pytrading.strategy.base import StrategyBase
 from pytrading.model.order_enum import OrderAction, Order
 from pytrading.logger import logger
-from pytrading.config import ACCOUNT_ID_LIVE
+from pytrading.config import config
 
 
 class OrderController:
@@ -36,7 +36,7 @@ class OrderController:
         self.strategy_id = context.strategy_id
         self.token = context.token
         if context.mode == MODE_LIVE:
-            self.account_id = context.account(account_id=ACCOUNT_ID_LIVE).id
+            self.account_id = context.account(account_id=config.account_id_live).id
         else:
             self.account_id = context.account().id
         context.order_controller = self

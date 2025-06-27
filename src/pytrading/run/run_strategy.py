@@ -17,7 +17,7 @@ from pytrading.controller.order_controller import OrderController
 from pytrading.strategy.strategy_macd import MacdStrategy
 from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
-from pytrading.config import STRATEGY_ID, TOKEN
+from pytrading.config import config
 from pytrading.utils import is_live_mode
 from pytrading.model.strategy_enum import StrategyType
 
@@ -105,7 +105,7 @@ def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, st
     run(strategy_id=strategy_id,
         filename=os.path.basename(__file__),
         mode=mode,
-        token=TOKEN,
+        token=config.token,
         backtest_start_time=backtest_start_time,
         backtest_end_time=backtest_end_time,
         backtest_adjust=ADJUST_PREV,
@@ -134,7 +134,7 @@ def run_cli():
                           help="回测or实盘")
     cli_parser.add_option("--strategy_id", action="store",
                           dest="strategy_id",
-                          default=STRATEGY_ID,
+                          default=config.strategy_id,
                           help="策略ID")
     cli_parser.add_option("--strategy_name", action="store",
                           dest="strategy_name",

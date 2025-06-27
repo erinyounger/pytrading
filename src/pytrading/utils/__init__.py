@@ -18,7 +18,7 @@ from decimal import Decimal
 import datetime
 
 from gm.api import MODE_LIVE
-from pytrading.config import TRADING_MODE
+from pytrading.config import config
 
 
 def float_fmt(value):
@@ -34,7 +34,7 @@ def cmp_time_str(s1, s2, time_format="%Y-%m-%d %H:%M:%S"):
 
 
 def is_live_mode():
-    return TRADING_MODE == MODE_LIVE
+    return config.trading_mode == MODE_LIVE
 
 
 def clear_disk_space(logic_path="D:\\", usage_limit=0.6, template_dir=None):
