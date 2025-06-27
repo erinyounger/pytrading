@@ -78,6 +78,8 @@ def on_order_status(context, order):
 
 def on_backtest_finished(context, indicator):
     """回测结束"""
+    if not config.save_db:
+        return
     try:
         back_test_obj = BackTest()
         back_test_obj.symbol = context.symbol
@@ -85,7 +87,7 @@ def on_backtest_finished(context, indicator):
         stock_info = get_instruments(symbols=context.symbol, df=False)
         if len(stock_info) > 0:
             back_test_obj.name = stock_info[0]["sec_name"]
-        back_test_obj.trending_type = context.ins_strategy.trending_type
+        back_test_obj.trending_type = context.stgy_instance.trending_type
         back_test_obj.backtest_start_time = context.backtest_start_time
         back_test_obj.backtest_end_time = context.backtest_end_time
         back_test_obj.save()
@@ -144,6 +146,9 @@ def run_cli():
 
     # 清楚接收的参数，避免影响run接收参数
     sys.argv = []
+    logger.info("Mode: {}, StrategeID: {}, StrategyName: {}, Symbol: {}, StartTime: {}, EndTime: {}, SaveDB: {}".format(
+        arg_options.mode, arg_options.strategy_id, arg_options.strategy_name, arg_options.symbol,
+        arg_options.start_time, arg_options.end_time, config.save_db))
     multiple_run(arg_options.strategy_id,
                  arg_options.symbol,
                  backtest_start_time=arg_options.start_time,

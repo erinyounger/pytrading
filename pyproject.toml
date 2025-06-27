@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
     "bson>=0.5.10",
+    "dotenv>=0.9.9",
     "gm>=3.0.177",
     "mongoengine>=0.29.1",
     "psutil>=7.0.0",

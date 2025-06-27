@@ -16,6 +16,7 @@ class Config:
     """统一配置类"""
     # 基础配置
     app_root_dir: Path = APP_ROOT_DIR
+    save_db: bool = os.getenv('SAVE_DB', "false").lower() == "true"
     
     # 日志配置
     log_level: str = os.getenv('LOG_LEVEL', 'INFO')
@@ -24,19 +25,21 @@ class Config:
     
     # 交易配置
     trading_mode: str = os.getenv('TRADING_MODE', 'backtest')
-    backtest_strategy_id: str = os.getenv('BACKTEST_STRATEGY_ID', '')
-    live_strategy_id: str = os.getenv('LIVE_STRATEGY_ID', '')
+    backtest_strategy_id: str = os.getenv('BACKTEST_STRATEGY_ID')
+    backtest_trading_token: str = os.getenv('BACKTEST_TRADING_TOKEN')
+
+    live_strategy_id: str = os.getenv('LIVE_STRATEGY_ID')
+    live_trading_token: str = os.getenv('LIVE_TRADING_TOKEN')
     symbols: List[str] = None
     
-    # 账号配置
-    token: str = os.getenv('TRADING_TOKEN', '')
-    account_id_live: str = os.getenv('ACCOUNT_ID_LIVE', '')
-    
+
     def __post_init__(self):
         # 设置交易模式
         self.trading_mode = MODE_LIVE if self.trading_mode == 'live' else MODE_BACKTEST
         # 设置当前策略ID
         self.strategy_id = self.live_strategy_id if self.trading_mode == MODE_LIVE else self.backtest_strategy_id
+        # 设置账号ID
+        self.token = self.live_trading_token if self.trading_mode == MODE_LIVE else self.backtest_trading_token
         # 设置交易标的
         env_symbols = os.getenv('SYMBOLS', '').strip()
         if env_symbols:

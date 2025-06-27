@@ -16,17 +16,15 @@ from pytrading.config import config
 
 
 class OrderController:
-    strategy = None  # type: StrategyBase
-
-    # 基础信息
-    context = None  # type: Context
-    symbol = None  # type: str
-    strategy_id = None  # type: str
-    account_id = None  # type: str
-    token = None  # type: str
-
+    """订单控制器"""
     def __init__(self):
-        pass
+        self.context = None
+        self.token: str
+        self.account_id: str
+        self.save_db: bool = config.save_db
+        self.strategy_id: str
+        self.symbol: str
+        self.strategy: StrategyBase
 
     def setup(self, context: Context):
         if self.context:
