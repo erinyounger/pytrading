@@ -89,11 +89,20 @@ class XPointType:
 class MacdStrategy(StrategyBase):
     """交易信号"""
 
-    def __init__(self, short, long, period):
+    def __init__(self, short=12, long=26, period=3000, atr_multiplier=2.0):
         super(MacdStrategy, self).__init__()
         self.short = short
         self.long = long
-        self.period = period
+        self.period = period # 获取的历史数据条数，影响MACD计算的准确性。
+        
+        # 动态止损相关参数
+        self.atr_multiplier = atr_multiplier  # ATR倍数，默认2.0
+        self.atr_period = 14  # ATR计算周期，默认14天
+        self.cost_price = None  # 持仓成本价
+        self.max_price = None   # 持仓期间最高价
+        
+        # 固定回撤止损参数
+        self.max_drawdown_ratio = 0.08  # 固定回撤止损阈值，10%
         
         # 交易相关属性
         self.order = None  # type: Order
@@ -117,6 +126,10 @@ class MacdStrategy(StrategyBase):
         subscribe(context.symbol, frequency='1d', count=self.period)  # 订阅历史行情数据
         if is_live_mode():
             schedule(schedule_func=self.run_schedule, date_rule='1d', time_rule='14:59:00')     # 实时订阅数据
+        
+        # 记录策略参数
+        logger.info("MACD策略初始化完成 - 快线周期: {}, 慢线周期: {}, 数据周期: {}, ATR倍数: {}".format(
+            self.short, self.long, self.period, self.atr_multiplier))
 
     def run_schedule(self, context):
         """执行定时策略"""
@@ -133,16 +146,38 @@ class MacdStrategy(StrategyBase):
         close_price = data["close"].values
         high_price = data["high"].values
         low_price = data["low"].values
+        
+        # 获取当前价格
+        current_price = close_price[-1]
+        
+        # 固定回撤止损优先
+        order = self.check_fixed_drawdown_stop(current_price)
+        if order:
+            return order
+        
+        # 计算ATR
+        atr_value = talib.ATR(high_price, low_price, close_price, timeperiod=self.atr_period)[-1]
+        
+        # 动态止损检查 - 优先于MACD策略执行
+        if self.check_atr_stop_loss(current_price, atr_value):
+            loss_percent = (current_price / self.cost_price - 1) * 100
+            atr_stop_loss = self.calculate_atr_stop_loss(self.cost_price, atr_value)
+            logger.warning("[{}] 触发ATR动态止损: 当前价格{:.2f} <= ATR止损位{:.2f} "
+                       "(成本价{:.2f} - ATR{:.2f} × {}), 亏损{:.2f}%".format(
+                bar_date_time, current_price, atr_stop_loss, self.cost_price, 
+                atr_value, self.atr_multiplier, loss_percent))
+            self.set_clear()
+            return OrderAction.order_close_all()
+        
         # 利用15分钟价格与前几天close价格计算MACD
         dif, dea, macd = talib.MACD(close_price, fastperiod=self.short, slowperiod=self.long, signalperiod=9)
         macd_point = MACDPoint(datetime=bar_date_time, diff=dif, dea=dea, macd=macd)
         macd_point.set_position(context.order_controller.volume, context.order_controller.volume_available_now)
         order = self.macd_strategy(macd_point)
-        # if order:
-        # atr1 = talib.ATR(high_price, low_price, close_price)[-1]
-        # atr2 = ATR_CN(data).values[-1]
-        # atr3 = ATR(high_price, low_price, close_price)[-1]
-        # logger.info("Date:{} ATR1: {} ATR2: {} ATR3: {}".format(bar_date_time, atr1, atr2, atr3))
+        
+        # 如果生成了订单，更新成本价
+        if order:
+            self._update_cost_price_from_order(order, current_price)
         return order
 
     def create_golden_x(self, diff, dea, macd):
@@ -229,6 +264,71 @@ class MacdStrategy(StrategyBase):
         if self.percent_volume <= 0:
             self.percent_volume = 0
         return self.percent_volume
+
+    def update_cost_price(self, current_price: float, volume_change: float):
+        """
+        更新成本价和最高价
+        
+        Args:
+            current_price: 当前价格
+            volume_change: 仓位变化量（正数为买入，负数为卖出）
+        """
+        if volume_change > 0:  # 买入操作
+            if self.cost_price is None:
+                # 首次买入，直接设置成本价
+                self.cost_price = current_price
+                self.max_price = current_price
+            else:
+                # 加仓，计算加权平均成本价
+                total_volume = self.percent_volume
+                old_cost = self.cost_price * (total_volume - volume_change)
+                new_cost = current_price * volume_change
+                self.cost_price = (old_cost + new_cost) / total_volume
+                # 更新最高价
+                if current_price > self.max_price:
+                    self.max_price = current_price
+        elif volume_change < 0:  # 卖出操作
+            # 卖出时保持成本价不变，但更新最高价
+            if current_price > self.max_price:
+                self.max_price = current_price
+
+    def calculate_atr_stop_loss(self, cost_price, atr_value):
+        """
+        计算基于ATR的动态止损位
+        
+        Args:
+            cost_price: 成本价
+            atr_value: ATR值
+            
+        Returns:
+            stop_loss_price: 止损价格
+        """
+        if cost_price is None or atr_value is None:
+            return None
+        
+        # 多头止损：成本价 - ATR × 倍数
+        stop_loss_price = cost_price - (atr_value * self.atr_multiplier)
+        return stop_loss_price
+
+    def check_atr_stop_loss(self, current_price, atr_value):
+        """
+        检查是否触发ATR动态止损
+        
+        Args:
+            current_price: 当前价格
+            atr_value: ATR值
+            
+        Returns:
+            bool: 是否触发止损
+        """
+        if self.percent_volume <= 0 or self.cost_price is None or atr_value is None:
+            return False
+        
+        stop_loss_price = self.calculate_atr_stop_loss(self.cost_price, atr_value)
+        if stop_loss_price is None:
+            return False
+        
+        return current_price <= stop_loss_price
 
     def is_diff_declining_nday(self, diff, nday: int, step: float = 0.0):
         result = list()
@@ -493,6 +593,42 @@ class MacdStrategy(StrategyBase):
         self.second_dead_x = None
         self.percent_volume = 0
         self.trending_type = TrendingType.TrendingUnknown
+        # 重置止损相关状态
+        self.cost_price = None
+        self.max_price = None
+
+    def _update_cost_price_from_order(self, order, current_price):
+        """
+        根据订单更新成本价
+        
+        Args:
+            order: 交易订单
+            current_price: 当前价格
+        """
+        if order is None:
+            return
+            
+        # 根据订单类型判断是买入还是卖出
+        if hasattr(order, 'side'):
+            if order.side == OrderSide_Buy:
+                # 买入订单，需要更新成本价
+                if hasattr(order, 'volume') and order.volume > 0:
+                    self.update_cost_price(current_price, order.volume)
+                elif hasattr(order, 'target_percent'):
+                    # 目标仓位订单，计算仓位变化
+                    old_volume = self.percent_volume
+                    new_volume = order.target_percent
+                    volume_change = new_volume - old_volume
+                    if volume_change > 0:
+                        self.update_cost_price(current_price, volume_change)
+            elif order.side == OrderSide_Sell:
+                # 卖出订单，更新最高价
+                if current_price > self.max_price:
+                    self.max_price = current_price
+        elif hasattr(order, 'action') and 'close_all' in str(order.action):
+            # 清仓订单，重置成本价
+            self.cost_price = None
+            self.max_price = None
 
     def is_cleared(self):
         """是否需要清仓"""
@@ -506,3 +642,31 @@ class MacdStrategy(StrategyBase):
             self.zero_axis_point = None
             self.first_dead_x = None
             self.second_dead_x = None
+
+    def get_cost_info(self):
+        """
+        获取成本价信息
+        
+        Returns:
+            dict: 包含成本价、最高价、当前仓位等信息
+        """
+        return {
+            'cost_price': self.cost_price,
+            'max_price': self.max_price,
+            'percent_volume': self.percent_volume,
+            'atr_multiplier': self.atr_multiplier,
+            'atr_period': self.atr_period
+        }
+
+    def check_fixed_drawdown_stop(self, current_price):
+        """
+        固定回撤止损：当前价较持仓期间最高价回撤超过阈值则止损
+        """
+        if self.max_price is None or self.percent_volume <= 0:
+            return None
+        drawdown = (self.max_price - current_price) / self.max_price
+        if drawdown >= self.max_drawdown_ratio:
+            logger.warning(f"[固定回撤止损] 触发固定回撤止损，当前价{current_price}，最高价{self.max_price}，回撤比例{drawdown:.2%}")
+            self.set_clear()
+            return OrderAction.order_close_all()
+        return None
