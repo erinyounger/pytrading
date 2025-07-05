@@ -44,11 +44,6 @@ class Config:
         env_symbols = os.getenv('SYMBOLS', '').strip()
         if env_symbols:
             self.symbols = [s.strip() for s in env_symbols.split(',') if s.strip()]
-        elif self.symbols is None:
-            self.symbols = """
-            SZSE.002459
-            SZSE.002920
-            """.strip().splitlines()
     
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)

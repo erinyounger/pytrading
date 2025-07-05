@@ -569,11 +569,6 @@ class MacdStrategy(StrategyBase):
             order = OrderAction.order_close_all()
             logger.info("[{}] DeadX and Zero Axis, Sell Out 100%".format(macd_point.get_datetime()))
             return order
-        # if self.is_above_zero_axis(diff) and self.is_macd_fall_down_n(diff, times=3):
-        #     self.sell(self.current * 0.1)
-        #     logger.info("[{}] MACD FallDown 3 times, Sell 10%. Count: {}".format(macd_point.get_datetime(), self.trade_n))
-        #     return True
-        # 无操作，等待
 
     def is_macd_fall_down_n(self, macd: pd.DataFrame, times=2):
         """MACD连续N次下降"""
