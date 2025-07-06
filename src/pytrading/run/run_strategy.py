@@ -114,10 +114,11 @@ def on_backtest_finished(context, indicator):
         
         # 如果需要保存到数据库
         if config.save_db:
-            logger.info(f"保存回测数据到数据库:")
+            logger.info(f"保存回测数据到数据库。")
             back_test_obj.save()
             logger.info(f"回测数据保存成功")
     except Exception as ex:
+        logger.error("保存数据到数据库失败。")
         logger.exception(ex)
     logger.info(f"Back Test End, Symbol: {context.symbol}")
 
@@ -130,6 +131,8 @@ def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, st
     from gm.model.storage import context
     context.symbol = symbol
     context.strategy_name = strategy_name
+    context.backtest_start_time = backtest_start_time
+    context.backtest_end_time = backtest_end_time
     run(strategy_id=strategy_id,
         filename=os.path.basename(__file__),
         mode=mode,
@@ -190,3 +193,9 @@ if __name__ == '__main__':
         logger.info("End Run Strategy.")
     except Exception as e:
         logger.error(f"Run Strategy Error.\n{traceback.format_exc()}")
+    # multiple_run(strategy_id="f981bc35-5313-11f0-901c-00ff136bef06",
+    #              symbol='SZSE.000977',
+    #              backtest_start_time='2024-01-01 01:00:00',
+    #              backtest_end_time='2025-01-02 15:00:00',
+    #              strategy_name='MACD_STRATEGY',
+    #              mode=2)

@@ -17,6 +17,7 @@ class Config:
     # 基础配置
     app_root_dir: Path = APP_ROOT_DIR
     save_db: bool = os.getenv('SAVE_DB', "false").lower() == "true"
+    db_type: str = os.getenv('DB_TYPE', 'mongodb')  # 支持 'mysql' 或 'mongodb'
     
     # 日志配置
     log_level: str = os.getenv('LOG_LEVEL', 'INFO')
@@ -31,6 +32,19 @@ class Config:
     live_strategy_id: str = os.getenv('LIVE_STRATEGY_ID')
     live_trading_token: str = os.getenv('LIVE_TRADING_TOKEN')
     symbols: List[str] = None
+    
+    # 数据库配置
+    mysql_host: str = os.getenv('MYSQL_HOST', 'localhost')
+    mysql_port: int = int(os.getenv('MYSQL_PORT', '3306'))
+    mysql_username: str = os.getenv('MYSQL_USERNAME', '')
+    mysql_password: str = os.getenv('MYSQL_PASSWORD', '')
+    mysql_database: str = os.getenv('MYSQL_DATABASE', 'pytrading')
+    
+    mongodb_host: str = os.getenv('MONGODB_HOST', 'localhost')
+    mongodb_port: int = int(os.getenv('MONGODB_PORT', '27017'))
+    mongodb_username: str = os.getenv('MONGODB_USERNAME', '')
+    mongodb_password: str = os.getenv('MONGODB_PASSWORD', '')
+    mongodb_database: str = os.getenv('MONGODB_DATABASE', 'pytrading')
     
 
     def __post_init__(self):

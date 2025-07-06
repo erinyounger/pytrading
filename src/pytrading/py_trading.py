@@ -30,8 +30,8 @@ class PyTrading:
         set_token(config.token)
         # 沪深300：SHSE.000300
         # 中证500：SHSE.000905
-        # sz300_df = get_constituents(index='SHSE.000905', fields='symbol, weight', df=True)
-        sz300_df = stk_get_index_constituents(index='SHSE.000300')
+        # 上证50： SHSE.000016
+        sz300_df = stk_get_index_constituents(index='SHSE.000016')
         # sz300_symbols = list(sz300_df[sz300_df.weight < 0.5].symbol.values)
         sz300_symbols = list(sz300_df.symbol.values)
         logger.info("Get SHSE.000300 Symbols: {}".format(len(sz300_symbols)))
@@ -43,7 +43,7 @@ class PyTrading:
         symbol_list = config.symbols if config.symbols else self.get_symbols()
         run_queue = Queue()
 
-        start_time = '2020-01-01 09:00:00'
+        start_time = '2024-01-01 09:00:00'
         end_time = '2025-06-30 15:00:00'
 
         for _syb in symbol_list:

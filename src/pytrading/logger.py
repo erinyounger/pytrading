@@ -8,7 +8,7 @@ log_file = os.path.join(log_path, "py-trading.log")
 if not os.path.exists(log_path):
     os.makedirs(log_path)
 
-logger = logging.getLogger("pytrading")
+logger = logging.getLogger("xtrading")
 ch_handler = logging.StreamHandler()
 fh_handler = logging.FileHandler(log_file)
 

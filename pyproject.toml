@@ -11,6 +11,7 @@ dependencies = [
     "mongoengine>=0.29.1",
     "psutil>=7.0.0",
     "pymongo>=4.13.1",
+    "pymysql>=1.1.1",
     "sqlalchemy>=2.0.41",
     "ta-lib",
 ]
