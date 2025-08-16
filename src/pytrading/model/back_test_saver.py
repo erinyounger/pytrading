@@ -15,4 +15,14 @@ class BackTestSaver(ABC):
     @abstractmethod
     def save(self, backtest_obj):
         """保存回测数据"""
-        raise NotImplementedError("Must implement save method") 
+        raise NotImplementedError("Must implement save method")
+    
+    @abstractmethod
+    def test_connection(self):
+        """测试数据库连接"""
+        raise NotImplementedError("Must implement test_connection method")
+    
+    @abstractmethod
+    def get_all_results(self, symbol=None, start_date=None, end_date=None, limit=100):
+        """获取所有回测结果"""
+        raise NotImplementedError("Must implement get_all_results method") 

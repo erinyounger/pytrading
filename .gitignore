@@ -6,3 +6,4 @@
 /logs/*
 
 *.lock
+/*/**/node_modules/
