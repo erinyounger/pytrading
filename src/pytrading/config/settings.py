@@ -41,6 +41,7 @@ class Config:
     live_strategy_id: str = os.getenv('LIVE_STRATEGY_ID')
     live_trading_token: str = os.getenv('LIVE_TRADING_TOKEN')
     symbols: List[str] = None
+    index_symbol: str = os.getenv('INDEX_SYMBOL', 'SHSE.000300')
     
     # 数据库配置
     mysql_host: str = os.getenv('MYSQL_HOST', 'localhost')

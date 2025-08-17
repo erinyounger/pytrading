@@ -26,15 +26,11 @@ class PyTrading:
         return self.run_strategy(strategy_name)
 
     def get_symbols(self):
-        """批量获取股票列表"""
+        """获取指数成分股列表"""
         set_token(config.token)
-        # 沪深300：SHSE.000300
-        # 中证500：SHSE.000905
-        # 上证50： SHSE.000016
-        sz300_df = stk_get_index_constituents(index='SHSE.000300')
-        # sz300_symbols = list(sz300_df[sz300_df.weight < 0.5].symbol.values)
+        sz300_df = stk_get_index_constituents(index=config.index_symbol)
         sz300_symbols = list(sz300_df.symbol.values)
-        logger.info("Get SHSE.000300 Symbols: {}".format(len(sz300_symbols)))
+        logger.info("Get {} Symbols: {}".format(config.index_symbol, len(sz300_symbols)))
         return sz300_symbols
 
     def run_strategy(self, strategy_name=None):
