@@ -13,7 +13,7 @@ PyTrading 是一个基于 Python 构建的量化交易系统，集成了掘金�
 - **PyTrading**: 主要编排类 (`src/pytrading/py_trading.py`)，管理策略执行和并行处理
 - **策略框架**: 基础策略类，包含 MACD、布林带和海龟策略实现
 - **订单管理**: 订单控制器处理交易执行和仓位管理
-- **数据持久化**: 支持 MongoDB 和 MySQL 的灵活存储系统
+- **数据持久化**: 支持 MySQL 的灵活存储系统
 - **配置管理**: 基于环境变量的配置系统，使用 `.env` 文件
 
 ### 执行流程
@@ -81,9 +81,8 @@ uv remove package_name
 
 **数据库配置:**
 - `SAVE_DB`: 设置为 "true" 启用数据库持久化
-- `DB_TYPE`: "mysql" 或 "mongodb"
+- `DB_TYPE`: "mysql"
 - MySQL 配置: `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_DATABASE`
-- MongoDB 配置: `MONGODB_HOST`, `MONGODB_PORT`, `MONGODB_USERNAME`, `MONGODB_PASSWORD`, `MONGODB_DATABASE`
 
 **交易参数:**
 - `SYMBOLS`: 逗号分隔的股票代码列表（可选，默认为上证50成分股）
@@ -106,7 +105,7 @@ uv remove package_name
 - **gm**: 掘金量化 Python SDK (>= 3.0.177)
 - **ta-lib**: 技术分析库（本地 wheel 包在 bin/ 目录）
 - **sqlalchemy**: MySQL 数据库 ORM
-- **mongoengine**: MongoDB 文档数据库 ODM
+
 - **pymysql**: MySQL 数据库连接器
 
 ## 重要说明
@@ -131,6 +130,6 @@ uv remove package_name
 4. **结果保存**: `on_backtest_finished()` 在 `run_strategy.py:85` 中保存回测结果
 
 ### 数据库存储架构
-- **工厂模式**: `back_test_saver_factory.py` 根据配置选择 MySQL 或 MongoDB 存储
+- **工厂模式**: `back_test_saver_factory.py` 根据配置选择 MySQL 存储
 - **数据模型**: `BackTest` 类包含所有回测性能指标和元数据
 - **唯一约束**: 基于 (symbol, backtest_start_time, backtest_end_time) 避免重复数据

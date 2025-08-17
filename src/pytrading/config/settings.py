@@ -1,3 +1,12 @@
+#!/usr/bin/env python 
+# -*- coding:utf-8 -*-　　
+"""
+@Description    ：统一配置管理
+@Author  ：EEric
+@Email  : yflying7@gmail.com
+@Date    ：2022/11/20 21:50 
+"""
+
 import os
 from pathlib import Path
 from typing import Any, Dict, List
@@ -17,7 +26,7 @@ class Config:
     # 基础配置
     app_root_dir: Path = APP_ROOT_DIR
     save_db: bool = os.getenv('SAVE_DB', "false").lower() == "true"
-    db_type: str = os.getenv('DB_TYPE', 'mongodb')  # 支持 'mysql' 或 'mongodb'
+    db_type: str = os.getenv('DB_TYPE', 'mysql')  # 支持 'mysql'
     
     # 日志配置
     log_level: str = os.getenv('LOG_LEVEL', 'INFO')
@@ -39,12 +48,6 @@ class Config:
     mysql_username: str = os.getenv('MYSQL_USERNAME', '')
     mysql_password: str = os.getenv('MYSQL_PASSWORD', '')
     mysql_database: str = os.getenv('MYSQL_DATABASE', 'pytrading')
-    
-    mongodb_host: str = os.getenv('MONGODB_HOST', 'localhost')
-    mongodb_port: int = int(os.getenv('MONGODB_PORT', '27017'))
-    mongodb_username: str = os.getenv('MONGODB_USERNAME', '')
-    mongodb_password: str = os.getenv('MONGODB_PASSWORD', '')
-    mongodb_database: str = os.getenv('MONGODB_DATABASE', 'pytrading')
     
 
     def __post_init__(self):

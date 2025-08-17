@@ -5,12 +5,9 @@ description = "现代化量化交易系统 - 基于Python和React的Web界面"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
-    "bson>=0.5.10",
     "dotenv>=0.9.9",
     "gm>=3.0.177",
-    "mongoengine>=0.29.1",
     "psutil>=7.0.0",
-    "pymongo>=4.13.1",
     "pymysql>=1.1.1",
     "sqlalchemy>=2.0.41",
     "ta-lib",

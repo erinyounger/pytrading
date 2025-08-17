@@ -14,7 +14,7 @@ def get_backtest_saver():
         from pytrading.config.settings import config
         from pytrading.logger import logger
         
-        db_type = getattr(config, 'db_type', 'mongodb').lower()
+        db_type = getattr(config, 'db_type', 'mysql').lower()
         
         if db_type == 'mysql':
             try:
@@ -25,17 +25,6 @@ def get_backtest_saver():
                 return saver
             except Exception as e:
                 print(f"ERROR: MySQL数据库连接失败 - {str(e)}")
-                return None
-                
-        elif db_type == 'mongodb':
-            try:
-                from .mongo_back_test_saver import MongoBackTestSaver
-                saver = MongoBackTestSaver()
-                # 测试连接
-                saver.test_connection()
-                return saver
-            except Exception as e:
-                print(f"ERROR: MongoDB数据库连接失败 - {str(e)}")
                 return None
         else:
             print(f"ERROR: 不支持的数据库类型: {db_type}")

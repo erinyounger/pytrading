@@ -170,7 +170,6 @@ const Settings: React.FC = () => {
                   >
                     <Select>
                       <Option value="mysql">MySQL</Option>
-                      <Option value="mongodb">MongoDB</Option>
                     </Select>
                   </Form.Item>
                 </Col>

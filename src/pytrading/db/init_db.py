@@ -28,31 +28,12 @@ def init_mysql():
         raise
 
 
-def init_mongodb():
-    """初始化MongoDB数据库"""
-    try:
-        from .mongodb import PymongoClient
-        client = PymongoClient(
-            host=config.mongodb_host,
-            db_name=config.mongodb_database,
-            port=config.mongodb_port,
-            username=config.mongodb_username,
-            password=config.mongodb_password
-        )
-        logger.info("MongoDB数据库连接成功")
-    except Exception as e:
-        logger.error(f"MongoDB数据库初始化失败: {e}")
-        raise
-
-
 def init_database():
     """根据配置初始化数据库"""
-    db_type = getattr(config, 'db_type', 'mongodb').lower()
+    db_type = getattr(config, 'db_type', 'mysql').lower()
     
     if db_type == 'mysql':
         init_mysql()
-    elif db_type == 'mongodb':
-        init_mongodb()
     else:
         logger.warning(f"不支持的数据库类型: {db_type}")
 
