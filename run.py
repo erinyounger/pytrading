@@ -13,7 +13,7 @@ import os
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src")
 sys.path.insert(0, env_path)
 
-from pytrading.model.strategy_enum import StrategyType
+from pytrading.config.strategy_enum import StrategyType
 from pytrading.py_trading import PyTrading
 
 if __name__ == '__main__':

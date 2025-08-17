@@ -12,10 +12,9 @@ import pandas as pd
 from gm.api import *
 from pytrading.logger import logger
 from pytrading.strategy.base import StrategyBase
-from pytrading.model.order_enum import OrderAction, Order
-from pytrading.model.strategy_enum import TrendingType
-from pytrading.utils import cmp_time_str, is_live_mode
-from pytrading.utils.talib_util import ATR_CN, ATR
+from pytrading.config.order_enum import OrderAction, Order
+from pytrading.config.strategy_enum import TrendingType
+from pytrading.utils import is_live_mode
 
 
 class MACDPoint:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Table, 
   Card, 
@@ -13,10 +13,10 @@ import {
   Col, 
   Statistic,
   message,
-  Tooltip
+  Tooltip,
+  InputNumber
 } from 'antd';
 import { 
-  SearchOutlined, 
   ReloadOutlined, 
   EyeOutlined,
   DownloadOutlined 
@@ -39,7 +39,54 @@ const BacktestResults: React.FC = () => {
     symbol: '',
     strategy: '',
     dateRange: null as any,
+    pnlRange: null as any, // 收益率范围
+    winRatioRange: null as any, // 胜率范围
   });
+
+  const applyFilters = useCallback(() => {
+    let filtered = [...data];
+
+    // 股票代码/名称筛选
+    if (filters.symbol) {
+      filtered = filtered.filter(item => 
+        item.symbol.toLowerCase().includes(filters.symbol.toLowerCase()) ||
+        item.name.toLowerCase().includes(filters.symbol.toLowerCase())
+      );
+    }
+
+    // 趋势类型筛选
+    if (filters.strategy) {
+      filtered = filtered.filter(item => item.trending_type === filters.strategy);
+    }
+
+    // 日期范围筛选
+    if (filters.dateRange && filters.dateRange.length === 2) {
+      filtered = filtered.filter(item => {
+        const itemDate = dayjs(item.backtest_start_time);
+        const startDate = filters.dateRange[0].startOf('day');
+        const endDate = filters.dateRange[1].endOf('day');
+        return itemDate.isAfter(startDate) && itemDate.isBefore(endDate);
+      });
+    }
+
+    // 收益率范围筛选
+    if (filters.pnlRange && filters.pnlRange.length === 2) {
+      filtered = filtered.filter(item => {
+        const pnlPercent = item.pnl_ratio * 100;
+        return pnlPercent >= filters.pnlRange[0] && pnlPercent <= filters.pnlRange[1];
+      });
+    }
+
+    // 胜率范围筛选
+    if (filters.winRatioRange && filters.winRatioRange.length === 2) {
+      filtered = filtered.filter(item => {
+        const winRatioPercent = item.win_ratio * 100;
+        return winRatioPercent >= filters.winRatioRange[0] && winRatioPercent <= filters.winRatioRange[1];
+      });
+    }
+
+    setFilteredData(filtered);
+  }, [data, filters]);
 
   useEffect(() => {
     fetchBacktestResults();
@@ -47,7 +94,7 @@ const BacktestResults: React.FC = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [data, filters]);
+  }, [applyFilters]);
 
   const fetchBacktestResults = async () => {
     try {
@@ -61,33 +108,33 @@ const BacktestResults: React.FC = () => {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...data];
-
-    if (filters.symbol) {
-      filtered = filtered.filter(item => 
-        item.symbol.toLowerCase().includes(filters.symbol.toLowerCase()) ||
-        item.name.toLowerCase().includes(filters.symbol.toLowerCase())
-      );
-    }
-
-    if (filters.strategy) {
-      filtered = filtered.filter(item => item.trending_type === filters.strategy);
-    }
-
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      filtered = filtered.filter(item => {
-        const itemDate = dayjs(item.backtest_start_time);
-        return itemDate.isAfter(filters.dateRange[0]) && itemDate.isBefore(filters.dateRange[1]);
-      });
-    }
-
-    setFilteredData(filtered);
-  };
-
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
+
+  const clearAllFilters = () => {
+    setFilters({
+      symbol: '',
+      strategy: '',
+      dateRange: null,
+      pnlRange: null,
+      winRatioRange: null,
+    });
+  };
+
+  // 获取可用的趋势类型
+  const getAvailableStrategies = () => {
+    const strategies = new Set(data.map(item => item.trending_type).filter(Boolean));
+    return Array.from(strategies).sort();
+  };
+
+  // 快速筛选预设
+  const quickFilters = [
+    { label: '盈利策略', onClick: () => setFilters(prev => ({ ...prev, pnlRange: [0, 1000] })) },
+    { label: '亏损策略', onClick: () => setFilters(prev => ({ ...prev, pnlRange: [-100, 0] })) },
+    { label: '高胜率(>60%)', onClick: () => setFilters(prev => ({ ...prev, winRatioRange: [60, 100] })) },
+    { label: '低胜率(<40%)', onClick: () => setFilters(prev => ({ ...prev, winRatioRange: [0, 40] })) },
+  ];
 
   const showDetail = (record: BacktestResult) => {
     setSelectedResult(record);
@@ -96,12 +143,13 @@ const BacktestResults: React.FC = () => {
 
   const exportData = () => {
     // 简单的CSV导出
-    const headers = ['股票代码', '股票名称', '策略类型', '收益率', '夏普比率', '最大回撤', '胜率', '开始时间', '结束时间'];
+    const headers = ['股票代码', '股票名称', '策略名称', '趋势类型', '收益率', '夏普比率', '最大回撤', '胜率', '开始时间', '结束时间'];
     const csvContent = [
       headers.join(','),
       ...filteredData.map(item => [
         item.symbol,
         item.name,
+        item.strategy_name || '',  // 如果策略名称为null，导出时显示为空
         item.trending_type,
         (item.pnl_ratio * 100).toFixed(2) + '%',
         item.sharp_ratio.toFixed(2),
@@ -138,15 +186,33 @@ const BacktestResults: React.FC = () => {
       width: 120,
     },
     {
-      title: '策略类型',
+      title: '策略名称',
+      dataIndex: 'strategy_name',
+      key: 'strategy_name',
+      width: 120,
+      render: (value: string) => {
+        // 如果策略名称为null、undefined或空字符串，则不显示
+        if (!value || value === 'null' || value === 'undefined') {
+          return '-';
+        }
+        return value;
+      }
+    },
+    {
+      title: '趋势类型',
       dataIndex: 'trending_type',
       key: 'trending_type',
       width: 120,
       render: (type: string) => {
+        // 这里trending_type实际上是趋势阶段，不是策略类型
         const typeMap: Record<string, { text: string; color: string }> = {
-          'MACD_STRATEGY': { text: 'MACD', color: 'blue' },
-          'BOLL_STRATEGY': { text: '布林带', color: 'green' },
-          'TURTLE_STRATEGY': { text: '海龟', color: 'orange' }
+          'Unknown': { text: '未识别', color: 'default' },
+          'Observing': { text: '关注', color: 'blue' },
+          'RisingUp': { text: '上涨', color: 'red' },
+          'ZeroAxisUp': { text: '零轴上穿', color: 'purple' },
+          'DeadXDown': { text: '死叉下跌', color: 'orange' },
+          'FallingDown': { text: '下跌', color: 'volcano' },
+          'UpDown': { text: '震荡', color: 'cyan' }
         };
         const config = typeMap[type] || { text: type, color: 'default' };
         return <Tag color={config.color}>{config.text}</Tag>;
@@ -158,7 +224,10 @@ const BacktestResults: React.FC = () => {
       key: 'pnl_ratio',
       width: 100,
       render: (value: number) => (
-        <span className={value >= 0 ? 'profit-positive' : 'profit-negative'}>
+        <span style={{ 
+          color: value >= 0 ? '#ff4d4f' : '#52c41a',
+          fontWeight: 'bold'
+        }}>
           {(value * 100).toFixed(2)}%
         </span>
       ),
@@ -178,7 +247,10 @@ const BacktestResults: React.FC = () => {
       key: 'max_drawdown',
       width: 100,
       render: (value: number) => (
-        <span className="profit-negative">
+        <span style={{ 
+          color: '#ff4d4f',
+          fontWeight: 'bold'
+        }}>
           {(value * 100).toFixed(2)}%
         </span>
       ),
@@ -189,7 +261,14 @@ const BacktestResults: React.FC = () => {
       dataIndex: 'win_ratio',
       key: 'win_ratio',
       width: 80,
-      render: (value: number) => `${(value * 100).toFixed(1)}%`,
+      render: (value: number) => (
+        <span style={{ 
+          color: value >= 0.5 ? '#ff4d4f' : '#52c41a',
+          fontWeight: 'bold'
+        }}>
+          {(value * 100).toFixed(1)}%
+        </span>
+      ),
       sorter: (a: BacktestResult, b: BacktestResult) => a.win_ratio - b.win_ratio,
     },
     {
@@ -236,7 +315,7 @@ const BacktestResults: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <Card title="回测结果" style={{ marginBottom: '16px' }}>
         <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={4}>
             <Search
               placeholder="搜索股票代码或名称"
               allowClear
@@ -244,26 +323,92 @@ const BacktestResults: React.FC = () => {
               style={{ width: '100%' }}
             />
           </Col>
-          <Col xs={24} sm={12} md={6}>
+          <Col xs={24} sm={12} md={4}>
             <Select
-              placeholder="选择策略类型"
+              placeholder="选择趋势类型"
               allowClear
               style={{ width: '100%' }}
+              value={filters.strategy}
               onChange={(value) => handleFilterChange('strategy', value)}
             >
-              <Option value="MACD_STRATEGY">MACD策略</Option>
-              <Option value="BOLL_STRATEGY">布林带策略</Option>
-              <Option value="TURTLE_STRATEGY">海龟策略</Option>
+              {getAvailableStrategies().map(strategy => (
+                <Option key={strategy} value={strategy}>
+                  {strategy}
+                </Option>
+              ))}
             </Select>
           </Col>
-          <Col xs={24} sm={12} md={8}>
+          <Col xs={24} sm={12} md={4}>
             <RangePicker
+              placeholder={['开始日期', '结束日期']}
               style={{ width: '100%' }}
+              value={filters.dateRange}
               onChange={(dates) => handleFilterChange('dateRange', dates)}
             />
           </Col>
           <Col xs={24} sm={12} md={4}>
-            <Space>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <InputNumber
+                placeholder="最小收益率%"
+                style={{ width: '50%' }}
+                value={filters.pnlRange?.[0]}
+                onChange={(value) => {
+                  const newRange = [value, filters.pnlRange?.[1]].filter(v => v !== undefined);
+                  handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
+                }}
+                min={-100}
+                max={1000}
+                precision={2}
+              />
+              <span>-</span>
+              <InputNumber
+                placeholder="最大收益率%"
+                style={{ width: '50%' }}
+                value={filters.pnlRange?.[1]}
+                onChange={(value) => {
+                  const newRange = [filters.pnlRange?.[0], value].filter(v => v !== undefined);
+                  handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
+                }}
+                min={-100}
+                max={1000}
+                precision={2}
+              />
+            </div>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <InputNumber
+                placeholder="最小胜率%"
+                style={{ width: '50%' }}
+                value={filters.winRatioRange?.[0]}
+                onChange={(value) => {
+                  const newRange = [value, filters.winRatioRange?.[1]].filter(v => v !== undefined);
+                  handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
+                }}
+                min={0}
+                max={100}
+                precision={1}
+              />
+              <span>-</span>
+              <InputNumber
+                placeholder="最大胜率%"
+                style={{ width: '50%' }}
+                value={filters.winRatioRange?.[1]}
+                onChange={(value) => {
+                  const newRange = [filters.winRatioRange?.[0], value].filter(v => v !== undefined);
+                  handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
+                }}
+                min={0}
+                max={100}
+                precision={1}
+              />
+            </div>
+          </Col>
+        </Row>
+        
+        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+          <Col span={24}>
+            <Space wrap>
               <Button 
                 icon={<ReloadOutlined />} 
                 onClick={fetchBacktestResults}
@@ -272,12 +417,55 @@ const BacktestResults: React.FC = () => {
                 刷新
               </Button>
               <Button 
+                onClick={clearAllFilters}
+                disabled={!filters.symbol && !filters.strategy && !filters.dateRange && !filters.pnlRange && !filters.winRatioRange}
+              >
+                清除筛选
+              </Button>
+              <Button 
                 icon={<DownloadOutlined />} 
                 onClick={exportData}
                 disabled={filteredData.length === 0}
               >
                 导出
               </Button>
+              <span style={{ color: '#666', fontSize: '14px' }}>
+                共 {filteredData.length} 条记录
+                {filteredData.length > 0 && (
+                  <>
+                    | 平均收益率: <span style={{ 
+                      color: (filteredData.reduce((sum, item) => sum + item.pnl_ratio, 0) / filteredData.length) >= 0 ? '#ff4d4f' : '#52c41a',
+                      fontWeight: 'bold'
+                    }}>
+                      {(filteredData.reduce((sum, item) => sum + item.pnl_ratio, 0) / filteredData.length * 100).toFixed(2)}%
+                    </span>
+                    | 平均胜率: <span style={{ 
+                      color: (filteredData.reduce((sum, item) => sum + item.win_ratio, 0) / filteredData.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
+                      fontWeight: 'bold'
+                    }}>
+                      {(filteredData.reduce((sum, item) => sum + item.win_ratio, 0) / filteredData.length * 100).toFixed(1)}%
+                    </span>
+                  </>
+                )}
+              </span>
+            </Space>
+          </Col>
+        </Row>
+        
+        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
+          <Col span={24}>
+            <Space wrap>
+              <span style={{ color: '#666', fontSize: '14px' }}>快速筛选:</span>
+              {quickFilters.map((filter, index) => (
+                <Button 
+                  key={index}
+                  size="small"
+                  type="default"
+                  onClick={filter.onClick}
+                >
+                  {filter.label}
+                </Button>
+              ))}
             </Space>
           </Col>
         </Row>
@@ -318,7 +506,13 @@ const BacktestResults: React.FC = () => {
                     <Statistic title="股票名称" value={selectedResult.name} />
                   </Col>
                   <Col span={8}>
-                    <Statistic title="策略类型" value={selectedResult.trending_type} />
+                    <Statistic 
+                      title="策略名称" 
+                      value={selectedResult.strategy_name || '-'} 
+                    />
+                  </Col>
+                  <Col span={8}>
+                    <Statistic title="趋势类型" value={selectedResult.trending_type} />
                   </Col>
                 </Row>
               </Card>
@@ -334,7 +528,8 @@ const BacktestResults: React.FC = () => {
                       precision={2}
                       suffix="%" 
                       valueStyle={{ 
-                        color: selectedResult.pnl_ratio >= 0 ? '#52c41a' : '#ff4d4f' 
+                        color: selectedResult.pnl_ratio >= 0 ? '#ff4d4f' : '#52c41a',
+                        fontWeight: 'bold'
                       }}
                     />
                   </Col>
@@ -351,7 +546,10 @@ const BacktestResults: React.FC = () => {
                       value={selectedResult.max_drawdown * 100} 
                       precision={2}
                       suffix="%" 
-                      valueStyle={{ color: '#ff4d4f' }}
+                      valueStyle={{ 
+                        color: '#ff4d4f',
+                        fontWeight: 'bold'
+                      }}
                     />
                   </Col>
                 </Row>
@@ -371,7 +569,10 @@ const BacktestResults: React.FC = () => {
                     <Statistic 
                       title="盈利次数" 
                       value={selectedResult.win_count}
-                      valueStyle={{ color: '#52c41a' }}
+                      valueStyle={{ 
+                        color: '#ff4d4f',
+                        fontWeight: 'bold'
+                      }}
                     />
                   </Col>
                   <Col span={6}>
@@ -380,7 +581,10 @@ const BacktestResults: React.FC = () => {
                       value={selectedResult.win_ratio * 100} 
                       precision={1}
                       suffix="%" 
-                      valueStyle={{ color: '#52c41a' }}
+                      valueStyle={{ 
+                        color: selectedResult.win_ratio >= 0.5 ? '#ff4d4f' : '#52c41a',
+                        fontWeight: 'bold'
+                      }}
                     />
                   </Col>
                 </Row>

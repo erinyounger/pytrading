@@ -12,7 +12,6 @@ from typing import List, Optional
 import uvicorn
 import os
 import sys
-import random
 from datetime import datetime, timedelta
 
 # 添加项目根目录到Python路径
@@ -20,17 +19,9 @@ project_root = os.path.join(os.path.dirname(__file__), '../../..')
 sys.path.insert(0, project_root)
 sys.path.insert(0, os.path.join(project_root, 'src'))
 
-try:
-    from pytrading.config.settings import config
-    from pytrading.model.back_test import BackTest
-    from pytrading.model.back_test_saver_factory import get_backtest_saver
-    print("INFO: PyTrading 模块导入成功")
-except ImportError as e:
-    # 导入失败时记录错误信息
-    print(f"ERROR: PyTrading 模块导入失败 - {str(e)}")
-    config = None
-    BackTest = None
-    get_backtest_saver = lambda: None
+from pytrading.config.settings import config
+from pytrading.model.back_test import BackTest
+from pytrading.model.back_test_saver_factory import get_backtest_saver
 
 app = FastAPI(
     title="PyTrading API",
@@ -96,69 +87,6 @@ async def get_backtest_results(
         print(f"ERROR: 获取回测结果时发生未知错误 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"服务器内部错误: {str(e)}")
 
-@app.get("/api/realtime-data")
-async def get_realtime_data():
-    """获取实时监控数据"""
-    try:
-        saver = get_backtest_saver()
-        
-        if not saver:
-            print("ERROR: 数据库连接失败 - 无法获取实时监控数据")
-            raise HTTPException(status_code=500, detail="数据库连接失败，无法获取实时监控数据")
-        
-        # 从数据库获取回测结果作为基础数据
-        try:
-            backtest_results = saver.get_all_results(limit=10)
-            print(f"INFO: 成功从数据库获取 {len(backtest_results)} 条数据用于生成实时监控")
-        except Exception as db_error:
-            print(f"ERROR: 获取回测结果失败 - {str(db_error)}")
-            raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(db_error)}")
-        
-        if not backtest_results:
-            print("WARNING: 数据库中没有回测结果数据")
-            raise HTTPException(status_code=404, detail="数据库中没有回测结果数据")
-        
-        # 基于回测结果生成实时监控数据
-        realtime_data = []
-        for result in backtest_results:
-            # 生成当前价格和市场数据（基于历史数据）
-            base_price = random.uniform(10, 200)
-            change_percent = random.uniform(-5, 5)
-            
-            # 基于回测收益率计算当前持仓盈亏
-            position = random.randint(100, 2000) if result.get("pnl_ratio", 0) > 0 else random.randint(-2000, -100)
-            pnl = position * base_price * (result.get("pnl_ratio", 0) / 10)  # 按比例缩放
-            
-            # 根据策略类型和历史表现确定当前状态
-            if result.get("pnl_ratio", 0) > 0.1:  # 收益率大于10%
-                status = "active"
-            elif result.get("pnl_ratio", 0) > 0:   # 小额盈利
-                status = "active"
-            else:
-                status = "paused"  # 亏损的暂停
-            
-            realtime_item = {
-                "symbol": result.get("symbol", ""),
-                "name": result.get("name", ""),
-                "current_price": round(base_price, 2),
-                "change_percent": round(change_percent, 2),
-                "volume": random.randint(100000, 5000000),
-                "position": position,
-                "pnl": round(pnl, 2),
-                "status": status,
-                "last_update": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            }
-            realtime_data.append(realtime_item)
-        
-        print(f"INFO: 成功生成 {len(realtime_data)} 条实时监控数据")
-        return {"data": realtime_data}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"ERROR: 获取实时监控数据时发生未知错误 - {str(e)}")
-        raise HTTPException(status_code=500, detail=f"服务器内部错误: {str(e)}")
-
 @app.get("/api/system-status")
 async def get_system_status():
     """获取系统状态"""
@@ -189,7 +117,7 @@ async def get_system_status():
             "trading_mode": os.getenv("TRADING_MODE", "backtest"),
             "system_status": "running",
             "active_strategies": active_strategies,
-            "total_positions": random.randint(1000, 10000),
+            "total_positions": 0, # 实时数据接口已删除，这里返回0
             "total_pnl": round(total_pnl, 2),
             "last_update": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }

@@ -21,6 +21,7 @@ class BackTestResult(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(20), nullable=False)
     name = Column(String(50))
+    strategy_name = Column(String(50))  # 添加策略名称字段
     trending_type = Column(String(50))
     backtest_start_time = Column(DateTime)
     backtest_end_time = Column(DateTime)

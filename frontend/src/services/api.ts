@@ -69,12 +69,6 @@ export const apiService = {
     return response.data;
   },
 
-  // 实时数据相关
-  getRealtimeData: async (): Promise<{ data: any[] }> => {
-    const response = await api.get('/api/realtime-data');
-    return response.data;
-  },
-
   getSystemStatus: async (): Promise<{
     trading_mode: string;
     system_status: string;

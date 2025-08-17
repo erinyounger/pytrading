@@ -9,10 +9,8 @@ import {
   Space,
   Statistic,
   Alert,
-  Progress,
   Modal,
-  Typography,
-  Divider
+  Typography
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -21,8 +19,7 @@ import {
   EyeOutlined,
   StopOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined
+  ClockCircleOutlined
 } from '@ant-design/icons';
 import { Line, Doughnut } from 'react-chartjs-2';
 import {
@@ -101,13 +98,26 @@ const RealtimeMonitor: React.FC = () => {
     try {
       setLoading(true);
       
-      // 获取真实的实时数据和系统状态
-      const [realtimeResponse, systemResponse] = await Promise.all([
-        apiService.getRealtimeData(),
+      // 获取回测结果数据和系统状态
+      const [backtestResponse, systemResponse] = await Promise.all([
+        apiService.getBacktestResults({ limit: 10 }),
         apiService.getSystemStatus()
       ]);
 
-      setRealtimeData(realtimeResponse.data);
+      // 将回测结果转换为实时监控数据格式
+      const convertedData: RealtimeData[] = backtestResponse.data.map((result: any) => ({
+        symbol: result.symbol || '',
+        name: result.name || '',
+        current_price: result.close_price || 0,
+        change_percent: result.pnl_ratio ? (result.pnl_ratio * 100) : 0,
+        volume: result.volume || 0,
+        position: result.pnl_ratio > 0 ? Math.abs(result.pnl_ratio * 1000) : -Math.abs(result.pnl_ratio * 1000),
+        pnl: result.pnl || 0,
+        status: result.pnl_ratio > 0.1 ? 'active' : result.pnl_ratio > 0 ? 'active' : 'paused',
+        last_update: result.end_date || new Date().toISOString()
+      }));
+
+      setRealtimeData(convertedData);
       
       // 确保system_status字段类型正确
       const systemData: SystemStatus = {

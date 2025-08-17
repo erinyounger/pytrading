@@ -4,7 +4,6 @@ import {
   Row,
   Col,
   Form,
-  Input,
   Select,
   DatePicker,
   Button,
@@ -14,13 +13,11 @@ import {
   Tag,
   Space,
   Tabs,
-  InputNumber,
   Progress,
   Alert
 } from 'antd';
 import {
   PlayCircleOutlined,
-  PauseCircleOutlined,
   ReloadOutlined,
   EyeOutlined,
   SettingOutlined
@@ -31,7 +28,6 @@ import { Strategy, Symbol, BacktestConfig, TaskStatus } from '../types';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-const { TabPane } = Tabs;
 
 const StrategyManager: React.FC = () => {
   const [form] = Form.useForm();

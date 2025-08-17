@@ -30,7 +30,8 @@ class BackTest:
         self.win_count = None  # 盈利次数（平仓价格大于持仓均价vwap的次数）
         self.lose_count = None  # 亏损次数 （平仓价格小于或者等于持仓均价vwap的次数）
         self.win_ratio = None  # 胜率
-        self.trending_type = None
+        self.trending_type = None # 趋势类型
+        self.strategy_name = None # 策略名称
 
     def init_attr(self, **kwargs):
         """初始化属性"""
@@ -59,6 +60,7 @@ class BackTest:
             "lose_count": self.lose_count,
             "win_ratio": self.win_ratio,
             "trending_type": self.trending_type,
+            "strategy_name": self.strategy_name,
         }
     
     def save(self):

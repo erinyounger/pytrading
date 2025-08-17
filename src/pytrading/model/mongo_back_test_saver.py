@@ -34,6 +34,7 @@ class MongoBackTestDocument(db.Document):
     lose_count = db.IntField()  # 亏损次数 （平仓价格小于或者等于持仓均价vwap的次数）
     win_ratio = db.FloatField()  # 胜率
     trending_type = db.StringField()
+    strategy_name = db.StringField()
 
 
 class MongoBackTestSaver(BackTestSaver):
@@ -86,6 +87,7 @@ class MongoBackTestSaver(BackTestSaver):
                     'win_ratio': float(doc.win_ratio) if doc.win_ratio else 0.0,
                     'trending_type': doc.trending_type,
                     'created_at': doc.created_at.strftime('%Y-%m-%d %H:%M:%S') if doc.created_at else None,
+                    'strategy_name': doc.strategy_name if doc.strategy_name else None,
                 }
                 results.append(result_dict)
             

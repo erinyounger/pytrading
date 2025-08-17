@@ -10,7 +10,7 @@ from gm.api import *
 from gm.model.storage import Context
 
 from pytrading.strategy.base import StrategyBase
-from pytrading.model.order_enum import OrderAction, Order
+from pytrading.config.order_enum import OrderAction, Order
 from pytrading.logger import logger
 from pytrading.config import config
 

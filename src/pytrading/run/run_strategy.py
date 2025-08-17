@@ -24,7 +24,7 @@ from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import config
 from pytrading.utils import is_live_mode
-from pytrading.model.strategy_enum import StrategyType
+from pytrading.config.strategy_enum import StrategyType
 
 order_controller = OrderController()
 
@@ -87,6 +87,7 @@ def on_backtest_finished(context, indicator):
     try:
         back_test_obj = BackTest()
         back_test_obj.symbol = context.symbol
+        back_test_obj.strategy_name = context.strategy_name
         back_test_obj.init_attr(**indicator)
         stock_info = get_instruments(symbols=context.symbol, df=False)
         if len(stock_info) > 0:
@@ -99,6 +100,7 @@ def on_backtest_finished(context, indicator):
         logger.info(f"回测结果:")
         logger.info(f"  标的代码: {back_test_obj.symbol}")
         logger.info(f"  股票名称: {back_test_obj.name}")
+        logger.info(f"  策略名称: {back_test_obj.strategy_name}")
         logger.info(f"  趋势类型: {back_test_obj.trending_type}")
         logger.info(f"  回测开始时间: {back_test_obj.backtest_start_time}")
         logger.info(f"  回测结束时间: {back_test_obj.backtest_end_time}")
@@ -114,9 +116,8 @@ def on_backtest_finished(context, indicator):
         
         # 如果需要保存到数据库
         if config.save_db:
-            logger.info(f"保存回测数据到数据库。")
             back_test_obj.save()
-            logger.info(f"回测数据保存成功")
+            logger.info(f"保存回测数据到数据库成功，back_test_obj.name: {back_test_obj.name}")
     except Exception as ex:
         logger.error("保存数据到数据库失败。")
         logger.exception(ex)

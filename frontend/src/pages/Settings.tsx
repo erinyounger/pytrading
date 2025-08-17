@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Row,
@@ -25,7 +25,6 @@ import {
   DatabaseOutlined,
   ApiOutlined,
   SecurityScanOutlined,
-  EditOutlined,
   DeleteOutlined,
   PlusOutlined
 } from '@ant-design/icons';
@@ -33,9 +32,7 @@ import { apiService } from '../services/api';
 import { SystemConfig } from '../types';
 
 const { Option } = Select;
-const { Title, Text } = Typography;
-const { TextArea } = Input;
-const { TabPane } = Tabs;
+const { Title } = Typography;
 
 const Settings: React.FC = () => {
   const [form] = Form.useForm();
@@ -49,11 +46,7 @@ const Settings: React.FC = () => {
   const [symbolModalVisible, setSymbolModalVisible] = useState(false);
   const [newSymbol, setNewSymbol] = useState({ symbol: '', name: '' });
 
-  useEffect(() => {
-    fetchConfig();
-  }, []);
-
-  const fetchConfig = async () => {
+  const fetchConfig = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getConfig();
@@ -64,7 +57,11 @@ const Settings: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [form]);
+
+  useEffect(() => {
+    fetchConfig();
+  }, [fetchConfig]);
 
   const handleSave = async (values: any) => {
     try {
@@ -138,7 +135,7 @@ const Settings: React.FC = () => {
       <Title level={2}>系统设置</Title>
       
       <Tabs defaultActiveKey="general" type="card">
-        <TabPane tab={
+        <Tabs.TabPane tab={
           <span>
             <SettingOutlined />
             常规设置
@@ -212,9 +209,9 @@ const Settings: React.FC = () => {
               </Row>
             </Form>
           </Card>
-        </TabPane>
+        </Tabs.TabPane>
 
-        <TabPane tab={
+        <Tabs.TabPane tab={
           <span>
             <DatabaseOutlined />
             股票池管理
@@ -248,9 +245,9 @@ const Settings: React.FC = () => {
               size="small"
             />
           </Card>
-        </TabPane>
+        </Tabs.TabPane>
 
-        <TabPane tab={
+        <Tabs.TabPane tab={
           <span>
             <ApiOutlined />
             API配置
@@ -310,9 +307,9 @@ const Settings: React.FC = () => {
               </Card>
             </Col>
           </Row>
-        </TabPane>
+        </Tabs.TabPane>
 
-        <TabPane tab={
+        <Tabs.TabPane tab={
           <span>
             <SecurityScanOutlined />
             安全设置
@@ -377,7 +374,7 @@ const Settings: React.FC = () => {
               </Card>
             </Col>
           </Row>
-        </TabPane>
+        </Tabs.TabPane>
       </Tabs>
 
       {/* 添加股票模态框 */}

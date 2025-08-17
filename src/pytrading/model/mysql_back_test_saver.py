@@ -67,6 +67,8 @@ class MySQLBackTestSaver(BackTestSaver):
                     'id': row.id,
                     'symbol': row.symbol,
                     'name': row.name,
+                    # 优先取strategy_name字段，如果没有则回退到none
+                    'strategy_name': row.strategy_name if hasattr(row, 'strategy_name') else None,
                     'backtest_start_time': row.backtest_start_time.strftime('%Y-%m-%d %H:%M:%S') if row.backtest_start_time else None,
                     'backtest_end_time': row.backtest_end_time.strftime('%Y-%m-%d %H:%M:%S') if row.backtest_end_time else None,
                     'pnl_ratio': float(row.pnl_ratio) if row.pnl_ratio else 0.0,
@@ -96,13 +98,12 @@ class MySQLBackTestSaver(BackTestSaver):
         """保存回测数据到MySQL"""
         logger.info("开始保存回测数据到MySQL")
         session = self.mysql_client.get_session()
+        # 安全的数据类型转换
+        safe_data = dict()
         
         try:
             # 获取数据并转换
             data = backtest_obj.to_dict()
-            
-            # 安全的数据类型转换
-            safe_data = {}
             for key, value in data.items():
                 if value is None:
                     safe_data[key] = None
@@ -142,7 +143,7 @@ class MySQLBackTestSaver(BackTestSaver):
             session.commit()
             
         except Exception as e:
-            logger.error(f"保存回测数据到MySQL失败: {e}")
+            logger.error(f"保存回测数据到MySQL失败: {e}\n, DATA:{safe_data}")
             logger.error(f"错误详情: {traceback.format_exc()}")
             session.rollback()
             raise

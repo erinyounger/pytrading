@@ -34,13 +34,29 @@ code {
 }
 
 .profit-positive {
-  color: #52c41a;
+  color: #ff4d4f; /* 红色表示盈利 */
   font-weight: 600;
 }
 
 .profit-negative {
-  color: #ff4d4f;
+  color: #52c41a; /* 绿色表示亏损 */
   font-weight: 600;
+}
+
+/* 中国股票交易习惯的颜色样式 */
+.stock-up {
+  color: #ff4d4f; /* 红色表示上涨/盈利 */
+  font-weight: bold;
+}
+
+.stock-down {
+  color: #52c41a; /* 绿色表示下跌/亏损 */
+  font-weight: bold;
+}
+
+.stock-neutral {
+  color: #666666; /* 灰色表示中性 */
+  font-weight: normal;
 }
 
 .status-completed {

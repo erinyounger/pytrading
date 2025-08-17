@@ -14,6 +14,7 @@ class BacktestResult(BaseModel):
     id: Optional[int] = None
     symbol: str
     name: str
+    strategy_name: str  # 添加策略名称字段
     backtest_start_time: str
     backtest_end_time: str
     pnl_ratio: float

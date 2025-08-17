@@ -31,7 +31,7 @@ class PyTrading:
         # 沪深300：SHSE.000300
         # 中证500：SHSE.000905
         # 上证50： SHSE.000016
-        sz300_df = stk_get_index_constituents(index='SHSE.000016')
+        sz300_df = stk_get_index_constituents(index='SHSE.000300')
         # sz300_symbols = list(sz300_df[sz300_df.weight < 0.5].symbol.values)
         sz300_symbols = list(sz300_df.symbol.values)
         logger.info("Get SHSE.000300 Symbols: {}".format(len(sz300_symbols)))

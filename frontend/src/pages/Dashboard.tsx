@@ -5,7 +5,6 @@ import {
   ArrowDownOutlined, 
   DollarOutlined, 
   TrophyOutlined,
-  AlertOutlined,
   BarChartOutlined 
 } from '@ant-design/icons';
 import { Line } from 'react-chartjs-2';

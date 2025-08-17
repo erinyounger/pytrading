@@ -2,6 +2,7 @@ export interface BacktestResult {
   id?: number;
   symbol: string;
   name: string;
+  strategy_name: string; // 添加策略名称字段
   backtest_start_time: string;
   backtest_end_time: string;
   pnl_ratio: number;
