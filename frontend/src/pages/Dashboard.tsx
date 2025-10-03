@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Table, Spin, message } from 'antd';
+import { Row, Col, Card, Statistic, Table, Spin, message, Space, Select, Tag } from 'antd';
 import { 
   ArrowUpOutlined, 
   ArrowDownOutlined, 
@@ -35,13 +35,22 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [backtestResults, setBacktestResults] = useState<BacktestResult[]>([]);
   const [summary, setSummary] = useState({
-    totalStrategies: 0,
+    total: 0,
+    profitableRate: 0,
     avgPnlRatio: 0,
     avgSharpRatio: 0,
     avgWinRatio: 0,
-    bestPerformer: '',
-    worstPerformer: ''
   });
+  const [strategyBoard, setStrategyBoard] = useState<{
+    strategy: string;
+    count: number;
+    avgPnl: number;
+    avgWin: number;
+    avgSharp: number;
+  }[]>([]);
+  const [watchlist, setWatchlist] = useState<BacktestResult[]>([]);
+  const [watchTrend, setWatchTrend] = useState<string | null>(null);
+  const [availableTrends, setAvailableTrends] = useState<string[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -50,27 +59,61 @@ const Dashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getBacktestResults({ per_page: 20 });
+      // 拉取最新去重后的样本，做前端聚合
+      const response = await apiService.getBacktestResults({ per_page: 1000 });
       const results = response.data;
       setBacktestResults(results);
       
-      // 计算统计数据
-      if (results.length > 0) {
-        const avgPnl = results.reduce((sum, r) => sum + r.pnl_ratio, 0) / results.length;
-        const avgSharp = results.reduce((sum, r) => sum + r.sharp_ratio, 0) / results.length;
-        const avgWin = results.reduce((sum, r) => sum + r.win_ratio, 0) / results.length;
-        
-        const sortedByPnl = [...results].sort((a, b) => b.pnl_ratio - a.pnl_ratio);
-        
-        setSummary({
-          totalStrategies: results.length,
-          avgPnlRatio: avgPnl,
-          avgSharpRatio: avgSharp,
-          avgWinRatio: avgWin,
-          bestPerformer: sortedByPnl[0]?.symbol || '',
-          worstPerformer: sortedByPnl[sortedByPnl.length - 1]?.symbol || ''
-        });
+      if (results.length === 0) {
+        setSummary({ total: 0, profitableRate: 0, avgPnlRatio: 0, avgSharpRatio: 0, avgWinRatio: 0 });
+        setStrategyBoard([]);
+        setWatchlist([]);
+        return;
       }
+
+      // KPI 汇总
+      const total = results.length;
+      const profitableCount = results.filter(r => r.pnl_ratio > 0).length;
+      const avgPnl = results.reduce((sum, r) => sum + r.pnl_ratio, 0) / total;
+      const avgSharp = results.reduce((sum, r) => sum + r.sharp_ratio, 0) / total;
+      const avgWin = results.reduce((sum, r) => sum + r.win_ratio, 0) / total;
+      setSummary({
+        total,
+        profitableRate: total ? profitableCount / total : 0,
+        avgPnlRatio: avgPnl,
+        avgSharpRatio: avgSharp,
+        avgWinRatio: avgWin,
+      });
+
+      // 策略维度榜单（按 strategy_name 汇总）
+      const strategyMap = new Map<string, BacktestResult[]>();
+      results.forEach(r => {
+        const key = r.strategy_name || 'Unknown';
+        if (!strategyMap.has(key)) strategyMap.set(key, []);
+        strategyMap.get(key)!.push(r);
+      });
+      const board = Array.from(strategyMap.entries()).map(([strategy, list]) => {
+        const cnt = list.length;
+        return {
+          strategy,
+          count: cnt,
+          avgPnl: list.reduce((s, r) => s + r.pnl_ratio, 0) / cnt,
+          avgWin: list.reduce((s, r) => s + r.win_ratio, 0) / cnt,
+          avgSharp: list.reduce((s, r) => s + r.sharp_ratio, 0) / cnt,
+        };
+      }).sort((a, b) => (b.avgPnl - a.avgPnl) || (b.avgWin - a.avgWin)).slice(0, 10);
+      setStrategyBoard(board);
+
+      // 建议关注标的（多因子评分）
+      const favorableTrends = new Set(['RisingUp', 'ZeroAxisUp', 'Observing']);
+      const candidates = results.filter(r => r.win_ratio >= 0.55 && r.pnl_ratio >= 0.05);
+      const scored = candidates.map(r => {
+        const score = (r.pnl_ratio * 100) * 0.5 + (r.win_ratio * 100) * 0.4 - (r.max_drawdown * 100) * 0.3 + r.sharp_ratio * 0.2 + (favorableTrends.has(r.trending_type) ? 5 : 0);
+        return { r, score };
+      }).sort((a, b) => b.score - a.score).slice(0, 20).map(x => x.r);
+      setWatchlist(scored);
+      // 可用趋势集合
+      setAvailableTrends(Array.from(new Set(results.map(r => r.trending_type).filter(Boolean))).sort());
     } catch (error) {
       message.error('获取数据失败');
     } finally {
@@ -83,7 +126,7 @@ const Dashboard: React.FC = () => {
     datasets: [
       {
         label: '收益率 (%)',
-        data: backtestResults.slice(0, 10).map(r => (r.pnl_ratio * 100).toFixed(2)),
+        data: backtestResults.slice(0, 10).map(r => Number((r.pnl_ratio * 100).toFixed(2))),
         borderColor: 'rgb(24, 144, 255)',
         backgroundColor: 'rgba(24, 144, 255, 0.1)',
         tension: 0.4,
@@ -109,7 +152,28 @@ const Dashboard: React.FC = () => {
     },
   };
 
-  const columns = [
+  const strategyColumns = [
+    { title: '策略', dataIndex: 'strategy', key: 'strategy' },
+    { title: '样本数', dataIndex: 'count', key: 'count' },
+    { title: '平均收益率', dataIndex: 'avgPnl', key: 'avgPnl', render: (v: number) => `${(v * 100).toFixed(2)}%` },
+    { title: '平均胜率', dataIndex: 'avgWin', key: 'avgWin', render: (v: number) => `${(v * 100).toFixed(1)}%` },
+    { title: '夏普均值', dataIndex: 'avgSharp', key: 'avgSharp', render: (v: number) => v.toFixed(2) },
+  ];
+
+  const trendTag = (t: string) => {
+    const colorMap: Record<string, string> = {
+      'RisingUp': 'red',
+      'ZeroAxisUp': 'purple',
+      'Observing': 'blue',
+      'DeadXDown': 'orange',
+      'FallingDown': 'volcano',
+      'UpDown': 'cyan',
+      'Unknown': 'default',
+    };
+    return <Tag color={colorMap[t] || 'default'}>{t}</Tag>;
+  };
+
+  const watchColumns = [
     {
       title: '股票代码',
       dataIndex: 'symbol',
@@ -121,17 +185,10 @@ const Dashboard: React.FC = () => {
       key: 'name',
     },
     {
-      title: '策略类型',
+      title: '策略',
       dataIndex: 'strategy_name',
       key: 'strategy_name',
-      render: (type: string) => {
-        const typeMap: Record<string, string> = {
-          'MACD': 'MACD策略',
-          'BOLL': '布林带策略',
-          'TURTLE': '海龟策略'
-        };
-        return typeMap[type] || (type ? type : '-');
-      }
+      render: (v: string) => v || '-'
     },
     {
       title: '收益率',
@@ -142,23 +199,36 @@ const Dashboard: React.FC = () => {
           {(value * 100).toFixed(2)}%
         </span>
       ),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.pnl_ratio - b.pnl_ratio,
     },
     {
       title: '夏普比率',
       dataIndex: 'sharp_ratio',
       key: 'sharp_ratio',
       render: (value: number) => value.toFixed(2),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.sharp_ratio - b.sharp_ratio,
     },
     {
       title: '胜率',
       dataIndex: 'win_ratio',
       key: 'win_ratio',
       render: (value: number) => `${(value * 100).toFixed(1)}%`,
-      sorter: (a: BacktestResult, b: BacktestResult) => a.win_ratio - b.win_ratio,
+    },
+    {
+      title: '最大回撤',
+      dataIndex: 'max_drawdown',
+      key: 'max_drawdown',
+      render: (value: number) => `${(value * 100).toFixed(2)}%`,
+    },
+    {
+      title: '趋势',
+      dataIndex: 'trending_type',
+      key: 'trending_type',
+      filters: availableTrends.map(t => ({ text: t, value: t })),
+      onFilter: (value: any, record: BacktestResult) => record.trending_type === value,
+      render: (t: string) => trendTag(t),
     },
   ];
+
+  const displayedWatchlist = watchTrend ? watchlist.filter(r => r.trending_type === watchTrend) : watchlist;
 
   if (loading) {
     return (
@@ -172,13 +242,13 @@ const Dashboard: React.FC = () => {
     <div style={{ padding: '24px' }}>
       <h1 style={{ marginBottom: '24px' }}>仪表板</h1>
       
-      {/* 统计卡片 */}
+      {/* 盈利能力 KPI */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={12} lg={6}>
           <Card className="metric-card">
             <Statistic
-              title="策略总数"
-              value={summary.totalStrategies}
+              title="样本总数"
+              value={summary.total}
               prefix={<BarChartOutlined />}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -210,8 +280,8 @@ const Dashboard: React.FC = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card className="metric-card">
             <Statistic
-              title="平均胜率"
-              value={summary.avgWinRatio * 100}
+              title="盈利占比"
+              value={summary.profitableRate * 100}
               precision={1}
               suffix="%"
               prefix={<ArrowUpOutlined />}
@@ -221,45 +291,46 @@ const Dashboard: React.FC = () => {
         </Col>
       </Row>
 
-      {/* 图表和表格 */}
+      {/* 策略榜单与收益率对比 */}
       <Row gutter={[16, 16]}>
+        <Col xs={24} lg={12}>
+          <Card title="策略盈利榜单（Top10）">
+            <Table
+              columns={strategyColumns}
+              dataSource={strategyBoard}
+              rowKey={(r) => r.strategy}
+              pagination={false}
+              size="small"
+            />
+          </Card>
+        </Col>
         <Col xs={24} lg={12}>
           <Card title="策略收益率对比" className="chart-container">
             <Line data={chartData} options={chartOptions} />
           </Card>
         </Col>
-        <Col xs={24} lg={12}>
-          <Card title="最佳/最差表现">
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Statistic
-                  title="最佳表现"
-                  value={summary.bestPerformer}
-                  prefix={<ArrowUpOutlined style={{ color: '#52c41a' }} />}
-                  valueStyle={{ color: '#52c41a', fontSize: '20px' }}
-                />
-              </Col>
-              <Col span={24}>
-                <Statistic
-                  title="最差表现"
-                  value={summary.worstPerformer}
-                  prefix={<ArrowDownOutlined style={{ color: '#ff4d4f' }} />}
-                  valueStyle={{ color: '#ff4d4f', fontSize: '20px' }}
-                />
-              </Col>
-            </Row>
-          </Card>
-        </Col>
       </Row>
 
-      {/* 最近回测结果表格 */}
-      <Card title="最近回测结果" style={{ marginTop: '16px' }}>
+      {/* 建议重点关注标的 */}
+      <Card title="建议重点关注标的（Top20）" style={{ marginTop: '16px' }}>
+        <Space style={{ marginBottom: 12 }} size={12} wrap>
+          <span style={{ color: '#666' }}>当前趋势筛选:</span>
+          <Select
+            allowClear
+            placeholder="选择趋势"
+            style={{ minWidth: 180 }}
+            value={watchTrend as any}
+            onChange={(v) => setWatchTrend(v || null)}
+            options={availableTrends.map(t => ({ label: t, value: t }))}
+          />
+        </Space>
         <Table
-          columns={columns}
-          dataSource={backtestResults.slice(0, 10)}
-          rowKey="id"
+          columns={watchColumns}
+          dataSource={displayedWatchlist}
+          rowKey={(r) => `${r.symbol}_${r.backtest_end_time}`}
           pagination={false}
           scroll={{ x: 'max-content' }}
+          size="small"
         />
       </Card>
     </div>

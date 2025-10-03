@@ -30,6 +30,7 @@ export const apiService = {
     max_win_ratio?: number;
     page?: number;
     per_page?: number;
+    latest_only?: boolean;
   }): Promise<PaginatedApiResponse<BacktestResult[]>> => {
     const response = await api.get('/api/backtest-results', { params });
     return response.data;
