@@ -50,7 +50,7 @@ const Dashboard: React.FC = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getBacktestResults({ limit: 20 });
+      const response = await apiService.getBacktestResults({ per_page: 20 });
       const results = response.data;
       setBacktestResults(results);
       
@@ -122,15 +122,15 @@ const Dashboard: React.FC = () => {
     },
     {
       title: '策略类型',
-      dataIndex: 'trending_type',
-      key: 'trending_type',
+      dataIndex: 'strategy_name',
+      key: 'strategy_name',
       render: (type: string) => {
         const typeMap: Record<string, string> = {
-          'MACD_STRATEGY': 'MACD策略',
-          'BOLL_STRATEGY': '布林带策略',
-          'TURTLE_STRATEGY': '海龟策略'
+          'MACD': 'MACD策略',
+          'BOLL': '布林带策略',
+          'TURTLE': '海龟策略'
         };
-        return typeMap[type] || type;
+        return typeMap[type] || (type ? type : '-');
       }
     },
     {

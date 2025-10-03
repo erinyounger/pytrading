@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   Card, 
@@ -14,7 +14,8 @@ import {
   Statistic,
   message,
   Tooltip,
-  InputNumber
+  InputNumber,
+  Pagination
 } from 'antd';
 import { 
   ReloadOutlined, 
@@ -23,7 +24,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
-import { BacktestResult } from '../types';
+import { BacktestResult, PaginatedApiResponse } from '../types';
 
 const { Search } = Input;
 const { RangePicker } = DatePicker;
@@ -32,81 +33,73 @@ const { Option } = Select;
 const BacktestResults: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<BacktestResult[]>([]);
-  const [filteredData, setFilteredData] = useState<BacktestResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<BacktestResult | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [filters, setFilters] = useState({
     symbol: '',
-    strategy: '',
+    trending_type: '', // 改为trending_type以匹配后端API
     dateRange: null as any,
     pnlRange: null as any, // 收益率范围
     winRatioRange: null as any, // 胜率范围
   });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 20,
+    total: 0,
+    totalPages: 0
+  });
 
-  const applyFilters = useCallback(() => {
-    let filtered = [...data];
-
-    // 股票代码/名称筛选
-    if (filters.symbol) {
-      filtered = filtered.filter(item => 
-        item.symbol.toLowerCase().includes(filters.symbol.toLowerCase()) ||
-        item.name.toLowerCase().includes(filters.symbol.toLowerCase())
-      );
-    }
-
-    // 趋势类型筛选
-    if (filters.strategy) {
-      filtered = filtered.filter(item => item.trending_type === filters.strategy);
-    }
-
-    // 日期范围筛选
-    if (filters.dateRange && filters.dateRange.length === 2) {
-      filtered = filtered.filter(item => {
-        const itemDate = dayjs(item.backtest_start_time);
-        const startDate = filters.dateRange[0].startOf('day');
-        const endDate = filters.dateRange[1].endOf('day');
-        return itemDate.isAfter(startDate) && itemDate.isBefore(endDate);
+  const fetchBacktestResults = async (page: number = 1, pageSize: number = 20) => {
+    try {
+      setLoading(true);
+      const params = {
+        page: page,
+        per_page: pageSize,
+        symbol: filters.symbol || undefined,
+        trending_type: filters.trending_type || undefined,
+        start_date: filters.dateRange?.[0]?.format('YYYY-MM-DD'),
+        end_date: filters.dateRange?.[1]?.format('YYYY-MM-DD'),
+        min_pnl_ratio: filters.pnlRange?.[0],
+        max_pnl_ratio: filters.pnlRange?.[1],
+        min_win_ratio: filters.winRatioRange?.[0],
+        max_win_ratio: filters.winRatioRange?.[1],
+      };
+      
+      // 移除值为undefined的参数
+      Object.keys(params).forEach(key => {
+        if (params[key as keyof typeof params] === undefined) {
+          delete params[key as keyof typeof params];
+        }
       });
-    }
-
-    // 收益率范围筛选
-    if (filters.pnlRange && filters.pnlRange.length === 2) {
-      filtered = filtered.filter(item => {
-        const pnlPercent = item.pnl_ratio * 100;
-        return pnlPercent >= filters.pnlRange[0] && pnlPercent <= filters.pnlRange[1];
+      
+      const response: PaginatedApiResponse<BacktestResult[]> = await apiService.getBacktestResults(params);
+      
+      setData(response.data);
+      setPagination({
+        current: response.page,
+        pageSize: response.per_page,
+        total: response.total,
+        totalPages: response.total_pages
       });
+    } catch (error) {
+      message.error('获取回测结果失败');
+      console.error('获取回测结果失败:', error);
+    } finally {
+      setLoading(false);
     }
-
-    // 胜率范围筛选
-    if (filters.winRatioRange && filters.winRatioRange.length === 2) {
-      filtered = filtered.filter(item => {
-        const winRatioPercent = item.win_ratio * 100;
-        return winRatioPercent >= filters.winRatioRange[0] && winRatioPercent <= filters.winRatioRange[1];
-      });
-    }
-
-    setFilteredData(filtered);
-  }, [data, filters]);
+  };
 
   useEffect(() => {
     fetchBacktestResults();
   }, []);
 
+  // 监听筛选条件变化，自动重新获取数据
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
-
-  const fetchBacktestResults = async () => {
-    try {
-      setLoading(true);
-      const response = await apiService.getBacktestResults({ limit: 200 });
-      setData(response.data);
-    } catch (error) {
-      message.error('获取回测结果失败');
-    } finally {
-      setLoading(false);
+    // 避免初始化时重复调用
+    if (pagination.current > 0) {
+      fetchBacktestResults(1, pagination.pageSize);
     }
-  };
+  }, [filters]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -115,25 +108,54 @@ const BacktestResults: React.FC = () => {
   const clearAllFilters = () => {
     setFilters({
       symbol: '',
-      strategy: '',
+      trending_type: '',
       dateRange: null,
       pnlRange: null,
       winRatioRange: null,
     });
+    // 清除筛选后回到第一页
+    fetchBacktestResults(1, pagination.pageSize);
   };
 
-  // 获取可用的趋势类型
-  const getAvailableStrategies = () => {
-    const strategies = new Set(data.map(item => item.trending_type).filter(Boolean));
-    return Array.from(strategies).sort();
+
+
+  // 获取所有可用的趋势类型（从后端获取）
+  const [availableStrategies, setAvailableStrategies] = useState<string[]>([]);
+
+  // 获取所有趋势类型
+  const fetchAvailableStrategies = async () => {
+    try {
+      const response = await apiService.getBacktestResults({ per_page: 1000 }); // 获取所有数据
+      const allData = response.data;
+      const strategies = new Set(allData.map(item => item.trending_type).filter(Boolean));
+      setAvailableStrategies(Array.from(strategies).sort());
+    } catch (error) {
+      console.error('获取趋势类型失败:', error);
+    }
   };
+
+  useEffect(() => {
+    fetchAvailableStrategies();
+  }, []);
 
   // 快速筛选预设
   const quickFilters = [
-    { label: '盈利策略', onClick: () => setFilters(prev => ({ ...prev, pnlRange: [0, 1000] })) },
-    { label: '亏损策略', onClick: () => setFilters(prev => ({ ...prev, pnlRange: [-100, 0] })) },
-    { label: '高胜率(>60%)', onClick: () => setFilters(prev => ({ ...prev, winRatioRange: [60, 100] })) },
-    { label: '低胜率(<40%)', onClick: () => setFilters(prev => ({ ...prev, winRatioRange: [0, 40] })) },
+    { label: '盈利策略', onClick: () => {
+        setFilters(prev => ({ ...prev, pnlRange: [0, 1000] }));
+      } 
+    },
+    { label: '亏损策略', onClick: () => {
+        setFilters(prev => ({ ...prev, pnlRange: [-100, 0] }));
+      } 
+    },
+    { label: '高胜率(>60%)', onClick: () => {
+        setFilters(prev => ({ ...prev, winRatioRange: [60, 100] }));
+      } 
+    },
+    { label: '低胜率(<40%)', onClick: () => {
+        setFilters(prev => ({ ...prev, winRatioRange: [0, 40] }));
+      } 
+    },
   ];
 
   const showDetail = (record: BacktestResult) => {
@@ -142,11 +164,11 @@ const BacktestResults: React.FC = () => {
   };
 
   const exportData = () => {
-    // 简单的CSV导出
+    // 注意：当前导出功能仅导出当前页数据，完整导出需要后端支持
     const headers = ['股票代码', '股票名称', '策略名称', '趋势类型', '收益率', '夏普比率', '最大回撤', '胜率', '开始时间', '结束时间'];
     const csvContent = [
       headers.join(','),
-      ...filteredData.map(item => [
+      ...data.map(item => [
         item.symbol,
         item.name,
         item.strategy_name || '',  // 如果策略名称为null，导出时显示为空
@@ -319,7 +341,9 @@ const BacktestResults: React.FC = () => {
             <Search
               placeholder="搜索股票代码或名称"
               allowClear
-              onSearch={(value) => handleFilterChange('symbol', value)}
+              onSearch={(value) => {
+                handleFilterChange('symbol', value);
+              }}
               style={{ width: '100%' }}
             />
           </Col>
@@ -328,10 +352,12 @@ const BacktestResults: React.FC = () => {
               placeholder="选择趋势类型"
               allowClear
               style={{ width: '100%' }}
-              value={filters.strategy}
-              onChange={(value) => handleFilterChange('strategy', value)}
+              value={filters.trending_type}
+              onChange={(value) => {
+                handleFilterChange('trending_type', value);
+              }}
             >
-              {getAvailableStrategies().map(strategy => (
+              {availableStrategies.map(strategy => (
                 <Option key={strategy} value={strategy}>
                   {strategy}
                 </Option>
@@ -343,7 +369,9 @@ const BacktestResults: React.FC = () => {
               placeholder={['开始日期', '结束日期']}
               style={{ width: '100%' }}
               value={filters.dateRange}
-              onChange={(dates) => handleFilterChange('dateRange', dates)}
+              onChange={(dates) => {
+                handleFilterChange('dateRange', dates);
+              }}
             />
           </Col>
           <Col xs={24} sm={12} md={4}>
@@ -411,39 +439,39 @@ const BacktestResults: React.FC = () => {
             <Space wrap>
               <Button 
                 icon={<ReloadOutlined />} 
-                onClick={fetchBacktestResults}
+                onClick={() => fetchBacktestResults(pagination.current, pagination.pageSize)}
                 loading={loading}
               >
                 刷新
               </Button>
               <Button 
                 onClick={clearAllFilters}
-                disabled={!filters.symbol && !filters.strategy && !filters.dateRange && !filters.pnlRange && !filters.winRatioRange}
+                disabled={!filters.symbol && !filters.trending_type && !filters.dateRange && !filters.pnlRange && !filters.winRatioRange}
               >
                 清除筛选
               </Button>
               <Button 
                 icon={<DownloadOutlined />} 
                 onClick={exportData}
-                disabled={filteredData.length === 0}
+                disabled={data.length === 0}
               >
                 导出
               </Button>
               <span style={{ color: '#666', fontSize: '14px' }}>
-                共 {filteredData.length} 条记录
-                {filteredData.length > 0 && (
+                共 {pagination.total} 条记录
+                {data.length > 0 && (
                   <>
                     | 平均收益率: <span style={{ 
-                      color: (filteredData.reduce((sum, item) => sum + item.pnl_ratio, 0) / filteredData.length) >= 0 ? '#ff4d4f' : '#52c41a',
+                      color: (data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length) >= 0 ? '#ff4d4f' : '#52c41a',
                       fontWeight: 'bold'
                     }}>
-                      {(filteredData.reduce((sum, item) => sum + item.pnl_ratio, 0) / filteredData.length * 100).toFixed(2)}%
+                      {(data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length * 100).toFixed(2)}%
                     </span>
                     | 平均胜率: <span style={{ 
-                      color: (filteredData.reduce((sum, item) => sum + item.win_ratio, 0) / filteredData.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
+                      color: (data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
                       fontWeight: 'bold'
                     }}>
-                      {(filteredData.reduce((sum, item) => sum + item.win_ratio, 0) / filteredData.length * 100).toFixed(1)}%
+                      {(data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length * 100).toFixed(1)}%
                     </span>
                   </>
                 )}
@@ -472,19 +500,25 @@ const BacktestResults: React.FC = () => {
 
         <Table
           columns={columns}
-          dataSource={filteredData}
+          dataSource={data}
           rowKey={(record) => `${record.symbol}_${record.backtest_start_time}`}
           loading={loading}
-          pagination={{
-            total: filteredData.length,
-            pageSize: 20,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条记录`,
-          }}
+          pagination={false} // 使用自定义分页
           scroll={{ x: 1200 }}
           size="small"
         />
+        
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+          <Pagination
+            current={pagination.current}
+            pageSize={pagination.pageSize}
+            total={pagination.total}
+            onChange={(page, pageSize) => fetchBacktestResults(page, pageSize)}
+            showSizeChanger
+            showQuickJumper
+            showTotal={(total) => `共 ${total} 条记录`}
+          />
+        </div>
       </Card>
 
       <Modal

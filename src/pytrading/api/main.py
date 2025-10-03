@@ -57,7 +57,13 @@ async def get_backtest_results(
     symbol: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
-    limit: int = 100
+    trending_type: Optional[str] = None,
+    min_pnl_ratio: Optional[float] = None,
+    max_pnl_ratio: Optional[float] = None,
+    min_win_ratio: Optional[float] = None,
+    max_win_ratio: Optional[float] = None,
+    page: int = 1,
+    per_page: int = 20
 ):
     """获取回测结果列表"""
     try:
@@ -69,18 +75,57 @@ async def get_backtest_results(
         
         # 从数据库获取真实数据
         try:
-            results = saver.get_all_results(symbol=symbol, start_date=start_date, end_date=end_date, limit=limit)
-            print(f"INFO: 成功从数据库获取 {len(results)} 条回测结果")
+            result_data = saver.get_all_results(
+                symbol=symbol, 
+                start_date=start_date, 
+                end_date=end_date, 
+                page=page, 
+                per_page=per_page
+            )
+            
+            # 应用前端筛选条件（在内存中筛选）
+            filtered_data = result_data['data']
+            
+            # 按趋势类型筛选
+            if trending_type:
+                print(f"DEBUG: 筛选趋势类型 '{trending_type}'，筛选前数据量: {len(filtered_data)}")
+                filtered_data = [r for r in filtered_data if r.get('trending_type') == trending_type]
+                print(f"DEBUG: 筛选后数据量: {len(filtered_data)}")
+                # 打印前几条数据的趋势类型用于调试
+                for i, r in enumerate(filtered_data[:3]):
+                    print(f"DEBUG: 数据{i+1} - {r.get('symbol')}: {r.get('trending_type')}")
+            
+            # 按收益率范围筛选
+            if min_pnl_ratio is not None:
+                filtered_data = [r for r in filtered_data if r.get('pnl_ratio', 0) >= min_pnl_ratio / 100]
+            if max_pnl_ratio is not None:
+                filtered_data = [r for r in filtered_data if r.get('pnl_ratio', 0) <= max_pnl_ratio / 100]
+            
+            # 按胜率范围筛选
+            if min_win_ratio is not None:
+                filtered_data = [r for r in filtered_data if r.get('win_ratio', 0) >= min_win_ratio / 100]
+            if max_win_ratio is not None:
+                filtered_data = [r for r in filtered_data if r.get('win_ratio', 0) <= max_win_ratio / 100]
+            
+            # 重新计算分页
+            total_filtered = len(filtered_data)
+            start_idx = (page - 1) * per_page
+            end_idx = start_idx + per_page
+            paginated_data = filtered_data[start_idx:end_idx]
+            
+            # 更新返回数据
+            result_data['data'] = paginated_data
+            result_data['total'] = total_filtered
+            result_data['page'] = page
+            result_data['per_page'] = per_page
+            result_data['total_pages'] = (total_filtered + per_page - 1) // per_page
+            
+            print(f"INFO: 成功从数据库获取分页数据，当前页: {page}, 每页: {per_page}, 总记录数: {result_data['total']}")
         except Exception as db_error:
             print(f"ERROR: 数据库查询失败 - {str(db_error)}")
             raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(db_error)}")
         
-        return {
-            "data": results,
-            "total": len(results),
-            "page": 1,
-            "per_page": limit
-        }
+        return result_data
     except HTTPException:
         raise
     except Exception as e:
@@ -99,7 +144,8 @@ async def get_system_status():
         
         # 从数据库统计真实数据
         try:
-            backtest_results = saver.get_all_results(limit=100)
+            result_data = saver.get_all_results(limit=100, page=1, per_page=100)
+            backtest_results = result_data['data']
             print(f"INFO: 成功从数据库获取 {len(backtest_results)} 条数据用于统计系统状态")
             
             active_strategies = len([r for r in backtest_results if r.get("pnl_ratio", 0) > 0])

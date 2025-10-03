@@ -100,7 +100,7 @@ const RealtimeMonitor: React.FC = () => {
       
       // 获取回测结果数据和系统状态
       const [backtestResponse, systemResponse] = await Promise.all([
-        apiService.getBacktestResults({ limit: 10 }),
+        apiService.getBacktestResults({ per_page: 10 }),
         apiService.getSystemStatus()
       ]);
 

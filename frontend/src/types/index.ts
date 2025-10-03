@@ -59,6 +59,14 @@ export interface SystemConfig {
   symbols: string[];
 }
 
+export interface PaginatedApiResponse<T> {
+  data: T;
+  total: number;
+  page: number;
+  per_page: number;
+  total_pages: number;
+}
+
 export interface ApiResponse<T> {
   data: T;
   total?: number;

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse } from '../types';
+import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -23,8 +23,14 @@ export const apiService = {
     symbol?: string;
     start_date?: string;
     end_date?: string;
-    limit?: number;
-  }): Promise<ApiResponse<BacktestResult[]>> => {
+    trending_type?: string;
+    min_pnl_ratio?: number;
+    max_pnl_ratio?: number;
+    min_win_ratio?: number;
+    max_win_ratio?: number;
+    page?: number;
+    per_page?: number;
+  }): Promise<PaginatedApiResponse<BacktestResult[]>> => {
     const response = await api.get('/api/backtest-results', { params });
     return response.data;
   },

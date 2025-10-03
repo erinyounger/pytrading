@@ -42,6 +42,10 @@ class Config:
     live_trading_token: str = os.getenv('LIVE_TRADING_TOKEN')
     symbols: List[str] = None
     index_symbol: str = os.getenv('INDEX_SYMBOL', 'SHSE.000300')
+
+    # 设置回测时间
+    start_time: str = os.getenv('BACKTEST_START_TIME', '2024-01-01 09:00:00')
+    end_time: str = os.getenv('BACKTEST_END_TIME', '2025-06-30 15:00:00')
     
     # 数据库配置
     mysql_host: str = os.getenv('MYSQL_HOST', 'localhost')

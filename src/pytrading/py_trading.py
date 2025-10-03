@@ -39,8 +39,8 @@ class PyTrading:
         symbol_list = config.symbols if config.symbols else self.get_symbols()
         run_queue = Queue()
 
-        start_time = '2024-01-01 09:00:00'
-        end_time = '2025-06-30 15:00:00'
+        start_time = config.start_time
+        end_time = config.end_time
 
         for _syb in symbol_list:
             cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,

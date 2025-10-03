@@ -42,12 +42,13 @@ class MySQLBackTestSaver(BackTestSaver):
             logger.error(f"MySQL数据库连接测试失败: {e}")
             raise e
     
-    def get_all_results(self, symbol=None, start_date=None, end_date=None, limit=100):
-        """获取所有回测结果"""
-        logger.info(f"从MySQL获取回测结果，参数: symbol={symbol}, limit={limit}")
+    def get_all_results(self, symbol=None, start_date=None, end_date=None, limit=100, page=1, per_page=20):
+        """获取所有回测结果，支持分页"""
+        logger.info(f"从MySQL获取回测结果，参数: symbol={symbol}, page={page}, per_page={per_page}")
         session = self.mysql_client.get_session()
         
         try:
+            # 构建基础查询
             query = session.query(BackTestResult)
             
             # 应用过滤条件
@@ -58,8 +59,14 @@ class MySQLBackTestSaver(BackTestSaver):
             if end_date:
                 query = query.filter(BackTestResult.backtest_end_time <= end_date)
             
-            # 按创建时间倒序排列并限制结果数量
-            query = query.order_by(BackTestResult.created_at.desc()).limit(limit)
+            # 获取总记录数
+            total_count = query.count()
+            
+            # 计算分页参数
+            offset = (page - 1) * per_page
+            
+            # 应用分页和排序
+            query = query.order_by(BackTestResult.created_at.desc()).offset(offset).limit(per_page)
             
             results = []
             for row in query.all():
@@ -85,8 +92,14 @@ class MySQLBackTestSaver(BackTestSaver):
                 }
                 results.append(result_dict)
             
-            logger.info(f"成功从MySQL获取 {len(results)} 条回测结果")
-            return results
+            logger.info(f"成功从MySQL获取 {len(results)} 条回测结果，总记录数: {total_count}")
+            return {
+                'data': results,
+                'total': total_count,
+                'page': page,
+                'per_page': per_page,
+                'total_pages': (total_count + per_page - 1) // per_page
+            }
             
         except Exception as e:
             logger.error(f"从MySQL获取回测结果失败: {e}")
