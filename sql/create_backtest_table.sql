@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS backtest_results (
     symbol VARCHAR(20) NOT NULL COMMENT '股票代码',
     name VARCHAR(50) COMMENT '股票名称',
     trending_type VARCHAR(50) COMMENT '趋势类型',
+    strategy_name VARCHAR(50) COMMENT '策略名称',
     backtest_start_time DATETIME COMMENT '回测开始时间',
     backtest_end_time DATETIME COMMENT '回测结束时间',
     pnl_ratio DECIMAL(10,4) COMMENT '累计收益率',

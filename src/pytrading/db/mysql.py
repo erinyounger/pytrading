@@ -36,6 +36,7 @@ class BackTestResult(Base):
     win_ratio = Column(Float)
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    current_price = Column(Float)
     
     __table_args__ = (
         UniqueConstraint('symbol', 'backtest_start_time', 'backtest_end_time', name='uq_symbol_time'),

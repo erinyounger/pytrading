@@ -134,7 +134,7 @@ class MySQLBackTestSaver(BackTestSaver):
                     'lose_count': row.lose_count or 0,
                     'win_ratio': float(row.win_ratio) if row.win_ratio else 0.0,
                     'trending_type': row.trending_type,
-                    'current_price': None,
+                    'current_price': row.current_price,
                     'created_at': row.created_at.strftime('%Y-%m-%d %H:%M:%S') if row.created_at else None,
                 }
                 results.append(result_dict)
@@ -180,8 +180,7 @@ class MySQLBackTestSaver(BackTestSaver):
             # 检查是否已存在相同记录
             existing = session.query(BackTestResult).filter_by(
                 symbol=safe_data['symbol'],
-                backtest_start_time=safe_data['backtest_start_time'],
-                backtest_end_time=safe_data['backtest_end_time']
+                strategy_name=safe_data['strategy_name']
             ).first()
             
             if existing:

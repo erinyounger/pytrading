@@ -32,6 +32,7 @@ class BackTest:
         self.win_ratio = None  # 胜率
         self.trending_type = None # 趋势类型
         self.strategy_name = None # 策略名称
+        self.current_price = None # 当前价格
 
     def init_attr(self, **kwargs):
         """初始化属性"""
@@ -61,6 +62,7 @@ class BackTest:
             "win_ratio": self.win_ratio,
             "trending_type": self.trending_type,
             "strategy_name": self.strategy_name,
+            "current_price": self.current_price,
         }
     
     def save(self):

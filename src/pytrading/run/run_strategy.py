@@ -8,6 +8,7 @@
 """
 from optparse import OptionParser
 from gm.api import *
+from pytrading.utils.myquant import get_current_price
 
 import sys
 import os
@@ -95,6 +96,7 @@ def on_backtest_finished(context, indicator):
         back_test_obj.trending_type = context.stgy_instance.trending_type
         back_test_obj.backtest_start_time = context.backtest_start_time
         back_test_obj.backtest_end_time = context.backtest_end_time
+        back_test_obj.current_price = get_current_price(back_test_obj.symbol)
         
         # 打印回测结果信息
         logger.info(f"回测结果:")
@@ -113,6 +115,7 @@ def on_backtest_finished(context, indicator):
         logger.info(f"  盈利次数: {back_test_obj.win_count}")
         logger.info(f"  亏损次数: {back_test_obj.lose_count}")
         logger.info(f"  胜率: {back_test_obj.win_ratio}")
+        logger.info(f"  当前价格: {back_test_obj.current_price}")
         
         # 如果需要保存到数据库
         if config.save_db:

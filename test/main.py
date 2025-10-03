@@ -1,131 +1,124 @@
 # coding=utf-8
 from __future__ import print_function, absolute_import, unicode_literals
+from gm.api import *
+
+import datetime
 import numpy as np
 import pandas as pd
-from gm.api import *
 
 '''
 示例策略仅供参考，不建议直接实盘使用。
 
-网格交易法是一种把行情的所有日间上下的波动全部囊括，不会放过任何一次行情上下波动的策略。
-本策略标的为：SHFE.RB
-价格中枢设定为：每日前一交易日的收盘价，每个网格间距3%；每变动一次，交易一手
+风格轮动策略
+逻辑：以上证50、沪深300、中证500作为市场三个风格的代表，每次选取表现做好的一种风格，买入其成分股中最大市值的N只股票，每月月初进行调仓换股
 '''
 
 
 def init(context):
-    # 策略标的为SHFE.RB
-    context.symbol = 'SHFE.RB'
-    # 设置每变动一格，增减的数量
-    context.volume = 1
-    # 储存前一个网格所处区间，用来和最新网格所处区间作比较
-    context.last_grid = 0
-    # 记录上一次交易时网格范围的变化情况（例如从4区到5区，记为4,5）
-    context.grid_change_last = [0, 0]
-    # 止损条件:最大持仓
-    context.max_volume = 15
-    # 定时任务，日贫，盘前运行
-    schedule(schedule_func=algo, date_rule='1d', time_rule='21:00:00')
-    schedule(schedule_func=algo, date_rule='1d', time_rule='09:00:00')
-    # 订阅数据, bar频率为1min
-    subscribe(symbols=context.symbol, frequency='60s')
+    # 待轮动的风格指数(分别为：上证50、沪深300、中证500)
+    context.index = ['SHSE.000016', 'SHSE.000300', 'SZSE.399625']
+    # 用于统计数据的天数
+    context.days = 20
+    # 持股数量
+    context.holding_num = 10
+
+    # 每日定时任务
+    schedule(schedule_func=algo, date_rule='1d', time_rule='09:30:00')
 
 
 def algo(context):
-    # 获取前一交易日的收盘价作为价格中枢
-    if context.now.hour >= 20:
-        # 当天夜盘和次日日盘属于同一天数据，为此当天夜盘的上一交易日收盘价应调用当天的收盘价
-        context.center = \
-        history_n(symbol=context.symbol, frequency='1d', end_time=context.now, count=1, fields='close')[0]['close']
-    else:
-        last_date = get_previous_trading_date(exchange='SHFE', date=context.now)
-        context.center = \
-        history_n(symbol=context.symbol, frequency='1d', end_time=last_date, count=1, fields='close')[0]['close']
+    # 当天日期
+    now_str = context.now.strftime('%Y-%m-%d')
+    # 获取上一个交易日
+    last_day = get_previous_n_trading_dates(exchange='SHSE', date=now_str, n=1)[0]
+    # 判断是否为每个月第一个交易日
+    if context.now.month != pd.Timestamp(last_day).month:
+        return_index = pd.DataFrame(columns=['return'])
+        # 获取并计算指数收益率
+        for i in context.index:
+            return_index_his = history_n(symbol=i, frequency='1d', count=context.days + 1, fields='close,bob',
+                                         fill_missing='Last', adjust=ADJUST_PREV, end_time=last_day, df=True)
+            return_index_his = return_index_his['close'].values
+            return_index.loc[i, 'return'] = return_index_his[-1] / return_index_his[0] - 1
 
-    # 设置网格
-    context.band = np.array([0.92, 0.94, 0.96, 0.98, 1, 1.02, 1.04, 1.06, 1.08]) * context.center
+        # 获取指定数内收益率表现最好的指数
+        sector = return_index.index[np.argmax(return_index)]
+        print('{}:最佳指数是:{}'.format(now_str, sector))
+
+        # 获取最佳指数成份股
+        symbols = list(stk_get_index_constituents(index=sector, trade_date=last_day)['symbol'])
+
+        # 过滤停牌的股票
+        stocks_info = get_symbols(sec_type1=1010, symbols=symbols, trade_date=now_str, skip_suspended=True,
+                                  skip_st=True)
+        symbols = [item['symbol'] for item in stocks_info if
+                   item['listed_date'] < context.now and item['delisted_date'] > context.now]
+        # 获取最佳指数成份股的市值，选取市值最大的N只股票
+        fin = stk_get_daily_mktvalue_pt(symbols=symbols, fields='tot_mv', trade_date=last_day, df=True).sort_values(
+            by='tot_mv', ascending=False)
+        to_buy = list(fin.iloc[:context.holding_num]['symbol'])
+
+        # 计算权重(预留出2%资金，防止剩余资金不够手续费抵扣)
+        percent = 0.98 / len(to_buy)
+        # 获取当前所有仓位
+        positions = get_position()
+
+        # 平不在标的池的股票（注：本策略交易以开盘价为交易价格，当调整定时任务时间时，需调整对应价格）
+        for position in positions:
+            symbol = position['symbol']
+            if symbol not in to_buy:
+                # 开盘价（日频数据）
+                new_price = \
+                history_n(symbol=symbol, frequency='1d', count=1, end_time=now_str, fields='open', adjust=ADJUST_PREV,
+                          adjust_end_time=context.backtest_end_time, df=False)[0]['open']
+                # # 当前价（tick数据，免费版本有时间权限限制；实时模式，返回当前最新 tick 数据，回测模式，返回回测当前时间点的最近一分钟的收盘价）
+                # new_price = current(symbols=symbol)[0]['price']
+                order_target_percent(symbol=symbol, percent=0, order_type=OrderType_Limit,
+                                     position_side=PositionSide_Long, price=new_price)
+
+        # 买入标的池中的股票（注：本策略交易以开盘价为交易价格，当调整定时任务时间时，需调整对应价格）
+        for symbol in to_buy:
+            # 开盘价（日频数据）
+            new_price = \
+            history_n(symbol=symbol, frequency='1d', count=1, end_time=now_str, fields='open', adjust=ADJUST_PREV,
+                      adjust_end_time=context.backtest_end_time, df=False)[0]['open']
+            # # 当前价（tick数据，免费版本有时间权限限制；实时模式，返回当前最新 tick 数据，回测模式，返回回测当前时间点的最近一分钟的收盘价）
+            # new_price = current(symbols=symbol)[0]['price']
+            order_target_percent(symbol=symbol, percent=percent, order_type=OrderType_Limit,
+                                 position_side=PositionSide_Long, price=new_price)
 
 
-def on_bar(context, bars):
-    bar = bars[0]
-    # 获取多仓仓位
-    position_long = context.account().position(symbol=context.symbol, side=PositionSide_Long)
-    # 获取空仓仓位
-    position_short = context.account().position(symbol=context.symbol, side=PositionSide_Short)
-
-    # 当前价格所处的网格区域
-    grid = pd.cut([bar.close], context.band, labels=[1, 2, 3, 4, 5, 6, 7, 8])[
-        0]  # 1代表(0.88%,0.91%]区间，2代表(0.91%,0.94%]区间...
-
-    # 如果价格超出网格设置范围，则提示调节网格宽度和数量
-    if np.isnan(grid):
-        # print('价格波动超过网格范围，可适当调节网格宽度和数量')
-        return
-
-    # 如果新的价格所处网格区间和前一个价格所处的网格区间不同，说明触碰到了网格线，需要进行交易
-    # 如果新网格大于前一天的网格，做空或平多
-    if context.last_grid < grid:
-        # 记录新旧格子范围（按照大小排序）
-        grid_change_new = [context.last_grid, grid]
-
-        # 当last_grid = 0 时是初始阶段，不构成信号
-        if context.last_grid == 0:
-            context.last_grid = grid
-            return
-
-        # 如果前一次开仓是4-5，这一次是5-4，算是没有突破，不成交
-        if grid_change_new != context.grid_change_last:
-            # 如果有多仓，平多
-            if position_long:
-                order_volume(symbol=context.symbol, volume=context.volume, side=OrderSide_Sell,
-                             order_type=OrderType_Market,
-                             position_effect=PositionEffect_Close)
-                print('{}:从{}区调整至{}区，以市价单平多仓{}手'.format(context.now, context.last_grid, grid, context.volume))
-
-            # 否则，做空
-            if not position_long:
-                order_volume(symbol=context.symbol, volume=context.volume, side=OrderSide_Sell,
-                             order_type=OrderType_Market,
-                             position_effect=PositionEffect_Open)
-                print('{}:从{}区调整至{}区，以市价单开空{}手'.format(context.now, context.last_grid, grid, context.volume))
-
-            # 更新前一次的数据
-            context.last_grid = grid
-            context.grid_change_last = grid_change_new
-
-    # 如果新网格小于前一天的网格，做多或平空
-    if context.last_grid > grid:
-        # 记录新旧格子范围（按照大小排序）
-        grid_change_new = [grid, context.last_grid]
-
-        # 当last_grid = 0 时是初始阶段，不构成信号
-        if context.last_grid == 0:
-            context.last_grid = grid
-            return
-
-        # 如果前一次开仓是4-5，这一次是5-4，算是没有突破，不成交
-        if grid_change_new != context.grid_change_last:
-            # 如果有空仓，平空
-            if position_short:
-                order_volume(symbol=context.symbol, volume=context.volume, side=OrderSide_Buy,
-                             order_type=OrderType_Market, position_effect=PositionEffect_Close)
-                print('{}:从{}区调整至{}区，以市价单平空仓{}手'.format(context.now, context.last_grid, grid, context.volume))
-
-            # 否则，做多
-            if not position_short:
-                order_volume(symbol=context.symbol, volume=context.volume, side=OrderSide_Buy,
-                             order_type=OrderType_Market, position_effect=PositionEffect_Open)
-                print('{}:从{}区调整至{}区，以市价单开多{}手'.format(context.now, context.last_grid, grid, context.volume))
-
-            # 更新前一次的数据
-            context.last_grid = grid
-            context.grid_change_last = grid_change_new
-
-    # 设计一个止损条件：当持仓量达到20手，全部平仓
-    if (position_short is not None and position_short['volume'] == context.max_volume) or (
-            position_long is not None and position_long['volume'] == context.max_volume):
-        order_close_all()
-        print('{}:触发止损，全部平仓'.format(context.now))
+def on_order_status(context, order):
+    # 标的代码
+    symbol = order['symbol']
+    # 委托价格
+    price = order['price']
+    # 委托数量
+    volume = order['volume']
+    # 目标仓位
+    target_percent = order['target_percent']
+    # 查看下单后的委托状态，等于3代表委托全部成交
+    status = order['status']
+    # 买卖方向，1为买入，2为卖出
+    side = order['side']
+    # 开平仓类型，1为开仓，2为平仓
+    effect = order['position_effect']
+    # 委托类型，1为限价委托，2为市价委托
+    order_type = order['order_type']
+    if status == 3:
+        if effect == 1:
+            if side == 1:
+                side_effect = '开多仓'
+            else:
+                side_effect = '开空仓'
+        else:
+            if side == 1:
+                side_effect = '平空仓'
+            else:
+                side_effect = '平多仓'
+        order_type_word = '限价' if order_type == 1 else '市价'
+        print('{}:标的：{}，操作：以{}{}，委托价格：{}，委托数量：{}'.format(context.now, symbol, order_type_word, side_effect,
+                                                                      price, volume))
 
 
 def on_backtest_finished(context, indicator):
@@ -146,12 +139,12 @@ if __name__ == '__main__':
     backtest_commission_ratio回测佣金比例
     backtest_slippage_ratio回测滑点比例
     '''
-    run(strategy_id='30c9e7f7-4ca5-11ed-97c8-00ffc033e1eb',
+    run(strategy_id='f981bc35-5313-11f0-901c-00ff136bef06',
         filename='main.py',
         mode=MODE_BACKTEST,
         token='2cc0e58f40011fc98b77fdb8ead7c6d007208a59',
-        backtest_start_time='2019-06-01 08:00:00',
-        backtest_end_time='2019-12-31 16:00:00',
+        backtest_start_time='2025-09-01 08:00:00',
+        backtest_end_time='2025-09-30 16:00:00',
         backtest_adjust=ADJUST_PREV,
         backtest_initial_cash=150000,
         backtest_commission_ratio=0.0001,
