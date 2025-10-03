@@ -29,7 +29,7 @@ class PyTrading:
         """获取指数成分股列表"""
         set_token(config.token)
         sz300_df = stk_get_index_constituents(index=config.index_symbol)
-        sz300_symbols = list(sz300_df.symbol.values)
+        sz300_symbols = list(sz300_df.symbol.values) if not sz300_df.empty else []
         logger.info("Get {} Symbols: {}".format(config.index_symbol, len(sz300_symbols)))
         return sz300_symbols
 

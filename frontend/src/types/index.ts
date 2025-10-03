@@ -15,6 +15,7 @@ export interface BacktestResult {
   lose_count: number;
   win_ratio: number;
   trending_type: string;
+  current_price?: number;
   created_at?: string;
 }
 

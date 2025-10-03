@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Table, 
   Card, 
@@ -94,9 +94,12 @@ const BacktestResults: React.FC = () => {
   }, []);
 
   // 监听筛选条件变化，自动重新获取数据
+  // 当筛选变化时，重置到第一页并请求数据
+  const prevFiltersRef = useRef(filters);
   useEffect(() => {
-    // 避免初始化时重复调用
-    if (pagination.current > 0) {
+    const prev = prevFiltersRef.current;
+    if (prev !== filters) {
+      prevFiltersRef.current = filters;
       fetchBacktestResults(1, pagination.pageSize);
     }
   }, [filters]);
@@ -113,8 +116,7 @@ const BacktestResults: React.FC = () => {
       pnlRange: null,
       winRatioRange: null,
     });
-    // 清除筛选后回到第一页
-    fetchBacktestResults(1, pagination.pageSize);
+    // 清除筛选后由 filters effect 触发刷新
   };
 
 
@@ -306,15 +308,25 @@ const BacktestResults: React.FC = () => {
       width: 80,
     },
     {
-      title: '回测时间',
-      key: 'backtest_period',
-      width: 180,
-      render: (_: any, record: BacktestResult) => (
-        <div style={{ fontSize: '12px' }}>
-          <div>{dayjs(record.backtest_start_time).format('YYYY-MM-DD')}</div>
-          <div>至 {dayjs(record.backtest_end_time).format('YYYY-MM-DD')}</div>
-        </div>
-      ),
+      title: '回测开始',
+      dataIndex: 'backtest_start_time',
+      key: 'backtest_start_time',
+      width: 120,
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
+    },
+    {
+      title: '回测结束',
+      dataIndex: 'backtest_end_time',
+      key: 'backtest_end_time',
+      width: 120,
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
+    },
+    {
+      title: '当前股价',
+      dataIndex: 'current_price',
+      key: 'current_price',
+      width: 100,
+      render: (value?: number) => (value != null ? value.toFixed(2) : '-'),
     },
     {
       title: '操作',
@@ -513,8 +525,16 @@ const BacktestResults: React.FC = () => {
             current={pagination.current}
             pageSize={pagination.pageSize}
             total={pagination.total}
-            onChange={(page, pageSize) => fetchBacktestResults(page, pageSize)}
+            onChange={(page, pageSize) => {
+              setPagination(prev => ({ ...prev, current: page, pageSize: pageSize }));
+              fetchBacktestResults(page, pageSize);
+            }}
+            onShowSizeChange={(current, size) => {
+              setPagination(prev => ({ ...prev, current: 1, pageSize: size }));
+              fetchBacktestResults(1, size);
+            }}
             showSizeChanger
+            pageSizeOptions={["10","20","50","100"]}
             showQuickJumper
             showTotal={(total) => `共 ${total} 条记录`}
           />

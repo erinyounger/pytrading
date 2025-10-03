@@ -11,6 +11,7 @@ from decimal import Decimal
 from datetime import datetime
 
 from .back_test_saver import BackTestSaver
+from sqlalchemy import or_, func, and_
 from pytrading.logger import logger
 from pytrading.db.mysql import MySQLClient, BackTestResult
 from pytrading.config import config
@@ -42,22 +43,67 @@ class MySQLBackTestSaver(BackTestSaver):
             logger.error(f"MySQL数据库连接测试失败: {e}")
             raise e
     
-    def get_all_results(self, symbol=None, start_date=None, end_date=None, limit=100, page=1, per_page=20):
-        """获取所有回测结果，支持分页"""
-        logger.info(f"从MySQL获取回测结果，参数: symbol={symbol}, page={page}, per_page={per_page}")
+    def get_all_results(self, symbol=None, start_date=None, end_date=None,
+                        trending_type=None,
+                        min_pnl_ratio=None, max_pnl_ratio=None,
+                        min_win_ratio=None, max_win_ratio=None,
+                        latest_only=True,
+                        limit=100, page=1, per_page=20):
+        """获取所有回测结果，支持分页与筛选（全部在数据库查询层完成）"""
+        logger.info(
+            f"从MySQL获取回测结果，参数: symbol={symbol}, trending_type={trending_type},"
+            f" pnl[{min_pnl_ratio},{max_pnl_ratio}], win[{min_win_ratio},{max_win_ratio}],"
+            f" page={page}, per_page={per_page}"
+        )
         session = self.mysql_client.get_session()
         
         try:
-            # 构建基础查询
-            query = session.query(BackTestResult)
+            # 基础查询：同一标的仅保留最新记录（按 created_at 最大）
+            if latest_only:
+                latest_sub = (
+                    session.query(
+                        BackTestResult.symbol.label('symbol'),
+                        func.max(BackTestResult.created_at).label('max_created_at')
+                    )
+                    .group_by(BackTestResult.symbol)
+                    .subquery()
+                )
+                query = (
+                    session.query(BackTestResult)
+                    .join(
+                        latest_sub,
+                        and_(
+                            BackTestResult.symbol == latest_sub.c.symbol,
+                            BackTestResult.created_at == latest_sub.c.max_created_at
+                        )
+                    )
+                )
+            else:
+                query = session.query(BackTestResult)
             
             # 应用过滤条件
             if symbol:
-                query = query.filter(BackTestResult.symbol.like(f'%{symbol}%'))
+                # 同时支持股票代码与名称的模糊匹配
+                like_expr = f'%{symbol}%'
+                query = query.filter(or_(
+                    BackTestResult.symbol.like(like_expr),
+                    BackTestResult.name.like(like_expr)
+                ))
             if start_date:
                 query = query.filter(BackTestResult.backtest_start_time >= start_date)
             if end_date:
                 query = query.filter(BackTestResult.backtest_end_time <= end_date)
+            if trending_type:
+                query = query.filter(BackTestResult.trending_type == trending_type)
+            # 注意：数据库中存储的 pnl_ratio / win_ratio 通常为小数(0-1)
+            if min_pnl_ratio is not None:
+                query = query.filter(BackTestResult.pnl_ratio >= (min_pnl_ratio / 100.0))
+            if max_pnl_ratio is not None:
+                query = query.filter(BackTestResult.pnl_ratio <= (max_pnl_ratio / 100.0))
+            if min_win_ratio is not None:
+                query = query.filter(BackTestResult.win_ratio >= (min_win_ratio / 100.0))
+            if max_win_ratio is not None:
+                query = query.filter(BackTestResult.win_ratio <= (max_win_ratio / 100.0))
             
             # 获取总记录数
             total_count = query.count()
@@ -88,6 +134,7 @@ class MySQLBackTestSaver(BackTestSaver):
                     'lose_count': row.lose_count or 0,
                     'win_ratio': float(row.win_ratio) if row.win_ratio else 0.0,
                     'trending_type': row.trending_type,
+                    'current_price': None,
                     'created_at': row.created_at.strftime('%Y-%m-%d %H:%M:%S') if row.created_at else None,
                 }
                 results.append(result_dict)
