@@ -5,13 +5,15 @@
 @Author  ：Claude
 @Date    ：2025-08-16
 """
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional
 import uvicorn
 import os
 import sys
+import asyncio
+import threading
 from datetime import datetime, timedelta
 
 # 添加项目根目录到Python路径
@@ -23,6 +25,8 @@ from pytrading.config.settings import config
 from pytrading.model.back_test import BackTest
 from pytrading.model.back_test_saver_factory import get_backtest_saver
 from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask, SystemConfig
+from pytrading.py_trading import PyTrading
+from pytrading.logger import logger
 from sqlalchemy import func
 from gm.api import set_token, get_constituents
 
@@ -44,6 +48,91 @@ app.add_middleware(
 # 静态文件服务
 if os.path.exists("static"):
     app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# 全局变量:任务调度器
+task_scheduler_running = False
+task_scheduler_thread = None
+
+def execute_backtest_task(task_id: str):
+    """
+    后台执行回测任务
+    Args:
+        task_id: 任务ID
+    """
+    try:
+        logger.info(f"开始执行后台回测任务: {task_id}")
+        PyTrading.run_backtest_task(task_id)
+        logger.info(f"后台回测任务执行完成: {task_id}")
+    except Exception as e:
+        logger.error(f"后台回测任务执行失败: {task_id}, 错误: {str(e)}")
+
+def task_scheduler():
+    """
+    定时轮询pending状态的任务并执行
+    """
+    global task_scheduler_running
+    logger.info("回测任务调度器启动")
+    
+    while task_scheduler_running:
+        try:
+            # 获取数据库连接
+            db_client = MySQLClient(
+                host=config.mysql_host,
+                db_name=config.mysql_database,
+                port=config.mysql_port,
+                username=config.mysql_username,
+                password=config.mysql_password
+            )
+            session = db_client.get_session()
+            
+            # 查询pending状态的任务
+            pending_tasks = session.query(BacktestTask).filter_by(status='pending').all()
+            
+            if pending_tasks:
+                logger.info(f"发现 {len(pending_tasks)} 个待执行的回测任务")
+                
+                for task in pending_tasks:
+                    logger.info(f"准备执行任务: {task.task_id}")
+                    # 在新线程中执行任务,避免阻塞调度器
+                    thread = threading.Thread(target=execute_backtest_task, args=(task.task_id,))
+                    thread.daemon = True
+                    thread.start()
+            
+            session.close()
+            
+        except Exception as e:
+            logger.error(f"任务调度器执行出错: {str(e)}")
+        
+        # 每30秒检查一次
+        import time
+        time.sleep(30)
+    
+    logger.info("回测任务调度器停止")
+
+@app.on_event("startup")
+async def startup_event():
+    """应用启动事件"""
+    global task_scheduler_running, task_scheduler_thread
+    
+    logger.info("FastAPI应用启动")
+    
+    # 启动任务调度器
+    task_scheduler_running = True
+    task_scheduler_thread = threading.Thread(target=task_scheduler)
+    task_scheduler_thread.daemon = True
+    task_scheduler_thread.start()
+    logger.info("回测任务调度器已启动")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """应用关闭事件"""
+    global task_scheduler_running
+    
+    logger.info("FastAPI应用关闭")
+    
+    # 停止任务调度器
+    task_scheduler_running = False
+    logger.info("回测任务调度器已停止")
 
 @app.get("/")
 async def root():

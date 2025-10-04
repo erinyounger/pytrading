@@ -21,6 +21,8 @@ sys.path.insert(0, src_path)
 
 from pytrading.controller.order_controller import OrderController
 from pytrading.strategy.strategy_macd import MacdStrategy
+from pytrading.strategy.strategy_boll import BollStrategy
+from pytrading.strategy.strategy_turtle import TurtleStrategy
 from pytrading.model.back_test import BackTest
 from pytrading.logger import logger
 from pytrading.config import config
@@ -34,13 +36,21 @@ def init(context):
     # 1.初始化订单实例
     order_controller.setup(context=context)
     # 2.初始化策略实例
+    logger.info(f"Run Strategy Name: {context.strategy_name}")
+    
     if context.strategy_name == StrategyType.MACD:
         """MACD趋势策略"""
-        logger.info(f"Run Strategy Name: {context.strategy_name}")
         context.stgy_instance = MacdStrategy(short=12, long=26, period=3000, atr_multiplier=2.0)
-        # context.stgy_instance = SimplifiedMacdStrategy(short=12, long=26, atr_period=3000)
-        # context.stgy_instance = OptimizedMacdStrategy(short=12, long=26, atr_period=3000)
-        context.stgy_instance.setup(context)
+    elif context.strategy_name == StrategyType.BOLL:
+        """布林带策略"""
+        context.stgy_instance = BollStrategy()
+    elif context.strategy_name == StrategyType.TURTLE:
+        """海龟交易策略"""
+        context.stgy_instance = TurtleStrategy()
+    else:
+        raise ValueError(f"不支持的策略类型: {context.strategy_name}")
+    
+    context.stgy_instance.setup(context)
 
 
 def on_bar(context, bars):
@@ -175,6 +185,10 @@ def run_cli():
                           dest="strategy_name",
                           default=StrategyType.MACD,
                           help="策略名称")
+    cli_parser.add_option("--task_id", action="store",
+                          dest="task_id",
+                          default=None,
+                          help="回测任务ID(可选)")
     (arg_options, cli_args) = cli_parser.parse_args()
 
     # 清楚接收的参数，避免影响run接收参数

@@ -15,7 +15,8 @@ sys.path.insert(0, env_path)
 
 from pytrading.config.strategy_enum import StrategyType
 from pytrading.py_trading import PyTrading
+from pytrading.config import config
 
 if __name__ == '__main__':
-    application = PyTrading()
-    application.run(StrategyType.MACD)
+    application = PyTrading(symbols=config.symbols, strategy_name=StrategyType.MACD, start_time=config.start_time, end_time=config.end_time)
+    application.run()

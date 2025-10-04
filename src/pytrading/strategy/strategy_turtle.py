@@ -6,3 +6,6 @@
 @Email  : yflying7@gmail.com
 @Date    ：2023/1/14 16:08 
 """
+
+class TurtleStrategy:
+    pass
