@@ -121,6 +121,7 @@ class PyTrading:
                     end_time=end_time,
                     strategy_name=strategy.name
                 )
+                logger.info(f"创建指数回测任务: {index_symbol}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
             else:
                 symbol_list = task.symbols if isinstance(task.symbols, list) else [task.symbols]
                 py_trading = cls(
@@ -130,9 +131,10 @@ class PyTrading:
                     end_time=end_time,
                     strategy_name=strategy.name
                 )
+                logger.info(f"创建单股票回测任务: {symbol_list}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
             
             # 执行回测 (复用原有逻辑)
-            py_trading.run_strategy()
+            py_trading.run()
             
             # 汇总结果
             results = session.query(BackTestResult).filter_by(
@@ -183,4 +185,4 @@ if __name__ == '__main__':
         end_time="2025-06-30 15:00:00",
         strategy_name="MACD"
     )
-    py_trading.run_backtest_task("index_SHSE.000300")
+    py_trading.run_backtest_task("index_SHSE.000016")

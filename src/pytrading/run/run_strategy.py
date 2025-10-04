@@ -8,7 +8,6 @@
 """
 from optparse import OptionParser
 from gm.api import *
-from pytrading.utils.myquant import get_current_price
 
 import sys
 import os
@@ -28,6 +27,7 @@ from pytrading.logger import logger
 from pytrading.config import config
 from pytrading.utils import is_live_mode
 from pytrading.config.strategy_enum import StrategyType
+from pytrading.utils.myquant import get_current_price
 
 order_controller = OrderController()
 
