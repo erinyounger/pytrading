@@ -64,7 +64,8 @@ const StrategyManager: React.FC = () => {
     try {
       setLoading(true);
       const config: BacktestConfig = {
-        symbol: values.symbol,
+        mode: 'single',
+        symbols: Array.isArray(values.symbol) ? values.symbol : [values.symbol],
         strategy: values.strategy,
         start_time: values.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
         end_time: values.dateRange[1].format('YYYY-MM-DD HH:mm:ss'),
@@ -72,7 +73,7 @@ const StrategyManager: React.FC = () => {
       };
 
       const response = await apiService.startBacktest(config);
-      message.success('回测任务已启动');
+      message.success(response.message || '回测任务已创建');
       
       // 添加到运行任务列表
       const newTask: TaskStatus = {
@@ -85,8 +86,8 @@ const StrategyManager: React.FC = () => {
       setRunningTasks(prev => [newTask, ...prev]);
       
       form.resetFields();
-    } catch (error) {
-      message.error('启动回测失败');
+    } catch (error: any) {
+      message.error(error?.response?.data?.detail || '启动回测失败');
     } finally {
       setLoading(false);
     }

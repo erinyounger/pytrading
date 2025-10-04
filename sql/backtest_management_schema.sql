@@ -38,14 +38,14 @@ CREATE TABLE IF NOT EXISTS symbols (
 -- 3. 回测任务表 (backtest_tasks)
 CREATE TABLE IF NOT EXISTS backtest_tasks (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '任务ID',
-    task_id VARCHAR(50) NOT NULL UNIQUE COMMENT '任务唯一标识',
+    task_id VARCHAR(100) NOT NULL UNIQUE COMMENT '任务唯一标识',
     strategy_id INT NOT NULL COMMENT '策略ID',
-    symbol VARCHAR(20) NOT NULL COMMENT '股票代码',
+    symbols JSON NOT NULL COMMENT '股票代码列表或指数代码',
     start_time DATETIME NOT NULL COMMENT '回测开始时间',
     end_time DATETIME NOT NULL COMMENT '回测结束时间',
     status ENUM('pending', 'running', 'completed', 'failed', 'cancelled') DEFAULT 'pending' COMMENT '任务状态',
     progress INT DEFAULT 0 COMMENT '进度百分比',
-    parameters JSON COMMENT '任务参数',
+    parameters JSON COMMENT '任务参数(包含mode/index_symbol等配置)',
     result_summary JSON COMMENT '结果摘要',
     error_message TEXT COMMENT '错误信息',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -54,7 +54,6 @@ CREATE TABLE IF NOT EXISTS backtest_tasks (
     FOREIGN KEY (strategy_id) REFERENCES strategies(id) ON DELETE CASCADE,
     INDEX idx_task_id (task_id),
     INDEX idx_strategy_id (strategy_id),
-    INDEX idx_symbol (symbol),
     INDEX idx_status (status),
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='回测任务表';
@@ -114,23 +113,27 @@ CREATE TABLE IF NOT EXISTS system_config (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
 
 -- 插入默认数据
-INSERT INTO strategies (name, display_name, description, strategy_type, parameters) VALUES
-('bollinger_bands', '布林带策略', '基于布林带指标的趋势跟踪策略', 'trend_following', '{"period": 20, "std_dev": 2}'),
-('macd', 'MACD策略', '基于MACD指标的趋势跟踪策略', 'trend_following', '{"fast_period": 12, "slow_period": 26, "signal_period": 9}'),
-('turtle', '海龟策略', '经典的海龟交易策略', 'trend_following', '{"entry_period": 20, "exit_period": 10}');
+INSERT IGNORE INTO strategies (name, display_name, description, strategy_type, parameters) VALUES
+('BOLL', '布林带策略', '基于布林带指标的趋势跟踪策略', 'trend_following', '[{"name": "period", "type": "int", "default": 20, "description": "均线周期"}, {"name": "std_dev", "type": "float", "default": 2.0, "description": "标准差倍数"}]'),
+('MACD', 'MACD策略', '基于MACD指标的趋势跟踪策略', 'trend_following', '[{"name": "fast_period", "type": "int", "default": 12, "description": "快速EMA周期"}, {"name": "slow_period", "type": "int", "default": 26, "description": "慢速EMA周期"}, {"name": "signal_period", "type": "int", "default": 9, "description": "信号线周期"}]'),
+('TURTLE', '海龟策略', '经典的海龟交易策略', 'trend_following', '[{"name": "entry_period", "type": "int", "default": 20, "description": "入场突破周期"}, {"name": "exit_period", "type": "int", "default": 10, "description": "出场突破周期"}]');
 
-INSERT INTO symbols (symbol, name, market, industry) VALUES
-('000001', '平安银行', 'A', '银行'),
-('000002', '万科A', 'A', '房地产'),
-('000858', '五粮液', 'A', '食品饮料'),
-('600036', '招商银行', 'A', '银行'),
-('600519', '贵州茅台', 'A', '食品饮料');
+INSERT IGNORE INTO symbols (symbol, name, market, industry) VALUES
+('SHSE.600000', '浦发银行', 'A', '银行'),
+('SHSE.600036', '招商银行', 'A', '银行'),
+('SHSE.600519', '贵州茅台', 'A', '食品饮料'),
+('SHSE.600887', '伊利股份', 'A', '食品饮料'),
+('SZSE.000001', '平安银行', 'A', '银行'),
+('SZSE.000002', '万科A', 'A', '房地产'),
+('SZSE.000625', '长安汽车', 'A', '汽车'),
+('SZSE.000858', '五粮液', 'A', '食品饮料');
 
-INSERT INTO system_config (config_key, config_value, config_type, description) VALUES
+INSERT IGNORE INTO system_config (config_key, config_value, config_type, description) VALUES
 ('trading_mode', 'backtest', 'string', '交易模式：backtest/paper/live'),
 ('max_concurrent_tasks', '5', 'integer', '最大并发任务数'),
-('data_source', 'tushare', 'string', '数据源：tushare/akshare'),
-('cache_enabled', 'true', 'boolean', '是否启用缓存');
+('data_source', 'gm', 'string', '数据源：gm/tushare/akshare'),
+('cache_enabled', 'true', 'boolean', '是否启用缓存'),
+('default_index', 'SHSE.000300', 'string', '默认指数代码（沪深300）');
 
 -- 创建查询视图 - 兼容现有结构
 CREATE OR REPLACE VIEW v_backtest_summary AS
@@ -174,3 +177,11 @@ DESCRIBE system_config;
 -- 3. 视图v_backtest_summary兼容现有API，包含所有原有字段
 -- 4. 新增的strategies、symbols、backtest_tasks表支持新的回测管理功能
 -- 5. system_config表提供系统配置管理功能
+-- 6. backtest_tasks表的symbols字段为JSON类型，支持存储股票列表或指数成分股
+-- 7. parameters字段存储回测模式(single/index)和指数代码等配置信息
+
+-- 功能说明：
+-- 1. 支持单股票/多股票回测：symbols字段存储股票代码数组
+-- 2. 支持指数成分股批量回测：parameters中存储mode='index'和index_symbol
+-- 3. 策略参数采用JSON格式存储，支持灵活配置
+-- 4. 使用INSERT IGNORE避免重复插入默认数据

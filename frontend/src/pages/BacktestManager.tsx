@@ -14,70 +14,41 @@ import {
   Space,
   Tabs,
   Progress,
-  Alert,
-  Statistic,
-  Typography
+  Typography,
+  Descriptions,
+  Radio,
+  Input,
+  Alert
 } from 'antd';
 import {
   PlayCircleOutlined,
   ReloadOutlined,
   EyeOutlined,
-  SettingOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  PauseCircleOutlined,
-  StopOutlined
+  PlusOutlined,
+  SearchOutlined
 } from '@ant-design/icons';
-import { Line, Doughnut } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
-import { Strategy, Symbol, BacktestConfig, TaskStatus } from '../types';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement
-);
+import { Strategy, Symbol, BacktestConfig } from '../types';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
-interface RealtimeData {
-  symbol: string;
-  name: string;
-  current_price: number;
-  change_percent: number;
-  volume: number;
-  position: number;
-  pnl: number;
-  status: 'active' | 'paused' | 'stopped';
-  last_update: string;
-}
-
-interface SystemStatus {
-  trading_mode: string;
-  system_status: 'running' | 'stopped' | 'error';
-  active_strategies: number;
-  total_positions: number;
-  total_pnl: number;
-  last_update: string;
+interface BacktestTaskInfo {
+  id: number;
+  task_id: string;
+  strategy_id: number;
+  symbols: string[];
+  symbol_count: number;
+  start_time: string;
+  end_time: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  progress: number;
+  parameters?: any;
+  result_summary?: any;
+  error_message?: string;
+  created_at: string;
 }
 
 const BacktestManager: React.FC = () => {
@@ -85,32 +56,24 @@ const BacktestManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [symbols, setSymbols] = useState<Symbol[]>([]);
-  const [runningTasks, setRunningTasks] = useState<TaskStatus[]>([]);
-  const [realtimeData, setRealtimeData] = useState<RealtimeData[]>([]);
-  const [systemStatus, setSystemStatus] = useState<SystemStatus>({
-    trading_mode: 'backtest',
-    system_status: 'running',
-    active_strategies: 0,
-    total_positions: 0,
-    total_pnl: 0,
-    last_update: dayjs().format('YYYY-MM-DD HH:mm:ss')
-  });
+  const [backtestTasks, setBacktestTasks] = useState<BacktestTaskInfo[]>([]);
+  const [taskTotal, setTaskTotal] = useState(0);
+  const [taskPage, setTaskPage] = useState(1);
+  const [taskPageSize, setTaskPageSize] = useState(10);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(null);
-  const [selectedTask, setSelectedTask] = useState<TaskStatus | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<RealtimeData | null>(null);
+  const [selectedTask, setSelectedTask] = useState<BacktestTaskInfo | null>(null);
   const [strategyDetailModal, setStrategyDetailModal] = useState(false);
   const [taskDetailModal, setTaskDetailModal] = useState(false);
-  const [positionDetailModal, setPositionDetailModal] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [backTestMode, setBackTestMode] = useState<'single' | 'index'>('single');
 
   useEffect(() => {
     fetchInitialData();
-    
-    if (autoRefresh) {
-      const interval = setInterval(fetchRealtimeData, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [autoRefresh]);
+  }, []);
+
+  useEffect(() => {
+    fetchBacktestTasks();
+  }, [taskPage, taskPageSize]);
 
   const fetchInitialData = async () => {
     try {
@@ -128,70 +91,77 @@ const BacktestManager: React.FC = () => {
     }
   };
 
-  const fetchRealtimeData = async () => {
+  const fetchBacktestTasks = async () => {
     try {
-      const [backtestResponse, systemResponse] = await Promise.all([
-        apiService.getBacktestResults({ per_page: 10 }),
-        apiService.getSystemStatus()
-      ]);
-
-      const convertedData: RealtimeData[] = backtestResponse.data.map((result: any) => ({
-        symbol: result.symbol || '',
-        name: result.name || '',
-        current_price: result.close_price || 0,
-        change_percent: result.pnl_ratio ? (result.pnl_ratio * 100) : 0,
-        volume: result.volume || 0,
-        position: result.pnl_ratio > 0 ? Math.abs(result.pnl_ratio * 1000) : -Math.abs(result.pnl_ratio * 1000),
-        pnl: result.pnl || 0,
-        status: result.pnl_ratio > 0.1 ? 'active' : result.pnl_ratio > 0 ? 'active' : 'paused',
-        last_update: result.end_date || new Date().toISOString()
-      }));
-
-      setRealtimeData(convertedData);
-      
-      const systemData: SystemStatus = {
-        ...systemResponse,
-        system_status: systemResponse.system_status as 'running' | 'stopped' | 'error'
-      };
-      setSystemStatus(systemData);
-      
+      setLoading(true);
+      const response = await apiService.getBacktestTasks({
+        page: taskPage,
+        per_page: taskPageSize
+      });
+      setBacktestTasks(response.data);
+      setTaskTotal(response.total);
     } catch (error) {
-      console.error('获取实时数据失败:', error);
-      setRealtimeData([]);
-      setSystemStatus(prev => ({
-        ...prev,
-        system_status: 'error',
-        last_update: dayjs().format('YYYY-MM-DD HH:mm:ss')
-      }));
+      message.error('获取回测任务列表失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleModeChange = (e: any) => {
+    setBackTestMode(e.target.value);
+  };
+
+  const handleOpenCreateModal = () => {
+    setCreateModalVisible(true);
+    
+    // 从 localStorage 读取上次的时间范围
+    const lastDateRange = localStorage.getItem('lastBacktestDateRange');
+    if (lastDateRange) {
+      try {
+        const { start, end } = JSON.parse(lastDateRange);
+        // 设置表单的默认值
+        form.setFieldsValue({
+          dateRange: [dayjs(start), dayjs(end)]
+        });
+      } catch (error) {
+        console.error('解析上次时间范围失败:', error);
+      }
     }
   };
 
   const handleStartBacktest = async (values: any) => {
     try {
       setLoading(true);
+      
       const config: BacktestConfig = {
-        symbol: values.symbol,
+        mode: backTestMode,
         strategy: values.strategy,
         start_time: values.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
         end_time: values.dateRange[1].format('YYYY-MM-DD HH:mm:ss'),
         parameters: values.parameters || {}
       };
 
+      if (backTestMode === 'single') {
+        config.symbols = Array.isArray(values.symbols) ? values.symbols : [values.symbols];
+      } else {
+        config.index_symbol = values.index_symbol;
+      }
+
+      // 保存时间范围到 localStorage
+      localStorage.setItem('lastBacktestDateRange', JSON.stringify({
+        start: values.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
+        end: values.dateRange[1].format('YYYY-MM-DD HH:mm:ss')
+      }));
+
       const response = await apiService.startBacktest(config);
-      message.success('回测任务已启动');
+      message.success(response.message || '回测任务已创建');
       
-      const newTask: TaskStatus = {
-        task_id: response.task_id,
-        status: 'running',
-        progress: 0,
-        start_time: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-        message: '回测进行中...'
-      };
-      setRunningTasks(prev => [newTask, ...prev]);
-      
+      setCreateModalVisible(false);
       form.resetFields();
-    } catch (error) {
-      message.error('启动回测失败');
+      setBackTestMode('single');
+      fetchBacktestTasks();
+    } catch (error: any) {
+      message.error(error?.response?.data?.detail || '创建回测任务失败');
     } finally {
       setLoading(false);
     }
@@ -199,10 +169,9 @@ const BacktestManager: React.FC = () => {
 
   const refreshTaskStatus = async (taskId: string) => {
     try {
-      const status = await apiService.getBacktestStatus(taskId);
-      setRunningTasks(prev => prev.map(task => 
-        task.task_id === taskId ? status : task
-      ));
+      await apiService.getBacktestStatus(taskId);
+      message.success('已刷新任务状态');
+      fetchBacktestTasks();
     } catch (error) {
       message.error('获取任务状态失败');
     }
@@ -213,24 +182,12 @@ const BacktestManager: React.FC = () => {
     setStrategyDetailModal(true);
   };
 
-  const showTaskDetail = (task: TaskStatus) => {
+  const showTaskDetail = (task: BacktestTaskInfo) => {
     setSelectedTask(task);
     setTaskDetailModal(true);
   };
 
-  const showPositionDetail = (record: RealtimeData) => {
-    setSelectedPosition(record);
-    setPositionDetailModal(true);
-  };
-
-  const handleStrategyAction = (symbol: string, action: 'start' | 'pause' | 'stop') => {
-    setRealtimeData(prev => prev.map(item => 
-      item.symbol === symbol 
-        ? { ...item, status: action === 'start' ? 'active' : action as any }
-        : item
-    ));
-  };
-
+  // 策略表格列定义
   const strategyColumns = [
     {
       title: '策略名称',
@@ -238,10 +195,15 @@ const BacktestManager: React.FC = () => {
       key: 'display_name',
     },
     {
-      title: '策略类型',
+      title: '策略代码',
       dataIndex: 'name',
       key: 'name',
       render: (name: string) => <Tag color="blue">{name}</Tag>
+    },
+    {
+      title: '策略类型',
+      dataIndex: 'strategy_type',
+      key: 'strategy_type',
     },
     {
       title: '描述',
@@ -252,7 +214,7 @@ const BacktestManager: React.FC = () => {
     {
       title: '参数数量',
       key: 'paramCount',
-      render: (_: any, record: Strategy) => record.parameters.length,
+      render: (_: any, record: Strategy) => record.parameters?.length || 0,
     },
     {
       title: '操作',
@@ -269,6 +231,7 @@ const BacktestManager: React.FC = () => {
     },
   ];
 
+  // 回测任务表格列定义
   const taskColumns = [
     {
       title: '任务ID',
@@ -278,18 +241,25 @@ const BacktestManager: React.FC = () => {
       ellipsis: true,
     },
     {
+      title: '股票数量',
+      dataIndex: 'symbol_count',
+      key: 'symbol_count',
+      width: 100,
+      render: (count: number) => <Tag color="blue">{count} 只</Tag>,
+    },
+    {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
-        const statusConfig = {
+        const statusConfig: any = {
           'pending': { color: 'orange', text: '等待中' },
           'running': { color: 'blue', text: '运行中' },
           'completed': { color: 'green', text: '已完成' },
           'failed': { color: 'red', text: '失败' },
+          'cancelled': { color: 'default', text: '已取消' },
         };
-        const config = statusConfig[status as keyof typeof statusConfig] || 
-                       { color: 'default', text: status };
+        const config = statusConfig[status] || { color: 'default', text: status };
         return <Tag color={config.color}>{config.text}</Tag>;
       }
     },
@@ -302,15 +272,15 @@ const BacktestManager: React.FC = () => {
       ),
     },
     {
-      title: '开始时间',
-      dataIndex: 'start_time',
-      key: 'start_time',
+      title: '创建时间',
+      dataIndex: 'created_at',
+      key: 'created_at',
       render: (time: string) => time ? dayjs(time).format('MM-DD HH:mm:ss') : '-',
     },
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: TaskStatus) => (
+      render: (_: any, record: BacktestTaskInfo) => (
         <Space>
           <Button 
             type="link" 
@@ -331,377 +301,49 @@ const BacktestManager: React.FC = () => {
     },
   ];
 
-  const realtimeColumns = [
-    {
-      title: '股票代码',
-      dataIndex: 'symbol',
-      key: 'symbol',
-      width: 120,
-    },
-    {
-      title: '股票名称',
-      dataIndex: 'name',
-      key: 'name',
-      width: 100,
-    },
-    {
-      title: '当前价格',
-      dataIndex: 'current_price',
-      key: 'current_price',
-      render: (price: number) => `¥${price.toFixed(2)}`,
-    },
-    {
-      title: '涨跌幅',
-      dataIndex: 'change_percent',
-      key: 'change_percent',
-      render: (change: number) => (
-        <span className={change >= 0 ? 'profit-positive' : 'profit-negative'}>
-          {change >= 0 ? '+' : ''}{change.toFixed(2)}%
-        </span>
-      ),
-    },
-    {
-      title: '成交量',
-      dataIndex: 'volume',
-      key: 'volume',
-      render: (volume: number) => (volume / 10000).toFixed(1) + '万',
-    },
-    {
-      title: '持仓',
-      dataIndex: 'position',
-      key: 'position',
-      render: (position: number) => (
-        <span style={{ color: position > 0 ? '#52c41a' : position < 0 ? '#ff4d4f' : '#666' }}>
-          {position > 0 ? `+${position}` : position}
-        </span>
-      ),
-    },
-    {
-      title: '浮动盈亏',
-      dataIndex: 'pnl',
-      key: 'pnl',
-      render: (pnl: number) => (
-        <span className={pnl >= 0 ? 'profit-positive' : 'profit-negative'}>
-          {pnl >= 0 ? '+' : ''}¥{pnl.toFixed(2)}
-        </span>
-      ),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: string) => {
-        const statusConfig = {
-          'active': { color: 'green', text: '运行中', icon: <PlayCircleOutlined /> },
-          'paused': { color: 'orange', text: '暂停', icon: <PauseCircleOutlined /> },
-          'stopped': { color: 'red', text: '已停止', icon: <StopOutlined /> },
-        };
-        const config = statusConfig[status as keyof typeof statusConfig];
-        return (
-          <Tag color={config.color} icon={config.icon}>
-            {config.text}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_: any, record: RealtimeData) => (
-        <Space size="small">
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            onClick={() => showPositionDetail(record)}
-          />
-          {record.status === 'active' ? (
-            <Button
-              type="text"
-              icon={<PauseCircleOutlined />}
-              onClick={() => handleStrategyAction(record.symbol, 'pause')}
-            />
-          ) : (
-            <Button
-              type="text"
-              icon={<PlayCircleOutlined />}
-              onClick={() => handleStrategyAction(record.symbol, 'start')}
-            />
-          )}
-          <Button
-            type="text"
-            danger
-            icon={<StopOutlined />}
-            onClick={() => handleStrategyAction(record.symbol, 'stop')}
-          />
-        </Space>
-      ),
-    },
-  ];
-
-  // 策略状态分布图表
-  const statusData = {
-    labels: ['运行中', '暂停', '已停止'],
-    datasets: [
-      {
-        data: [
-          realtimeData.filter(item => item.status === 'active').length,
-          realtimeData.filter(item => item.status === 'paused').length,
-          realtimeData.filter(item => item.status === 'stopped').length,
-        ],
-        backgroundColor: ['#52c41a', '#faad14', '#ff4d4f'],
-        borderWidth: 0,
-      },
-    ],
-  };
-
-  // 盈亏分布图表
-  const pnlData = {
-    labels: realtimeData.map(item => item.symbol),
-    datasets: [
-      {
-        label: '浮动盈亏',
-        data: realtimeData.map(item => item.pnl),
-        borderColor: '#1890ff',
-        backgroundColor: 'rgba(24, 144, 255, 0.1)',
-        tension: 0.4,
-      },
-    ],
-  };
-
+  // TAB页配置
   const tabItems = [
     {
-      key: 'create',
-      label: '创建回测任务',
+      key: 'tasks',
+      label: '回测任务',
       children: (
-        <Row gutter={[16, 16]}>
-          <Col xs={24} lg={12}>
-            <Card title="新建回测任务" extra={<SettingOutlined />}>
-              <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleStartBacktest}
-              >
-                <Form.Item
-                  name="symbol"
-                  label="股票代码"
-                  rules={[{ required: true, message: '请选择股票代码' }]}
-                >
-                  <Select
-                    placeholder="选择股票代码"
-                    showSearch
-                    filterOption={(input, option) =>
-                      (option?.children as unknown as string)
-                        ?.toLowerCase()
-                        ?.includes(input.toLowerCase())
-                    }
-                  >
-                    {symbols.map(symbol => (
-                      <Option key={symbol.symbol} value={symbol.symbol}>
-                        {symbol.symbol} - {symbol.name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="strategy"
-                  label="策略类型"
-                  rules={[{ required: true, message: '请选择策略类型' }]}
-                >
-                  <Select placeholder="选择策略类型">
-                    {strategies.map(strategy => (
-                      <Option key={strategy.name} value={strategy.name}>
-                        {strategy.display_name}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="dateRange"
-                  label="回测时间范围"
-                  rules={[{ required: true, message: '请选择时间范围' }]}
-                >
-                  <RangePicker
-                    style={{ width: '100%' }}
-                    showTime
-                    format="YYYY-MM-DD HH:mm:ss"
-                  />
-                </Form.Item>
-
-                <Form.Item>
-                  <Button 
-                    type="primary" 
-                    htmlType="submit" 
-                    icon={<PlayCircleOutlined />}
-                    loading={loading}
-                    block
-                  >
-                    启动回测
-                  </Button>
-                </Form.Item>
-              </Form>
-            </Card>
-          </Col>
-
-          <Col xs={24} lg={12}>
-            <Card title="运行中的任务">
-              {runningTasks.length === 0 ? (
-                <Alert 
-                  message="暂无运行中的任务" 
-                  type="info" 
-                  showIcon 
-                />
-              ) : (
-                <Table
-                  columns={taskColumns}
-                  dataSource={runningTasks}
-                  rowKey="task_id"
-                  pagination={false}
-                  size="small"
-                />
-              )}
-            </Card>
-          </Col>
-        </Row>
-      ),
-    },
-    {
-      key: 'monitor',
-      label: '跟踪回测进度',
-      children: (
-        <div>
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col span={24}>
-              <Alert
-                message={
-                  <Row justify="space-between" align="middle">
-                    <Col>
-                      <Space>
-                        <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        <Text strong>系统状态: 正常运行</Text>
-                        <Text type="secondary">
-                          最后更新: {systemStatus.last_update}
-                        </Text>
-                      </Space>
-                    </Col>
-                    <Col>
-                      <Space>
-                        <Button
-                          type={autoRefresh ? 'primary' : 'default'}
-                          icon={<ClockCircleOutlined />}
-                          onClick={() => setAutoRefresh(!autoRefresh)}
-                        >
-                          {autoRefresh ? '自动刷新' : '手动刷新'}
-                        </Button>
-                        <Button 
-                          icon={<ReloadOutlined />} 
-                          onClick={fetchRealtimeData}
-                          loading={loading}
-                        >
-                          立即刷新
-                        </Button>
-                      </Space>
-                    </Col>
-                  </Row>
-                }
-                type="success"
-                showIcon={false}
-              />
-            </Col>
-          </Row>
-
-          {/* 系统概览 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24} sm={6}>
-              <Card className="metric-card">
-                <Statistic
-                  title="活跃策略"
-                  value={systemStatus.active_strategies}
-                  suffix={`/ ${realtimeData.length}`}
-                  valueStyle={{ color: '#1890ff' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card className="metric-card">
-                <Statistic
-                  title="总持仓"
-                  value={systemStatus.total_positions}
-                  valueStyle={{ color: '#52c41a' }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card className="metric-card">
-                <Statistic
-                  title="总盈亏"
-                  value={systemStatus.total_pnl}
-                  precision={2}
-                  prefix="¥"
-                  valueStyle={{ 
-                    color: systemStatus.total_pnl >= 0 ? '#52c41a' : '#ff4d4f' 
-                  }}
-                />
-              </Card>
-            </Col>
-            <Col xs={24} sm={6}>
-              <Card className="metric-card">
-                <Statistic
-                  title="交易模式"
-                  value={systemStatus.trading_mode === 'live' ? '实盘' : '回测'}
-                  valueStyle={{ color: '#faad14' }}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* 图表区域 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-            <Col xs={24} lg={16}>
-              <Card title="策略盈亏走势" className="chart-container">
-                <Line data={pnlData} options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { position: 'top' as const },
-                    title: { display: false },
-                  },
-                  scales: { y: { beginAtZero: true } },
-                }} />
-              </Card>
-            </Col>
-            <Col xs={24} lg={8}>
-              <Card title="策略状态分布" className="chart-container">
-                <Doughnut data={statusData} options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { position: 'bottom' as const },
-                  },
-                }} />
-              </Card>
-            </Col>
-          </Row>
-
-          {/* 实时数据表格 */}
-          <Card title="实时监控数据">
-            <Table
-              columns={realtimeColumns}
-              dataSource={realtimeData}
-              rowKey="symbol"
-              loading={loading}
-              pagination={false}
-              scroll={{ x: 'max-content' }}
-              size="small"
-            />
-          </Card>
-        </div>
+        <Card 
+          title="回测任务监控" 
+          extra={
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={handleOpenCreateModal}
+            >
+              创建回测任务
+            </Button>
+          }
+        >
+          <Table
+            columns={taskColumns}
+            dataSource={backtestTasks}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              current: taskPage,
+              pageSize: taskPageSize,
+              total: taskTotal,
+              onChange: (page, pageSize) => {
+                setTaskPage(page);
+                setTaskPageSize(pageSize || 10);
+              },
+              showSizeChanger: true,
+              showTotal: (total) => `共 ${total} 条记录`,
+            }}
+          />
+        </Card>
       ),
     },
     {
       key: 'strategies',
       label: '策略管理',
       children: (
-        <Card title="可用策略">
+        <Card title="可用策略列表">
           <Table
             columns={strategyColumns}
             dataSource={strategies}
@@ -716,7 +358,137 @@ const BacktestManager: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <Tabs defaultActiveKey="create" items={tabItems} />
+      <Tabs defaultActiveKey="tasks" items={tabItems} />
+
+      {/* 创建回测任务模态框 */}
+      <Modal
+        title="创建回测任务"
+        open={createModalVisible}
+        onCancel={() => {
+          setCreateModalVisible(false);
+          form.resetFields();
+        }}
+        footer={null}
+        width={600}
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleStartBacktest}
+        >
+          {/* 回测模式选择 */}
+          <Form.Item label="回测模式">
+            <Radio.Group value={backTestMode} onChange={handleModeChange}>
+              <Radio value="single">单股票/多股票</Radio>
+              <Radio value="index">指数成分股</Radio>
+            </Radio.Group>
+          </Form.Item>
+
+          {/* 单股票模式 */}
+          {backTestMode === 'single' && (
+            <Form.Item
+              name="symbols"
+              label="股票代码"
+              rules={[{ required: true, message: '请选择股票代码' }]}
+              tooltip="支持选择多只股票"
+            >
+              <Select
+                mode="multiple"
+                placeholder="选择一只或多只股票"
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children as unknown as string)
+                    ?.toLowerCase()
+                    ?.includes(input.toLowerCase())
+                }
+              >
+                {symbols.map(symbol => (
+                  <Option key={symbol.symbol} value={symbol.symbol}>
+                    {symbol.symbol} - {symbol.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+
+          {/* 指数成分股模式 */}
+          {backTestMode === 'index' && (
+            <>
+              <Form.Item
+                name="index_symbol"
+                label="指数代码"
+                rules={[{ required: true, message: '请选择指数代码' }]}
+                tooltip="选择指数后,系统将在执行回测时自动获取该指数的成分股"
+              >
+                <Select 
+                  placeholder="选择指数代码"
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.children as unknown as string)
+                      ?.toLowerCase()
+                      ?.includes(input.toLowerCase())
+                  }
+                >
+                  <Option value="SHSE.000001">SHSE.000001 - 上证指数</Option>
+                  <Option value="SHSE.000016">SHSE.000016 - 上证50</Option>
+                  <Option value="SHSE.000300">SHSE.000300 - 沪深300</Option>
+                  <Option value="SHSE.000852">SHSE.000852 - 中证1000</Option>
+                  <Option value="SHSE.000905">SHSE.000905 - 中证500</Option>
+                  <Option value="SZSE.399001">SZSE.399001 - 深证成指</Option>
+                  <Option value="SZSE.399006">SZSE.399006 - 创业板指</Option>
+                  <Option value="SZSE.399673">SZSE.399673 - 创业板50</Option>
+                </Select>
+              </Form.Item>
+            </>
+          )}
+
+          <Form.Item
+            name="strategy"
+            label="策略类型"
+            rules={[{ required: true, message: '请选择策略类型' }]}
+          >
+            <Select placeholder="选择策略类型">
+              {strategies.map(strategy => (
+                <Option key={strategy.name} value={strategy.name}>
+                  {strategy.display_name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="dateRange"
+            label="回测时间范围"
+            rules={[{ required: true, message: '请选择时间范围' }]}
+          >
+            <RangePicker
+              style={{ width: '100%' }}
+              showTime
+              format="YYYY-MM-DD HH:mm:ss"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => {
+                setCreateModalVisible(false);
+                form.resetFields();
+                setBackTestMode('single');
+              }}>
+                取消
+              </Button>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                icon={<PlayCircleOutlined />}
+                loading={loading}
+              >
+                创建任务
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* 策略详情模态框 */}
       <Modal
@@ -728,36 +500,36 @@ const BacktestManager: React.FC = () => {
       >
         {selectedStrategy && (
           <div>
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Card title="基本信息" size="small">
-                  <p><strong>策略名称:</strong> {selectedStrategy.display_name}</p>
-                  <p><strong>策略代码:</strong> <Tag>{selectedStrategy.name}</Tag></p>
-                  <p><strong>策略描述:</strong> {selectedStrategy.description}</p>
-                </Card>
-              </Col>
-              
-              <Col span={24}>
-                <Card title="策略参数" size="small">
-                  {selectedStrategy.parameters.length === 0 ? (
-                    <p>该策略无可配置参数</p>
-                  ) : (
-                    <Table
-                      dataSource={selectedStrategy.parameters}
-                      rowKey="name"
-                      pagination={false}
-                      size="small"
-                      columns={[
-                        { title: '参数名', dataIndex: 'name' },
-                        { title: '类型', dataIndex: 'type' },
-                        { title: '默认值', dataIndex: 'default' },
-                        { title: '描述', dataIndex: 'description' },
-                      ]}
-                    />
-                  )}
-                </Card>
-              </Col>
-            </Row>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="策略名称">
+                {selectedStrategy.display_name}
+              </Descriptions.Item>
+              <Descriptions.Item label="策略代码">
+                <Tag>{selectedStrategy.name}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="策略描述">
+                {selectedStrategy.description}
+              </Descriptions.Item>
+            </Descriptions>
+            
+            <Card title="策略参数" size="small" style={{ marginTop: 16 }}>
+              {selectedStrategy.parameters && selectedStrategy.parameters.length > 0 ? (
+                <Table
+                  dataSource={selectedStrategy.parameters}
+                  rowKey="name"
+                  pagination={false}
+                  size="small"
+                  columns={[
+                    { title: '参数名', dataIndex: 'name' },
+                    { title: '类型', dataIndex: 'type' },
+                    { title: '默认值', dataIndex: 'default' },
+                    { title: '描述', dataIndex: 'description' },
+                  ]}
+                />
+              ) : (
+                <Text type="secondary">该策略无可配置参数</Text>
+              )}
+            </Card>
           </div>
         )}
       </Modal>
@@ -768,123 +540,75 @@ const BacktestManager: React.FC = () => {
         open={taskDetailModal}
         onCancel={() => setTaskDetailModal(false)}
         footer={null}
-        width={500}
+        width={700}
       >
         {selectedTask && (
-          <div>
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Card size="small">
-                  <p><strong>任务ID:</strong> {selectedTask.task_id}</p>
-                  <p><strong>状态:</strong> 
-                    <Tag color={
-                      selectedTask.status === 'completed' ? 'green' :
-                      selectedTask.status === 'running' ? 'blue' :
-                      selectedTask.status === 'failed' ? 'red' : 'orange'
-                    }>
-                      {selectedTask.status}
+          <>
+            <Descriptions column={1} bordered>
+              <Descriptions.Item label="任务ID">
+                {selectedTask.task_id}
+              </Descriptions.Item>
+              <Descriptions.Item label="股票数量">
+                <Tag color="blue">{selectedTask.symbol_count} 只</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="回测模式">
+                <Tag color={selectedTask.parameters?.mode === 'index' ? 'purple' : 'cyan'}>
+                  {selectedTask.parameters?.mode === 'index' ? '指数成分股' : '单股票/多股票'}
+                </Tag>
+                {selectedTask.parameters?.mode === 'index' && selectedTask.parameters?.index_symbol && (
+                  <Text style={{ marginLeft: 8 }}>
+                    指数: {selectedTask.parameters.index_symbol}
+                  </Text>
+                )}
+              </Descriptions.Item>
+              <Descriptions.Item label="状态">
+                <Tag color={
+                  selectedTask.status === 'completed' ? 'green' :
+                  selectedTask.status === 'running' ? 'blue' :
+                  selectedTask.status === 'failed' ? 'red' : 'orange'
+                }>
+                  {selectedTask.status === 'pending' ? '等待中' :
+                   selectedTask.status === 'running' ? '运行中' :
+                   selectedTask.status === 'completed' ? '已完成' :
+                   selectedTask.status === 'failed' ? '失败' : '已取消'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="进度">
+                <Progress percent={selectedTask.progress} />
+              </Descriptions.Item>
+              <Descriptions.Item label="回测开始时间">
+                {selectedTask.start_time || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="回测结束时间">
+                {selectedTask.end_time || '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="创建时间">
+                {selectedTask.created_at || '-'}
+              </Descriptions.Item>
+              {selectedTask.error_message && (
+                <Descriptions.Item label="错误信息">
+                  <Text type="danger">{selectedTask.error_message}</Text>
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+            
+            {/* 股票列表 */}
+            {selectedTask.symbols && selectedTask.symbols.length > 0 && (
+              <Card 
+                title={`股票列表 (${selectedTask.symbols.length}只)`}
+                size="small" 
+                style={{ marginTop: 16 }}
+              >
+                <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                  {selectedTask.symbols.map((symbol: string, index: number) => (
+                    <Tag key={index} style={{ marginBottom: 4 }}>
+                      {symbol}
                     </Tag>
-                  </p>
-                  <p><strong>进度:</strong></p>
-                  <Progress percent={selectedTask.progress} />
-                  <p><strong>开始时间:</strong> {selectedTask.start_time || '-'}</p>
-                  <p><strong>结束时间:</strong> {selectedTask.end_time || '-'}</p>
-                  <p><strong>状态信息:</strong> {selectedTask.message}</p>
-                </Card>
-              </Col>
-            </Row>
-          </div>
-        )}
-      </Modal>
-
-      {/* 持仓详情模态框 */}
-      <Modal
-        title="持仓详情"
-        open={positionDetailModal}
-        onCancel={() => setPositionDetailModal(false)}
-        footer={null}
-        width={600}
-      >
-        {selectedPosition && (
-          <div>
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <Card title="基本信息" size="small">
-                  <Row gutter={[16, 16]}>
-                    <Col span={8}>
-                      <Statistic title="股票代码" value={selectedPosition.symbol} />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic title="股票名称" value={selectedPosition.name} />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic 
-                        title="当前价格" 
-                        value={selectedPosition.current_price} 
-                        prefix="¥"
-                        precision={2}
-                      />
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-
-              <Col span={24}>
-                <Card title="持仓信息" size="small">
-                  <Row gutter={[16, 16]}>
-                    <Col span={8}>
-                      <Statistic 
-                        title="持仓数量" 
-                        value={selectedPosition.position}
-                        valueStyle={{ 
-                          color: selectedPosition.position > 0 ? '#52c41a' : '#ff4d4f' 
-                        }}
-                      />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic 
-                        title="浮动盈亏" 
-                        value={selectedPosition.pnl} 
-                        prefix="¥"
-                        precision={2}
-                        valueStyle={{ 
-                          color: selectedPosition.pnl >= 0 ? '#52c41a' : '#ff4d4f' 
-                        }}
-                      />
-                    </Col>
-                    <Col span={8}>
-                      <Statistic 
-                        title="涨跌幅" 
-                        value={selectedPosition.change_percent} 
-                        suffix="%"
-                        precision={2}
-                        valueStyle={{ 
-                          color: selectedPosition.change_percent >= 0 ? '#52c41a' : '#ff4d4f' 
-                        }}
-                      />
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-
-              <Col span={24}>
-                <Card title="市场信息" size="small">
-                  <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                      <Statistic 
-                        title="成交量" 
-                        value={(selectedPosition.volume / 10000).toFixed(1)} 
-                        suffix="万手"
-                      />
-                    </Col>
-                    <Col span={12}>
-                      <Statistic title="更新时间" value={selectedPosition.last_update} />
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-            </Row>
-          </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </>
         )}
       </Modal>
     </div>

@@ -87,4 +87,26 @@ export const apiService = {
     const response = await api.get('/api/system-status');
     return response.data;
   },
+
+  // 回测任务列表
+  getBacktestTasks: async (params?: {
+    status?: string;
+    page?: number;
+    per_page?: number;
+  }): Promise<PaginatedApiResponse<any[]>> => {
+    const response = await api.get('/api/backtest/tasks', { params });
+    return response.data;
+  },
+
+  // 获取指数成分股
+  getIndexConstituents: async (indexSymbol: string): Promise<{
+    index_symbol: string;
+    constituents: string[];
+    count: number;
+  }> => {
+    const response = await api.get('/api/index/constituents', {
+      params: { index_symbol: indexSymbol }
+    });
+    return response.data;
+  },
 };

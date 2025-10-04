@@ -37,7 +37,9 @@ export interface Symbol {
 }
 
 export interface BacktestConfig {
-  symbol: string;
+  mode: 'single' | 'index';
+  symbols?: string[];
+  index_symbol?: string;
   strategy: string;
   start_time: string;
   end_time: string;
