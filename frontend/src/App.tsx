@@ -11,8 +11,7 @@ import {
 } from '@ant-design/icons';
 import Dashboard from './pages/Dashboard';
 import BacktestResults from './pages/BacktestResults';
-import StrategyManager from './pages/StrategyManager';
-import RealtimeMonitor from './pages/RealtimeMonitor';
+import BacktestManager from './pages/BacktestManager';
 import Settings from './pages/Settings';
 import './index.css';
 
@@ -34,14 +33,9 @@ const App: React.FC = () => {
       label: '回测结果',
     },
     {
-      key: '/strategy',
+      key: '/backtest-manager',
       icon: <ExperimentOutlined />,
-      label: '策略管理',
-    },
-    {
-      key: '/monitor',
-      icon: <MonitorOutlined />,
-      label: '实时监控',
+      label: '回测管理',
     },
     {
       key: '/settings',
@@ -107,8 +101,7 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/backtest" element={<BacktestResults />} />
-              <Route path="/strategy" element={<StrategyManager />} />
-              <Route path="/monitor" element={<RealtimeMonitor />} />
+              <Route path="/backtest-manager" element={<BacktestManager />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </Content>
