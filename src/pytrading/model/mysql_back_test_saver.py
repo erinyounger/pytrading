@@ -7,6 +7,7 @@
 @Date    ：2022/11/20 21:50 
 """
 import traceback
+import enum
 from decimal import Decimal
 from datetime import datetime
 
@@ -167,6 +168,9 @@ class MySQLBackTestSaver(BackTestSaver):
             for key, value in data.items():
                 if value is None:
                     safe_data[key] = None
+                elif isinstance(value, enum.Enum):
+                    # 枚举类型转换为其值
+                    safe_data[key] = value.value
                 elif isinstance(value, (int, str)):
                     safe_data[key] = value
                 elif isinstance(value, float):

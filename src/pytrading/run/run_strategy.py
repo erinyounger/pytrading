@@ -23,11 +23,12 @@ from pytrading.strategy.strategy_macd import MacdStrategy
 from pytrading.strategy.strategy_boll import BollStrategy
 from pytrading.strategy.strategy_turtle import TurtleStrategy
 from pytrading.model.back_test import BackTest
-from pytrading.logger import logger
+from pytrading.logger import logger, set_log_context, clear_log_context
 from pytrading.config import config
 from pytrading.utils import is_live_mode
 from pytrading.config.strategy_enum import StrategyType
 from pytrading.utils.myquant import get_current_price
+from pytrading.db.mysql import BacktestStatus
 
 order_controller = OrderController()
 
@@ -107,6 +108,11 @@ def on_backtest_finished(context, indicator):
         back_test_obj.backtest_start_time = context.backtest_start_time
         back_test_obj.backtest_end_time = context.backtest_end_time
         back_test_obj.current_price = get_current_price(back_test_obj.symbol)
+        back_test_obj.status = BacktestStatus.finished  # 标记为已完成
+        
+        # 填充 task_id
+        if hasattr(context, 'task_id') and context.task_id:
+            back_test_obj.task_id = context.task_id
         
         # 打印回测结果信息
         logger.info(f"回测结果:")
@@ -126,27 +132,80 @@ def on_backtest_finished(context, indicator):
         logger.info(f"  亏损次数: {back_test_obj.lose_count}")
         logger.info(f"  胜率: {back_test_obj.win_ratio}")
         logger.info(f"  当前价格: {back_test_obj.current_price}")
+        logger.info(f"  任务ID: {back_test_obj.task_id}")
         
+        # 个股日志：统一通过 logger 输出（DB Handler 已接管）
+        logger.info("标的回测完成")
+
         # 如果需要保存到数据库
         if config.save_db:
             back_test_obj.save()
             logger.info(f"保存回测数据到数据库成功，back_test_obj.name: {back_test_obj.name}")
+        
+        # 更新任务进度
+        if hasattr(context, 'task_id') and context.task_id:
+            update_task_progress(context.task_id)
+            
     except Exception as ex:
         logger.error("保存数据到数据库失败。")
         logger.exception(ex)
     logger.info(f"Back Test End, Symbol: {context.symbol}")
 
 
+def update_task_progress(task_id: str):
+    """更新任务进度"""
+    try:
+        from pytrading.db.mysql import MySQLClient, BacktestTask, BackTestResult
+        
+        db_client = MySQLClient(
+            host=config.mysql_host,
+            db_name=config.mysql_database,
+            port=config.mysql_port,
+            username=config.mysql_username,
+            password=config.mysql_password
+        )
+        session = db_client.get_session()
+        
+        try:
+            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+            if not task:
+                return
+            
+            # 计算已完成的股票数量
+            completed_count = session.query(BackTestResult).filter_by(
+                task_id=task.task_id,
+                status=BacktestStatus.finished
+            ).count()
+            
+            # 计算总股票数量
+            total_count = len(task.symbols) if isinstance(task.symbols, list) else 1
+            
+            # 更新进度
+            if total_count > 0:
+                progress = int((completed_count / total_count) * 100)
+                task.progress = min(progress, 99)  # 最多99%,100%由主任务设置
+                session.commit()
+                logger.info(f"任务进度更新: {task_id}, 已完成 {completed_count}/{total_count}, 进度 {task.progress}%")
+        finally:
+            session.close()
+    except Exception as e:
+        logger.error(f"更新任务进度失败: {str(e)}")
+
+
 def on_error(context, code, info):
     print('code:{}, info:{}'.format(code, info))
 
 
-def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, strategy_name, mode=MODE_BACKTEST):
+def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, strategy_name, mode=MODE_BACKTEST, task_id=None):
     from gm.model.storage import context
     context.symbol = symbol
     context.strategy_name = strategy_name
     context.backtest_start_time = backtest_start_time
     context.backtest_end_time = backtest_end_time
+    context.task_id = task_id  # 传递task_id用于进度更新
+    # 为当前 symbol 设置日志上下文
+    if task_id:
+        set_log_context(task_id=task_id, symbol=symbol, enable_db=True)
     run(strategy_id=strategy_id,
         filename=os.path.basename(__file__),
         mode=mode,
@@ -156,7 +215,11 @@ def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, st
         backtest_adjust=ADJUST_PREV,
         backtest_initial_cash=200000000000,
         backtest_commission_ratio=0.0001,
-        backtest_slippage_ratio=0.0001)
+        backtest_slippage_ratio=0.0001,
+        serv_addr="192.168.3.139:7001"
+        )
+    # 清理上下文
+    clear_log_context()
 
 
 def run_cli():
@@ -193,15 +256,16 @@ def run_cli():
 
     # 清楚接收的参数，避免影响run接收参数
     sys.argv = []
-    logger.info("Mode: {}, StrategeID: {}, StrategyName: {}, Symbol: {}, StartTime: {}, EndTime: {}, SaveDB: {}".format(
+    logger.info("Mode: {}, StrategeID: {}, StrategyName: {}, Symbol: {}, StartTime: {}, EndTime: {}, SaveDB: {}, TaskID: {}".format(
         arg_options.mode, arg_options.strategy_id, arg_options.strategy_name, arg_options.symbol,
-        arg_options.start_time, arg_options.end_time, config.save_db))
+        arg_options.start_time, arg_options.end_time, config.save_db, arg_options.task_id))
     multiple_run(arg_options.strategy_id,
                  arg_options.symbol,
                  backtest_start_time=arg_options.start_time,
                  backtest_end_time=arg_options.end_time,
                  strategy_name=arg_options.strategy_name,
-                 mode=arg_options.mode)
+                 mode=arg_options.mode,
+                 task_id=arg_options.task_id)
 
 
 if __name__ == '__main__':

@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS backtest_tasks (
 -- 4. 回测结果表 (backtest_results) - 兼容现有结构
 CREATE TABLE IF NOT EXISTS backtest_results (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-    task_id VARCHAR(50) COMMENT '任务ID',
+    task_id VARCHAR(100) COMMENT '任务ID',
     strategy_id INT COMMENT '策略ID',
     symbol VARCHAR(20) NOT NULL COMMENT '股票代码',
     name VARCHAR(50) COMMENT '股票名称',
@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS backtest_results (
     total_trades INT COMMENT '总交易次数',
     win_trades INT COMMENT '盈利交易次数',
     current_price DECIMAL(10,2) COMMENT '当前股价',
+    status ENUM('init', 'running', 'finished') DEFAULT 'init' COMMENT '回测状态: init-初始化, running-运行中, finished-已完成',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     
@@ -92,6 +93,7 @@ CREATE TABLE IF NOT EXISTS backtest_results (
     INDEX idx_task_id (task_id),
     INDEX idx_strategy_id (strategy_id),
     INDEX idx_symbol (symbol),
+    INDEX idx_status (status),
     INDEX idx_backtest_time (backtest_start_time, backtest_end_time),
     INDEX idx_created_at (created_at),
     
@@ -111,6 +113,20 @@ CREATE TABLE IF NOT EXISTS system_config (
     
     INDEX idx_config_key (config_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统配置表';
+
+-- 6. 回测日志表 (backtest_logs)
+CREATE TABLE IF NOT EXISTS backtest_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '自增ID',
+    task_id VARCHAR(100) NOT NULL COMMENT '任务ID',
+    symbol VARCHAR(20) NULL COMMENT '股票代码(为空表示任务级日志)',
+    level ENUM('DEBUG','INFO','WARN','ERROR') NOT NULL DEFAULT 'INFO' COMMENT '日志级别',
+    message TEXT NOT NULL COMMENT '日志内容',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    
+    INDEX idx_task_id (task_id, id),
+    INDEX idx_task_symbol (task_id, symbol, id),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='回测日志表';
 
 -- 插入默认数据
 INSERT IGNORE INTO strategies (name, display_name, description, strategy_type, parameters) VALUES
@@ -170,18 +186,24 @@ DESCRIBE symbols;
 DESCRIBE backtest_tasks;
 DESCRIBE backtest_results;
 DESCRIBE system_config;
+DESCRIBE backtest_logs;
 
 -- 兼容性说明：
--- 1. backtest_results表保留了所有现有字段，新增了task_id、strategy_id、total_trades、win_trades、current_price
--- 2. 外键约束被注释掉，避免数据不一致时的问题
--- 3. 视图v_backtest_summary兼容现有API，包含所有原有字段
--- 4. 新增的strategies、symbols、backtest_tasks表支持新的回测管理功能
--- 5. system_config表提供系统配置管理功能
--- 6. backtest_tasks表的symbols字段为JSON类型，支持存储股票列表或指数成分股
--- 7. parameters字段存储回测模式(single/index)和指数代码等配置信息
+-- 1. backtest_results表保留了所有现有字段，新增了task_id、strategy_id、total_trades、win_trades、current_price、status
+-- 2. task_id字段长度从VARCHAR(50)扩展到VARCHAR(100)以支持更长的任务ID
+-- 3. status字段使用ENUM('init', 'running', 'finished')类型，默认值为'init'
+-- 4. 外键约束被注释掉，避免数据不一致时的问题
+-- 5. 视图v_backtest_summary兼容现有API，包含所有原有字段
+-- 6. 新增的strategies、symbols、backtest_tasks表支持新的回测管理功能
+-- 7. system_config表提供系统配置管理功能
+-- 8. backtest_tasks表的symbols字段为JSON类型，支持存储股票列表或指数成分股
+-- 9. parameters字段存储回测模式(single/index)和指数代码等配置信息
+-- 10. 新增 backtest_logs 表，用于任务/个股日志统一存储与增量查询
 
 -- 功能说明：
 -- 1. 支持单股票/多股票回测：symbols字段存储股票代码数组
 -- 2. 支持指数成分股批量回测：parameters中存储mode='index'和index_symbol
 -- 3. 策略参数采用JSON格式存储，支持灵活配置
 -- 4. 使用INSERT IGNORE避免重复插入默认数据
+-- 5. status字段标记回测状态，支持查询运行中/已完成的回测记录
+-- 6. 为status字段添加索引，优化状态查询性能

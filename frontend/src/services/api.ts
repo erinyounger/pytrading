@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse } from '../types';
+import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse, LogQueryResponse } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -98,15 +98,24 @@ export const apiService = {
     return response.data;
   },
 
-  // 获取指数成分股
-  getIndexConstituents: async (indexSymbol: string): Promise<{
-    index_symbol: string;
-    constituents: string[];
-    count: number;
-  }> => {
-    const response = await api.get('/api/index/constituents', {
-      params: { index_symbol: indexSymbol }
+  // 日志相关
+  getTaskLogs: async (taskId: string, afterId: number = 0, limit: number = 500): Promise<LogQueryResponse> => {
+    const response = await api.get(`/api/logs/task/${taskId}`, {
+      params: { after_id: afterId, limit }
     });
+    return response.data;
+  },
+
+  getResultLogs: async (taskId: string, symbol: string, afterId: number = 0, limit: number = 500): Promise<LogQueryResponse> => {
+    const response = await api.get('/api/logs/result', {
+      params: { task_id: taskId, symbol, after_id: afterId, limit }
+    });
+    return response.data;
+  },
+
+  // 获取任务的股票回测结果
+  getTaskResults: async (taskId: string): Promise<ApiResponse<BacktestResult[]>> => {
+    const response = await api.get(`/api/backtest/tasks/${taskId}/results`);
     return response.data;
   },
 };

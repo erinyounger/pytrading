@@ -24,7 +24,7 @@ sys.path.insert(0, os.path.join(project_root, 'src'))
 from pytrading.config.settings import config
 from pytrading.model.back_test import BackTest
 from pytrading.model.back_test_saver_factory import get_backtest_saver
-from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask, SystemConfig
+from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask, SystemConfig, BackTestResult
 from pytrading.py_trading import PyTrading
 from pytrading.logger import logger
 from sqlalchemy import func
@@ -249,6 +249,33 @@ def get_db_client():
         password=config.mysql_password
     )
 
+@app.get("/api/logs/task/{task_id}")
+async def get_task_logs(task_id: str, after_id: int = 0, limit: int = 500):
+    """获取任务级日志(增量)"""
+    try:
+        from pytrading.db.log_repository import LogRepository
+        db_client = get_db_client()
+        log_repo = LogRepository(db_client=db_client)
+        result = log_repo.query_logs(task_id=task_id, symbol=None, after_id=after_id, limit=min(max(limit, 1), 2000))
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取任务日志失败: {str(e)}")
+
+
+@app.get("/api/logs/result")
+async def get_result_logs(task_id: str, symbol: str, after_id: int = 0, limit: int = 500):
+    """获取个股级日志(增量)"""
+    if not task_id or not symbol:
+        raise HTTPException(status_code=400, detail="task_id 和 symbol 为必填")
+    try:
+        from pytrading.db.log_repository import LogRepository
+        db_client = get_db_client()
+        log_repo = LogRepository(db_client=db_client)
+        result = log_repo.query_logs(task_id=task_id, symbol=symbol, after_id=after_id, limit=min(max(limit, 1), 2000))
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取个股日志失败: {str(e)}")
+
 @app.get("/api/strategies")
 async def get_strategies():
     """获取可用策略列表"""
@@ -406,7 +433,7 @@ async def start_backtest(backtest_config: dict):
                 print(f"INFO: 创建指数回测任务 - 指数: {index_symbol}")
             
             # 生成任务ID
-            task_id = f"{mode}_{task_name}"
+            task_id = f"{mode}_{task_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             
             # 保存所有参数到parameters字段
             parameters = {
@@ -552,6 +579,56 @@ async def get_backtest_tasks(
     except Exception as e:
         print(f"ERROR: 获取任务列表失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取任务列表失败: {str(e)}")
+
+@app.get("/api/backtest/tasks/{task_id}/results")
+async def get_task_results(task_id: str):
+    """获取任务的回测结果列表"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+        
+        try:
+            # 获取任务信息
+            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+            if not task:
+                raise HTTPException(status_code=404, detail="任务不存在")
+            
+            # 获取该任务的所有回测结果
+            results = session.query(BackTestResult).filter(
+                BackTestResult.task_id == task_id,
+                BackTestResult.backtest_start_time == task.start_time,
+                BackTestResult.backtest_end_time == task.end_time
+            ).all()
+            
+            result_list = []
+            for r in results:
+                result_list.append({
+                    "id": r.id,
+                    "symbol": r.symbol,
+                    "name": r.name,
+                    "strategy_name": r.strategy_name,
+                    "backtest_start_time": r.backtest_start_time.strftime('%Y-%m-%d %H:%M:%S') if r.backtest_start_time else None,
+                    "backtest_end_time": r.backtest_end_time.strftime('%Y-%m-%d %H:%M:%S') if r.backtest_end_time else None,
+                    "pnl_ratio": float(r.pnl_ratio) if r.pnl_ratio else 0,
+                    "sharp_ratio": float(r.sharp_ratio) if r.sharp_ratio else 0,
+                    "max_drawdown": float(r.max_drawdown) if r.max_drawdown else 0,
+                    "win_ratio": float(r.win_ratio) if r.win_ratio else 0,
+                    "current_price": float(r.current_price) if r.current_price else None,
+                    "open_count": r.open_count,
+                    "close_count": r.close_count,
+                    "win_count": r.win_count,
+                    "lose_count": r.lose_count,
+                })
+            
+            return {
+                "data": result_list
+            }
+        finally:
+            session.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"获取任务结果失败: {str(e)}")
 
 @app.get("/api/config")
 async def get_config():

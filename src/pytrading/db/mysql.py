@@ -10,8 +10,16 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
+import enum
 
 Base = declarative_base()
+
+
+class BacktestStatus(enum.Enum):
+    """回测状态枚举"""
+    init = "init"  # 初始化/未开始
+    running = "running"  # 运行中
+    finished = "finished"  # 已完成
 
 
 class Strategy(Base):
@@ -68,7 +76,7 @@ class BackTestResult(Base):
     __tablename__ = 'backtest_results'
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
-    task_id = Column(String(50), comment='任务ID')
+    task_id = Column(String(100), comment='任务ID')
     strategy_id = Column(Integer, comment='策略ID')
     symbol = Column(String(20), nullable=False, comment='股票代码')
     name = Column(String(50), comment='股票名称')
@@ -88,6 +96,7 @@ class BackTestResult(Base):
     total_trades = Column(Integer, comment='总交易次数')
     win_trades = Column(Integer, comment='盈利交易次数')
     current_price = Column(DECIMAL(10, 2), comment='当前股价')
+    status = Column(SQLEnum(BacktestStatus), default=BacktestStatus.init, comment='回测状态')
     created_at = Column(DateTime, default=datetime.now, comment='创建时间')
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
     
@@ -143,3 +152,17 @@ class MySQLClient:
         except Exception as e:
             print(f"连接测试失败: {e}")
             return False
+
+
+class BacktestLog(Base):
+    """统一回测日志表(任务/个股)"""
+    __tablename__ = 'backtest_logs'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='自增ID')
+    task_id = Column(String(100), nullable=False, comment='任务ID')
+    symbol = Column(String(20), nullable=True, comment='股票代码(为空表示任务级日志)')
+    level = Column(SQLEnum('DEBUG', 'INFO', 'WARN', 'ERROR', name='log_level_enum'), default='INFO', nullable=False, comment='日志级别')
+    message = Column(Text, nullable=False, comment='日志内容')
+    created_at = Column(DateTime, default=datetime.now, comment='创建时间')
+
+

@@ -15,6 +15,7 @@ class BackTest:
     """回测结果数据模型"""
     
     def __init__(self):
+        self.task_id = None  # 任务ID
         self.symbol = None
         self.name = None
         self.created_at = None
@@ -33,6 +34,7 @@ class BackTest:
         self.trending_type = None # 趋势类型
         self.strategy_name = None # 策略名称
         self.current_price = None # 当前价格
+        self.status = None  # 回测状态: running-运行中, finished-已完成, null-未开始
 
     def init_attr(self, **kwargs):
         """初始化属性"""
@@ -45,6 +47,7 @@ class BackTest:
     def to_dict(self):
         """转换为字典"""
         return {
+            "task_id": self.task_id,
             "symbol": self.symbol,
             "name": self.name,
             "created_at": self.created_at,
@@ -63,6 +66,7 @@ class BackTest:
             "trending_type": self.trending_type,
             "strategy_name": self.strategy_name,
             "current_price": self.current_price,
+            "status": self.status,
         }
     
     def save(self):

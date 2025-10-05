@@ -76,3 +76,17 @@ export interface ApiResponse<T> {
   page?: number;
   per_page?: number;
 }
+
+export interface BacktestLog {
+  id: number;
+  task_id: string;
+  symbol?: string;
+  level: string;
+  message: string;
+  created_at: string;
+}
+
+export interface LogQueryResponse {
+  items: BacktestLog[];
+  last_id: number;
+}

@@ -12,7 +12,7 @@ import traceback
 from datetime import datetime
 
 from gm.api import *
-from pytrading.logger import logger
+from pytrading.logger import logger, set_log_context, clear_log_context
 from pytrading.config import config
 from pytrading.utils.thread_pool import ThreadPool, Queue
 from pytrading.utils import clear_disk_space
@@ -21,7 +21,7 @@ from pytrading.db.mysql import MySQLClient, BacktestTask, Strategy, BackTestResu
 
 
 class PyTrading:
-    def __init__(self, symbols=None, index_symbol=None, start_time=None, end_time=None, strategy_name=None):
+    def __init__(self, symbols=None, index_symbol=None, start_time=None, end_time=None, strategy_name=None, task_id=None):
         self.run_strategy_path = os.path.join(config.app_root_dir, "src", "pytrading", "run")
         self.db_client = MySQLClient(
             host=config.mysql_host,
@@ -35,44 +35,59 @@ class PyTrading:
         self.start_time = start_time
         self.end_time = end_time
         self.strategy_name = strategy_name
+        self.task_id = task_id
 
     def run(self):
         clear_disk_space(template_dir=os.path.join(config.app_root_dir, "gmcache"))
         return self.run_strategy()
 
-    def get_symbols(self):
+    @classmethod
+    def get_index_symbols(cls, index_symbol):
         """获取指数成分股列表"""
-        if len(self.symbols) > 0:
-            "指定标的直接返回"
-            return self.symbols
-        if not self.index_symbol:
-            raise ValueError("index_symbol is required")
         set_token(config.token)
-        index_df = stk_get_index_constituents(index=self.index_symbol)
+        index_df = stk_get_index_constituents(index=index_symbol)
         index_symbols = list(index_df.symbol.values) if not index_df.empty else []
-        logger.info("Get {} Symbols: {}".format(self.index_symbol, len(index_symbols)))
+        logger.info("Get {} Symbols: {}".format(index_symbol, len(index_symbols)))
         return index_symbols
 
     def run_strategy(self):
         """执行策略"""
         f_name = os.path.join(self.run_strategy_path, "run_strategy.py").replace('\\', '/')
-        symbol_list = self.get_symbols()
         run_queue = Queue()
 
         start_time = self.start_time
         end_time = self.end_time    
 
-        for _syb in symbol_list:
-            cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,
-                   f"--symbol={_syb}",
-                   f"--start_time=\"{start_time}\"",
-                   f"--end_time=\"{end_time}\"",
-                   f"--strategy_name={self.strategy_name}",
-                   f"--mode={config.trading_mode}"]
-            cmd_args = (" ".join(cmd),)
-            kwargs = {}
-            run_queue.put((exec_process, cmd_args, kwargs))
-        size = len(symbol_list) if config.trading_mode == MODE_LIVE else None
+        # 在执行策略前，先将对应回测结果的status更新为init
+        session = self.db_client.get_session()
+        try:
+            from pytrading.db.mysql import BacktestStatus  # 确保已导入枚举类型
+
+            for _syb in self.symbols:
+                # 更新backtest_results表中对应symbol和task_id的status为init（使用枚举类型）
+                session.query(BackTestResult).filter_by(
+                    symbol=_syb,
+                    task_id=self.task_id
+                ).update({"status": BacktestStatus.init})
+                session.commit()
+
+                cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,
+                       f"--symbol={_syb}",
+                       f"--start_time=\"{start_time}\"",
+                       f"--end_time=\"{end_time}\"",
+                       f"--strategy_name={self.strategy_name}",
+                       f"--mode={config.trading_mode}"]
+                
+                # 如果有task_id,传递给子进程用于进度更新
+                if self.task_id:
+                    cmd.append(f"--task_id={self.task_id}")
+                
+                cmd_args = (" ".join(cmd),)
+                kwargs = {}
+                run_queue.put((exec_process, cmd_args, kwargs))
+        finally:
+            session.close()
+        size = len(self.symbols) if config.trading_mode == MODE_LIVE else None
         threader = ThreadPool(run_queue, size=size)
         threader.run()
 
@@ -94,10 +109,14 @@ class PyTrading:
             if not task:
                 logger.error(f"任务不存在: {task_id}")
                 return
+            # 任务日志：读取到任务
+            set_log_context(task_id=task_id, enable_db=True)
+            logger.info(f"加载任务成功: strategy_id={task.strategy_id}")
             
             strategy = session.query(Strategy).filter_by(id=task.strategy_id).first()
             if not strategy:
                 raise Exception(f"策略不存在: {task.strategy_id}")
+            logger.info(f"加载策略成功: {strategy.name}")
             
             # 更新为运行中
             task.status = 'running'
@@ -105,6 +124,7 @@ class PyTrading:
             task.updated_at = datetime.now()
             session.commit()
             logger.info(f"开始执行回测任务: {task_id}, 策略: {strategy.name}")
+            logger.info(f"任务进入运行中: {task_id}")
             
             # 准备参数
             parameters = task.parameters or {}
@@ -112,29 +132,30 @@ class PyTrading:
             end_time = task.end_time.strftime('%Y-%m-%d %H:%M:%S')
             
             # 根据模式创建 PyTrading 实例
-            if parameters.get('mode') == 'index':
-                index_symbol = parameters.get('index_symbol')
-                py_trading = cls(
-                    symbols=[],
-                    index_symbol=index_symbol,
-                    start_time=start_time,
-                    end_time=end_time,
-                    strategy_name=strategy.name
-                )
-                logger.info(f"创建指数回测任务: {index_symbol}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
+            index_symbol = parameters.get('index_symbol')
+            if parameters.get('mode') == 'index' and index_symbol:
+                logger.info(f"开始获取指数成分股: {index_symbol}")
+                symbol_list = cls.get_index_symbols(index_symbol)
+                logger.info(f"获取成分股完成: {index_symbol}, 数量={len(symbol_list)}")
             else:
                 symbol_list = task.symbols if isinstance(task.symbols, list) else [task.symbols]
-                py_trading = cls(
-                    symbols=symbol_list,
-                    index_symbol=None,
-                    start_time=start_time,
-                    end_time=end_time,
-                    strategy_name=strategy.name
-                )
-                logger.info(f"创建单股票回测任务: {symbol_list}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
-            
+            py_trading = cls(
+                symbols=symbol_list,
+                index_symbol=index_symbol,
+                start_time=start_time,
+                end_time=end_time,
+                strategy_name=strategy.name,
+                task_id=task_id
+            )
+            logger.info(f"创建回测任务:，股票数：{len(symbol_list)}, index_symbol: {index_symbol}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
+            # 更新任务进度为0，并保存当前标的列表
+            task.progress = 0
+            task.symbols = symbol_list
+            task.updated_at = datetime.now()
+            session.commit()
             # 执行回测 (复用原有逻辑)
             py_trading.run()
+            logger.info("子任务执行完成，开始汇总结果")
             
             # 汇总结果
             results = session.query(BackTestResult).filter_by(
@@ -158,11 +179,12 @@ class PyTrading:
                 task.result_summary = {"total_count": 0, "message": "未找到回测结果"}
             
             task.status = 'completed'
+            task.symbols = symbol_list
             task.progress = 100
             task.updated_at = datetime.now()
             session.commit()
-            logger.info(f"回测任务执行成功: {task_id}")
-            
+            logger.info(f"回测任务执行成功: {task_id}, 任务完成: completed")
+
         except Exception as e:
             logger.error(f"执行回测任务失败: {task_id}, 错误: {str(e)}")
             logger.error(traceback.format_exc())
@@ -173,11 +195,13 @@ class PyTrading:
                     task.error_message = str(e)
                     task.updated_at = datetime.now()
                     session.commit()
+                logger.error(f"任务失败: {str(e)}")
             except Exception as commit_error:
                 logger.error(f"更新任务状态失败: {str(commit_error)}")
             raise
         finally:
             session.close()
+            clear_log_context()
 
 if __name__ == '__main__':
     py_trading = PyTrading(
@@ -185,4 +209,4 @@ if __name__ == '__main__':
         end_time="2025-06-30 15:00:00",
         strategy_name="MACD"
     )
-    py_trading.run_backtest_task("index_SHSE.000016")
+    py_trading.run_backtest_task("index_SHSE.000016_20251005180052")
