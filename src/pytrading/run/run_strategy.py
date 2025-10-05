@@ -113,11 +113,11 @@ def on_backtest_finished(context, indicator):
         # 填充 task_id
         if hasattr(context, 'task_id') and context.task_id:
             back_test_obj.task_id = context.task_id
-        
+
         # 打印回测结果信息
         logger.info(f"回测完成, 标的：{back_test_obj.symbol}, 股票名称：{back_test_obj.name}, \n \
         策略名称：{back_test_obj.strategy_name}, \n \
-        趋势类型：{back_test_obj.trending_type}, \n \
+        当前趋势：{back_test_obj.trending_type}, \n \
         回测开始时间：{back_test_obj.backtest_start_time}, \n \
         回测结束时间：{back_test_obj.backtest_end_time}, \n \
         累计收益率：{back_test_obj.pnl_ratio}, \n \

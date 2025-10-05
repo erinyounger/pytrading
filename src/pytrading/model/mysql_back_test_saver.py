@@ -157,7 +157,6 @@ class MySQLBackTestSaver(BackTestSaver):
     
     def save(self, backtest_obj):
         """保存回测数据到MySQL"""
-        logger.info("开始保存回测数据到MySQL")
         session = self.mysql_client.get_session()
         # 安全的数据类型转换
         safe_data = dict()
@@ -193,21 +192,20 @@ class MySQLBackTestSaver(BackTestSaver):
                     if hasattr(existing, key):
                         setattr(existing, key, value)
                 existing.updated_at = datetime.now()
-                logger.info(f"更新已存在的回测记录: {safe_data['symbol']}")
             else:
                 # 创建新记录
                 safe_data['created_at'] = datetime.now()
                 safe_data['updated_at'] = datetime.now()
                 result = BackTestResult(**safe_data)
                 session.add(result)
-                logger.info(f"创建新的回测记录: {safe_data['symbol']}")
+            logger.info(f"Create/Update backtest record: {safe_data['symbol']}, Task ID: {safe_data['task_id']}")
             
             # 提交事务
             session.commit()
             
         except Exception as e:
-            logger.error(f"保存回测数据到MySQL失败: {e}\n, DATA:{safe_data}")
-            logger.error(f"错误详情: {traceback.format_exc()}")
+            logger.error(f"Save backtest data to MySQL failed: {e}\n, DATA:{safe_data}")
+            logger.error(f"Error details: {traceback.format_exc()}")
             session.rollback()
             raise
         finally:
