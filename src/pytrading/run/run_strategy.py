@@ -115,41 +115,36 @@ def on_backtest_finished(context, indicator):
             back_test_obj.task_id = context.task_id
         
         # 打印回测结果信息
-        logger.info(f"回测结果:")
-        logger.info(f"  标的代码: {back_test_obj.symbol}")
-        logger.info(f"  股票名称: {back_test_obj.name}")
-        logger.info(f"  策略名称: {back_test_obj.strategy_name}")
-        logger.info(f"  趋势类型: {back_test_obj.trending_type}")
-        logger.info(f"  回测开始时间: {back_test_obj.backtest_start_time}")
-        logger.info(f"  回测结束时间: {back_test_obj.backtest_end_time}")
-        logger.info(f"  累计收益率: {back_test_obj.pnl_ratio}")
-        logger.info(f"  夏普比率: {back_test_obj.sharp_ratio}")
-        logger.info(f"  最大回撤: {back_test_obj.max_drawdown}")
-        logger.info(f"  风险比率: {back_test_obj.risk_ratio}")
-        logger.info(f"  开仓次数: {back_test_obj.open_count}")
-        logger.info(f"  平仓次数: {back_test_obj.close_count}")
-        logger.info(f"  盈利次数: {back_test_obj.win_count}")
-        logger.info(f"  亏损次数: {back_test_obj.lose_count}")
-        logger.info(f"  胜率: {back_test_obj.win_ratio}")
-        logger.info(f"  当前价格: {back_test_obj.current_price}")
-        logger.info(f"  任务ID: {back_test_obj.task_id}")
-        
-        # 个股日志：统一通过 logger 输出（DB Handler 已接管）
-        logger.info("标的回测完成")
+        logger.info(f"回测完成, 标的：{back_test_obj.symbol}, 股票名称：{back_test_obj.name}, \n \
+        策略名称：{back_test_obj.strategy_name}, \n \
+        趋势类型：{back_test_obj.trending_type}, \n \
+        回测开始时间：{back_test_obj.backtest_start_time}, \n \
+        回测结束时间：{back_test_obj.backtest_end_time}, \n \
+        累计收益率：{back_test_obj.pnl_ratio}, \n \
+        夏普比率：{back_test_obj.sharp_ratio}, \n \
+        最大回撤：{back_test_obj.max_drawdown}, \n \
+        风险比率：{back_test_obj.risk_ratio}, \n \
+        开仓次数：{back_test_obj.open_count}, \n \
+        平仓次数：{back_test_obj.close_count}, \n \
+        盈利次数：{back_test_obj.win_count}, \n \
+        亏损次数：{back_test_obj.lose_count}, \n \
+        胜率：{back_test_obj.win_ratio}, \n \
+        当前价格：{back_test_obj.current_price}, \n \
+        任务ID：{back_test_obj.task_id}"
+        )
 
         # 如果需要保存到数据库
         if config.save_db:
             back_test_obj.save()
-            logger.info(f"保存回测数据到数据库成功，back_test_obj.name: {back_test_obj.name}")
         
         # 更新任务进度
         if hasattr(context, 'task_id') and context.task_id:
             update_task_progress(context.task_id)
             
     except Exception as ex:
-        logger.error("保存数据到数据库失败。")
+        logger.error("保存数据到数据库失败, Error: {}, Task ID: {}".format(ex, context.task_id))
         logger.exception(ex)
-    logger.info(f"Back Test End, Symbol: {context.symbol}")
+    logger.info(f"Back Test End, Symbol: {context.symbol}, Task ID: {context.task_id}")
 
 
 def update_task_progress(task_id: str):
@@ -185,11 +180,10 @@ def update_task_progress(task_id: str):
                 progress = int((completed_count / total_count) * 100)
                 task.progress = min(progress, 99)  # 最多99%,100%由主任务设置
                 session.commit()
-                logger.info(f"任务进度更新: {task_id}, 已完成 {completed_count}/{total_count}, 进度 {task.progress}%")
         finally:
             session.close()
     except Exception as e:
-        logger.error(f"更新任务进度失败: {str(e)}")
+        logger.error(f"Update task progress failed: {str(e)}, Task ID: {task_id}")
 
 
 def on_error(context, code, info):

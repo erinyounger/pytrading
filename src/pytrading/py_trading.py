@@ -111,20 +111,17 @@ class PyTrading:
                 return
             # 任务日志：读取到任务
             set_log_context(task_id=task_id, enable_db=True)
-            logger.info(f"加载任务成功: strategy_id={task.strategy_id}")
             
             strategy = session.query(Strategy).filter_by(id=task.strategy_id).first()
             if not strategy:
-                raise Exception(f"策略不存在: {task.strategy_id}")
-            logger.info(f"加载策略成功: {strategy.name}")
-            
+                logger.error(f"Strategy not found: {task.strategy_id}, task_id: {task_id}")
+                raise Exception(f"Strategy not found: {task.strategy_id}, task_id: {task_id}")
+            logger.info(f"Start Backtest Task: strategy_id={task.strategy_id}, Task ID: {task_id}, Strategy Name: {strategy.name}")
             # 更新为运行中
             task.status = 'running'
             task.progress = 0
             task.updated_at = datetime.now()
             session.commit()
-            logger.info(f"开始执行回测任务: {task_id}, 策略: {strategy.name}")
-            logger.info(f"任务进入运行中: {task_id}")
             
             # 准备参数
             parameters = task.parameters or {}
@@ -134,9 +131,9 @@ class PyTrading:
             # 根据模式创建 PyTrading 实例
             index_symbol = parameters.get('index_symbol')
             if parameters.get('mode') == 'index' and index_symbol:
-                logger.info(f"开始获取指数成分股: {index_symbol}")
+                logger.info(f"Start getting index constituents: {index_symbol}")
                 symbol_list = cls.get_index_symbols(index_symbol)
-                logger.info(f"获取成分股完成: {index_symbol}, 数量={len(symbol_list)}")
+                logger.info(f"Get index constituents completed: {index_symbol}, number={len(symbol_list)}")
             else:
                 symbol_list = task.symbols if isinstance(task.symbols, list) else [task.symbols]
             py_trading = cls(
@@ -147,7 +144,7 @@ class PyTrading:
                 strategy_name=strategy.name,
                 task_id=task_id
             )
-            logger.info(f"创建回测任务:，股票数：{len(symbol_list)}, index_symbol: {index_symbol}, 开始时间: {start_time}, 结束时间: {end_time}, 策略: {strategy.name}")
+            logger.info(f"Start Backtest Task: Task ID: {task_id}, Strategy Name: {strategy.name}, Number of stocks: {len(symbol_list)}, Index Symbol: {index_symbol}, Start Time: {start_time}, End Time: {end_time}")
             # 更新任务进度为0，并保存当前标的列表
             task.progress = 0
             task.symbols = symbol_list
@@ -155,7 +152,7 @@ class PyTrading:
             session.commit()
             # 执行回测 (复用原有逻辑)
             py_trading.run()
-            logger.info("子任务执行完成，开始汇总结果")
+            logger.info("Subtask execution completed, start summarizing results")
             
             # 汇总结果
             results = session.query(BackTestResult).filter_by(
@@ -176,17 +173,17 @@ class PyTrading:
                     "completed_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 }
             else:
-                task.result_summary = {"total_count": 0, "message": "未找到回测结果"}
+                task.result_summary = {"total_count": 0, "message": "No backtest results found"}
             
             task.status = 'completed'
             task.symbols = symbol_list
             task.progress = 100
             task.updated_at = datetime.now()
             session.commit()
-            logger.info(f"回测任务执行成功: {task_id}, 任务完成: completed")
+            logger.info(f"Backtest Task execution completed: Task ID: {task_id}, Task Status: completed")
 
         except Exception as e:
-            logger.error(f"执行回测任务失败: {task_id}, 错误: {str(e)}")
+            logger.error(f"Backtest Task execution failed: Task ID: {task_id}, Error: {str(e)}")
             logger.error(traceback.format_exc())
             try:
                 task = session.query(BacktestTask).filter_by(task_id=task_id).first()
@@ -195,9 +192,9 @@ class PyTrading:
                     task.error_message = str(e)
                     task.updated_at = datetime.now()
                     session.commit()
-                logger.error(f"任务失败: {str(e)}")
+                logger.error(f"Backtest Task execution failed: Task ID: {task_id}, Error: {str(e)}")
             except Exception as commit_error:
-                logger.error(f"更新任务状态失败: {str(commit_error)}")
+                logger.error(f"Update task status failed: Task ID: {task_id}, Error: {str(commit_error)}")
             raise
         finally:
             session.close()
