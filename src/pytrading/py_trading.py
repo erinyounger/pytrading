@@ -88,7 +88,7 @@ class PyTrading:
         finally:
             session.close()
         size = len(self.symbols) if config.trading_mode == MODE_LIVE else None
-        threader = ThreadPool(run_queue, size=size)
+        threader = ThreadPool(run_queue, size=10)
         threader.run()
 
     @classmethod

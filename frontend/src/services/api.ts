@@ -30,7 +30,8 @@ export const apiService = {
     max_win_ratio?: number;
     page?: number;
     per_page?: number;
-    latest_only?: boolean;
+    sort_by?: string;
+    sort_order?: string;
   }): Promise<PaginatedApiResponse<BacktestResult[]>> => {
     const response = await api.get('/api/backtest-results', { params });
     return response.data;
@@ -117,5 +118,29 @@ export const apiService = {
   getTaskResults: async (taskId: string): Promise<ApiResponse<BacktestResult[]>> => {
     const response = await api.get(`/api/backtest/tasks/${taskId}/results`);
     return response.data;
+  },
+
+  // 获取回测池中的股票列表（用于创建回测任务时的股票选择）
+  getBacktestPoolSymbols: async (): Promise<ApiResponse<{symbol: string, name: string}[]>> => {
+    const response = await api.get('/api/backtest-results', { 
+      params: { 
+        per_page: 5000 // 获取足够数量的回测结果
+      } 
+    });
+    
+    // 从回测结果中提取唯一的股票列表
+    const uniqueSymbols = new Map();
+    response.data.data.forEach((result: BacktestResult) => {
+      if (result.symbol && result.name) {
+        uniqueSymbols.set(result.symbol, {
+          symbol: result.symbol,
+          name: result.name
+        });
+      }
+    });
+    
+    return {
+      data: Array.from(uniqueSymbols.values())
+    };
   },
 };

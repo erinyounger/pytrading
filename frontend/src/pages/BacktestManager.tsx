@@ -61,6 +61,7 @@ const BacktestManager: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [symbols, setSymbols] = useState<Symbol[]>([]);
+  const [backtestPoolSymbols, setBacktestPoolSymbols] = useState<{symbol: string, name: string}[]>([]);
   const [backtestTasks, setBacktestTasks] = useState<BacktestTaskInfo[]>([]);
   const [taskTotal, setTaskTotal] = useState(0);
   const [taskPage, setTaskPage] = useState(1);
@@ -101,6 +102,16 @@ const BacktestManager: React.FC = () => {
     }
   };
 
+  const fetchBacktestPoolSymbols = async () => {
+    try {
+      const response = await apiService.getBacktestPoolSymbols();
+      setBacktestPoolSymbols(response.data);
+    } catch (error) {
+      console.error('获取回测池股票列表失败:', error);
+      message.error('获取回测池股票列表失败');
+    }
+  };
+
   const fetchBacktestTasks = async () => {
     try {
       setLoading(true);
@@ -124,17 +135,22 @@ const BacktestManager: React.FC = () => {
   const handleOpenCreateModal = () => {
     setCreateModalVisible(true);
     
-    // 从 localStorage 读取上次的时间范围
-    const lastDateRange = localStorage.getItem('lastBacktestDateRange');
-    if (lastDateRange) {
+    // 获取回测池股票列表
+    fetchBacktestPoolSymbols();
+    
+    // 从 localStorage 读取上次的配置（只记住时间和策略）
+    const lastBacktestConfig = localStorage.getItem('lastBacktestConfig');
+    if (lastBacktestConfig) {
       try {
-        const { start, end } = JSON.parse(lastDateRange);
-        // 设置表单的默认值
+        const config = JSON.parse(lastBacktestConfig);
+        // 只设置时间和策略
         form.setFieldsValue({
-          dateRange: [dayjs(start), dayjs(end)]
+          dateRange: config.dateRange ? [dayjs(config.dateRange[0]), dayjs(config.dateRange[1])] : undefined,
+          strategy: config.strategy,
+          parameters: config.parameters
         });
-    } catch (error) {
-        console.error('解析上次时间范围失败:', error);
+      } catch (error) {
+        console.error('解析上次回测配置失败:', error);
       }
     }
   };
@@ -157,11 +173,16 @@ const BacktestManager: React.FC = () => {
         config.index_symbol = values.index_symbol;
       }
 
-      // 保存时间范围到 localStorage
-      localStorage.setItem('lastBacktestDateRange', JSON.stringify({
-        start: values.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
-        end: values.dateRange[1].format('YYYY-MM-DD HH:mm:ss')
-      }));
+      // 保存时间和策略到 localStorage（不保存股票选择）
+      const configToSave = {
+        strategy: values.strategy,
+        dateRange: [
+          values.dateRange[0].format('YYYY-MM-DD HH:mm:ss'),
+          values.dateRange[1].format('YYYY-MM-DD HH:mm:ss')
+        ],
+        parameters: values.parameters || {}
+      };
+      localStorage.setItem('lastBacktestConfig', JSON.stringify(configToSave));
 
       const response = await apiService.startBacktest(config);
       message.success(response.message || '回测任务已创建');
@@ -459,7 +480,7 @@ const BacktestManager: React.FC = () => {
                         <span style={{ color, fontVariantNumeric: 'tabular-nums' }}>
                           {Icon ? <Icon style={{ color, marginRight: 4 }} /> : null}
                           {(val * 100).toFixed(2)}%
-                        </span>
+        </span>
                       );
                     },
                     sorter: (a: BacktestResult, b: BacktestResult) => (Number(a.pnl_ratio) || 0) - (Number(b.pnl_ratio) || 0),
@@ -475,7 +496,7 @@ const BacktestManager: React.FC = () => {
                       return (
                         <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                           {(val * 100).toFixed(1)}%
-                        </span>
+        </span>
                       );
                     },
                     sorter: (a: BacktestResult, b: BacktestResult) => (Number(a.win_ratio) || 0) - (Number(b.win_ratio) || 0),
@@ -590,19 +611,30 @@ const BacktestManager: React.FC = () => {
               name="symbols"
                   label="股票代码"
                   rules={[{ required: true, message: '请选择股票代码' }]}
-              tooltip="支持选择多只股票"
+              tooltip="从回测池中选择股票，支持选择多只股票"
                 >
                   <Select
                 mode="multiple"
-                placeholder="选择一只或多只股票"
+                placeholder="从回测池中选择股票"
                     showSearch
-                    filterOption={(input, option) =>
-                      (option?.children as unknown as string)
-                        ?.toLowerCase()
-                        ?.includes(input.toLowerCase())
-                    }
+                    allowClear
+                    optionFilterProp="children"
+                    filterOption={(input, option) => {
+                      const searchText = input.toLowerCase().trim();
+                      if (!searchText) return true;
+                      
+                      // 获取选项的文本内容
+                      const optionText = option?.children?.toString().toLowerCase() || '';
+                      
+                      // 支持多种匹配方式：
+                      // 1. 股票代码匹配
+                      // 2. 股票名称匹配  
+                      // 3. 部分匹配
+                      return optionText.includes(searchText);
+                    }}
+                    notFoundContent="未找到匹配的股票"
                   >
-                    {symbols.map(symbol => (
+                    {backtestPoolSymbols.map(symbol => (
                       <Option key={symbol.symbol} value={symbol.symbol}>
                         {symbol.symbol} - {symbol.name}
                       </Option>
@@ -623,11 +655,19 @@ const BacktestManager: React.FC = () => {
                 <Select 
                   placeholder="选择指数代码"
                   showSearch
-                  filterOption={(input, option) =>
-                    (option?.children as unknown as string)
-                      ?.toLowerCase()
-                      ?.includes(input.toLowerCase())
-                  }
+                  allowClear
+                  optionFilterProp="children"
+                  filterOption={(input, option) => {
+                    const searchText = input.toLowerCase().trim();
+                    if (!searchText) return true;
+                    
+                    // 获取选项的文本内容
+                    const optionText = option?.children?.toString().toLowerCase() || '';
+                    
+                    // 支持指数代码和名称的模糊匹配
+                    return optionText.includes(searchText);
+                  }}
+                  notFoundContent="未找到匹配的指数"
                 >
                   <Option value="SHSE.000001">SHSE.000001 - 上证指数</Option>
                   <Option value="SHSE.000016">SHSE.000016 - 上证50</Option>
@@ -647,7 +687,23 @@ const BacktestManager: React.FC = () => {
                   label="策略类型"
                   rules={[{ required: true, message: '请选择策略类型' }]}
                 >
-                  <Select placeholder="选择策略类型">
+                  <Select 
+                    placeholder="选择策略类型"
+                    showSearch
+                    allowClear
+                    optionFilterProp="children"
+                    filterOption={(input, option) => {
+                      const searchText = input.toLowerCase().trim();
+                      if (!searchText) return true;
+                      
+                      // 获取选项的文本内容
+                      const optionText = option?.children?.toString().toLowerCase() || '';
+                      
+                      // 支持策略名称的模糊匹配
+                      return optionText.includes(searchText);
+                    }}
+                    notFoundContent="未找到匹配的策略"
+                  >
                     {strategies.map(strategy => (
                       <Option key={strategy.name} value={strategy.name}>
                         {strategy.display_name}
@@ -665,6 +721,13 @@ const BacktestManager: React.FC = () => {
                     style={{ width: '100%' }}
                     showTime
                     format="YYYY-MM-DD HH:mm:ss"
+                    presets={[
+                      { label: '过去1个月', value: [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')] },
+                      { label: '过去3个月', value: [dayjs().subtract(3, 'month').startOf('day'), dayjs().endOf('day')] },
+                      { label: '过去6个月', value: [dayjs().subtract(6, 'month').startOf('day'), dayjs().endOf('day')] },
+                      { label: '过去1年', value: [dayjs().subtract(1, 'year').startOf('day'), dayjs().endOf('day')] },
+                      { label: '过去2年', value: [dayjs().subtract(2, 'year').startOf('day'), dayjs().endOf('day')] },
+                    ]}
                   />
                 </Form.Item>
 

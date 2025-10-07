@@ -155,8 +155,9 @@ async def get_backtest_results(
     min_win_ratio: Optional[float] = None,
     max_win_ratio: Optional[float] = None,
     page: int = 1,
-    per_page: int = 20,
-    latest_only: bool = True
+    per_page: int = 10,
+    sort_by: Optional[str] = None,  # 排序字段
+    sort_order: Optional[str] = 'desc'  # 排序方向：asc/desc
 ):
     """获取回测结果列表"""
     try:
@@ -178,11 +179,12 @@ async def get_backtest_results(
                 max_pnl_ratio=max_pnl_ratio,
                 min_win_ratio=min_win_ratio,
                 max_win_ratio=max_win_ratio,
-                latest_only=latest_only,
                 page=page,
-                per_page=per_page
+                per_page=per_page,
+                sort_by=sort_by,
+                sort_order=sort_order
             )
-            print(f"INFO: 数据库分页完成，当前页: {page}, 每页: {per_page}, 总记录数: {result_data['total']}")
+            print(f"INFO: 数据库分页完成，当前页: {page}, 每页: {per_page}, 总记录数: {result_data['total']}, 排序字段: {sort_by}, 排序方向: {sort_order}")
         except Exception as db_error:
             print(f"ERROR: 数据库查询失败 - {str(db_error)}")
             raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(db_error)}")
@@ -526,7 +528,7 @@ async def get_backtest_status(task_id: str):
 async def get_backtest_tasks(
     status: Optional[str] = None,
     page: int = 1,
-    per_page: int = 20
+    per_page: int = 10
 ):
     """获取回测任务列表"""
     try:

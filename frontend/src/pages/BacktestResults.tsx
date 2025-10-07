@@ -17,6 +17,7 @@ import {
   InputNumber,
   Pagination
 } from 'antd';
+import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
 import { 
   ReloadOutlined, 
   EyeOutlined,
@@ -44,12 +45,24 @@ const BacktestResults: React.FC = () => {
   });
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 20,
+    pageSize: 10,
     total: 0,
     totalPages: 0
   });
+  const [sortConfig, setSortConfig] = useState<{
+    field: string | null;
+    order: 'asc' | 'desc' | null;
+  }>({
+    field: null,
+    order: null
+  });
 
-  const fetchBacktestResults = async (page: number = 1, pageSize: number = 20) => {
+  const fetchBacktestResults = async (
+    page: number = 1, 
+    pageSize: number = 10,
+    sortBy?: string,
+    sortOrder?: 'asc' | 'desc'
+  ) => {
     try {
       setLoading(true);
       const params = {
@@ -63,6 +76,8 @@ const BacktestResults: React.FC = () => {
         max_pnl_ratio: filters.pnlRange?.[1],
         min_win_ratio: filters.winRatioRange?.[0],
         max_win_ratio: filters.winRatioRange?.[1],
+        sort_by: sortBy || undefined,
+        sort_order: sortOrder || undefined,
       };
       
       // 移除值为undefined的参数
@@ -100,7 +115,12 @@ const BacktestResults: React.FC = () => {
     const prev = prevFiltersRef.current;
     if (prev !== filters) {
       prevFiltersRef.current = filters;
-      fetchBacktestResults(1, pagination.pageSize);
+      fetchBacktestResults(
+        1, 
+        pagination.pageSize, 
+        sortConfig.field || undefined, 
+        sortConfig.order || undefined
+      );
     }
   }, [filters]);
 
@@ -117,6 +137,18 @@ const BacktestResults: React.FC = () => {
       winRatioRange: null,
     });
     // 清除筛选后由 filters effect 触发刷新
+  };
+
+  const handleSort = (field: string) => {
+    let newOrder: 'asc' | 'desc' = 'desc';
+    
+    // 如果点击的是当前排序字段，则切换排序方向
+    if (sortConfig.field === field) {
+      newOrder = sortConfig.order === 'asc' ? 'desc' : 'asc';
+    }
+    
+    setSortConfig({ field, order: newOrder });
+    fetchBacktestResults(1, pagination.pageSize, field, newOrder);
   };
 
 
@@ -195,25 +227,28 @@ const BacktestResults: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const columns = [
+  const columns: ColumnsType<BacktestResult> = [
     {
       title: '股票代码',
       dataIndex: 'symbol',
       key: 'symbol',
-      width: 120,
       fixed: 'left' as const,
     },
     {
       title: '股票名称',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
+    },
+    {
+      title: '当前股价',
+      dataIndex: 'current_price',
+      key: 'current_price',
+      render: (value?: number) => (value != null ? value.toFixed(2) : '-'),
     },
     {
       title: '策略名称',
       dataIndex: 'strategy_name',
       key: 'strategy_name',
-      width: 120,
       render: (value: string) => {
         // 如果策略名称为null、undefined或空字符串，则不显示
         if (!value || value === 'null' || value === 'undefined') {
@@ -223,10 +258,9 @@ const BacktestResults: React.FC = () => {
       }
     },
     {
-      title: '趋势类型',
+      title: '当前趋势',
       dataIndex: 'trending_type',
       key: 'trending_type',
-      width: 120,
       render: (type: string) => {
         // 这里trending_type实际上是趋势阶段，不是策略类型
         const typeMap: Record<string, { text: string; color: string }> = {
@@ -243,10 +277,16 @@ const BacktestResults: React.FC = () => {
       }
     },
     {
-      title: '收益率',
+      title: (
+        <span 
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => handleSort('pnl_ratio')}
+        >
+          收益率 {sortConfig.field === 'pnl_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+        </span>
+      ),
       dataIndex: 'pnl_ratio',
       key: 'pnl_ratio',
-      width: 100,
       render: (value: number) => (
         <span style={{ 
           color: value >= 0 ? '#ff4d4f' : '#52c41a',
@@ -255,36 +295,18 @@ const BacktestResults: React.FC = () => {
           {(value * 100).toFixed(2)}%
         </span>
       ),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.pnl_ratio - b.pnl_ratio,
     },
     {
-      title: '夏普比率',
-      dataIndex: 'sharp_ratio',
-      key: 'sharp_ratio',
-      width: 100,
-      render: (value: number) => value.toFixed(2),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.sharp_ratio - b.sharp_ratio,
-    },
-    {
-      title: '最大回撤',
-      dataIndex: 'max_drawdown',
-      key: 'max_drawdown',
-      width: 100,
-      render: (value: number) => (
-        <span style={{ 
-          color: '#ff4d4f',
-          fontWeight: 'bold'
-        }}>
-          {(value * 100).toFixed(2)}%
+      title: (
+        <span 
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => handleSort('win_ratio')}
+        >
+          胜率 {sortConfig.field === 'win_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
         </span>
       ),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.max_drawdown - b.max_drawdown,
-    },
-    {
-      title: '胜率',
       dataIndex: 'win_ratio',
       key: 'win_ratio',
-      width: 80,
       render: (value: number) => (
         <span style={{ 
           color: value >= 0.5 ? '#ff4d4f' : '#52c41a',
@@ -293,45 +315,65 @@ const BacktestResults: React.FC = () => {
           {(value * 100).toFixed(1)}%
         </span>
       ),
-      sorter: (a: BacktestResult, b: BacktestResult) => a.win_ratio - b.win_ratio,
+    },
+    {
+      title: (
+        <span 
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => handleSort('sharp_ratio')}
+        >
+          夏普比率 {sortConfig.field === 'sharp_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+        </span>
+      ),
+      dataIndex: 'sharp_ratio',
+      key: 'sharp_ratio',
+      render: (value: number) => value.toFixed(2),
+    },
+    {
+      title: (
+        <span 
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          onClick={() => handleSort('max_drawdown')}
+        >
+          最大回撤 {sortConfig.field === 'max_drawdown' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
+        </span>
+      ),
+      dataIndex: 'max_drawdown',
+      key: 'max_drawdown',
+      render: (value: number) => (
+        <span style={{ 
+          color: '#ff4d4f',
+          fontWeight: 'bold'
+        }}>
+          {(value * 100).toFixed(2)}%
+        </span>
+      ),
+    },
+    {
+      title: '开始时间',
+      dataIndex: 'backtest_start_time',
+      key: 'backtest_start_time',
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
+    },
+    {
+      title: '结束时间',
+      dataIndex: 'backtest_end_time',
+      key: 'backtest_end_time',
+      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
     },
     {
       title: '开仓次数',
       dataIndex: 'open_count',
       key: 'open_count',
-      width: 80,
     },
     {
       title: '平仓次数',
       dataIndex: 'close_count',
       key: 'close_count',
-      width: 80,
-    },
-    {
-      title: '回测开始',
-      dataIndex: 'backtest_start_time',
-      key: 'backtest_start_time',
-      width: 120,
-      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
-    },
-    {
-      title: '回测结束',
-      dataIndex: 'backtest_end_time',
-      key: 'backtest_end_time',
-      width: 120,
-      render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
-    },
-    {
-      title: '当前股价',
-      dataIndex: 'current_price',
-      key: 'current_price',
-      width: 100,
-      render: (value?: number) => (value != null ? value.toFixed(2) : '-'),
     },
     {
       title: '操作',
       key: 'action',
-      width: 80,
       fixed: 'right' as const,
       render: (_: any, record: BacktestResult) => (
         <Tooltip title="查看详情">
@@ -516,7 +558,7 @@ const BacktestResults: React.FC = () => {
           rowKey={(record) => `${record.symbol}_${record.backtest_start_time}`}
           loading={loading}
           pagination={false} // 使用自定义分页
-          scroll={{ x: 1200 }}
+          tableLayout="auto"
           size="small"
         />
         
@@ -527,11 +569,21 @@ const BacktestResults: React.FC = () => {
             total={pagination.total}
             onChange={(page, pageSize) => {
               setPagination(prev => ({ ...prev, current: page, pageSize: pageSize }));
-              fetchBacktestResults(page, pageSize);
+              fetchBacktestResults(
+                page, 
+                pageSize, 
+                sortConfig.field || undefined, 
+                sortConfig.order || undefined
+              );
             }}
             onShowSizeChange={(current, size) => {
               setPagination(prev => ({ ...prev, current: 1, pageSize: size }));
-              fetchBacktestResults(1, size);
+              fetchBacktestResults(
+                1, 
+                size, 
+                sortConfig.field || undefined, 
+                sortConfig.order || undefined
+              );
             }}
             showSizeChanger
             pageSizeOptions={["10","20","50","100"]}

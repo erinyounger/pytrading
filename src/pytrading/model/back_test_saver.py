@@ -35,7 +35,7 @@ class BackTestSaver(ABC):
         max_win_ratio=None,
         limit=100,
         page=1,
-        per_page=20,
+        per_page=10,
     ):
         """获取所有回测结果，支持分页与筛选（在数据库层执行）"""
         raise NotImplementedError("Must implement get_all_results method")

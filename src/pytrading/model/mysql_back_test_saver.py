@@ -48,39 +48,19 @@ class MySQLBackTestSaver(BackTestSaver):
                         trending_type=None,
                         min_pnl_ratio=None, max_pnl_ratio=None,
                         min_win_ratio=None, max_win_ratio=None,
-                        latest_only=True,
-                        limit=100, page=1, per_page=20):
-        """获取所有回测结果，支持分页与筛选（全部在数据库查询层完成）"""
+                        limit=100, page=1, per_page=10,
+                        sort_by=None, sort_order='desc'):
+        """获取所有回测结果，支持分页、筛选和排序（全部在数据库查询层完成）"""
         logger.info(
             f"从MySQL获取回测结果，参数: symbol={symbol}, trending_type={trending_type},"
             f" pnl[{min_pnl_ratio},{max_pnl_ratio}], win[{min_win_ratio},{max_win_ratio}],"
-            f" page={page}, per_page={per_page}"
+            f" page={page}, per_page={per_page}, sort_by={sort_by}, sort_order={sort_order}"
         )
         session = self.mysql_client.get_session()
         
         try:
-            # 基础查询：同一标的仅保留最新记录（按 created_at 最大）
-            if latest_only:
-                latest_sub = (
-                    session.query(
-                        BackTestResult.symbol.label('symbol'),
-                        func.max(BackTestResult.created_at).label('max_created_at')
-                    )
-                    .group_by(BackTestResult.symbol)
-                    .subquery()
-                )
-                query = (
-                    session.query(BackTestResult)
-                    .join(
-                        latest_sub,
-                        and_(
-                            BackTestResult.symbol == latest_sub.c.symbol,
-                            BackTestResult.created_at == latest_sub.c.max_created_at
-                        )
-                    )
-                )
-            else:
-                query = session.query(BackTestResult)
+            # 基础查询
+            query = session.query(BackTestResult)
             
             # 应用过滤条件
             if symbol:
@@ -112,8 +92,27 @@ class MySQLBackTestSaver(BackTestSaver):
             # 计算分页参数
             offset = (page - 1) * per_page
             
-            # 应用分页和排序
-            query = query.order_by(BackTestResult.created_at.desc()).offset(offset).limit(per_page)
+            # 应用排序
+            sort_field_map = {
+                'pnl_ratio': BackTestResult.pnl_ratio,
+                'win_ratio': BackTestResult.win_ratio,
+                'sharp_ratio': BackTestResult.sharp_ratio,
+                'max_drawdown': BackTestResult.max_drawdown,
+                'created_at': BackTestResult.created_at
+            }
+            
+            if sort_by and sort_by in sort_field_map:
+                sort_field = sort_field_map[sort_by]
+                if sort_order.lower() == 'asc':
+                    query = query.order_by(sort_field.asc())
+                else:
+                    query = query.order_by(sort_field.desc())
+            else:
+                # 默认按创建时间倒序
+                query = query.order_by(BackTestResult.created_at.desc())
+            
+            # 应用分页
+            query = query.offset(offset).limit(per_page)
             
             results = []
             for row in query.all():
