@@ -275,16 +275,24 @@ const BacktestManager: React.FC = () => {
     {
       title: '参数数量',
       key: 'paramCount',
-      render: (_: any, record: Strategy) => record.parameters?.length || 0,
+      align: 'center' as const,
+      render: (_: any, record: Strategy) => (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {record.parameters?.length || 0}
+        </span>
+      ),
     },
     {
       title: '操作',
       key: 'action',
+      align: 'center' as const,
+      width: 100,
       render: (_: any, record: Strategy) => (
         <Button 
-          type="link" 
+          type="text" 
           icon={<EyeOutlined />}
           onClick={() => showStrategyDetail(record)}
+          size="small"
         >
           查看详情
         </Button>
@@ -311,23 +319,23 @@ const BacktestManager: React.FC = () => {
       title: '股票数量',
       dataIndex: 'symbol_count',
       key: 'symbol_count',
+      align: 'center' as const,
       sorter: (a: BacktestTaskInfo, b: BacktestTaskInfo) => (a.symbol_count || 0) - (b.symbol_count || 0),
       render: (count: number, record: BacktestTaskInfo) => (
-        <Space>
-          <Tag
-            color="blue"
-            style={{ cursor: 'pointer' }}
-            onClick={() => handleExpand(!(expandedRowKeys || []).includes(record.id), record)}
-          >
-            {count} 只
-          </Tag>
-        </Space>
+        <Tag
+          color="blue"
+          style={{ cursor: 'pointer', fontVariantNumeric: 'tabular-nums' }}
+          onClick={() => handleExpand(!(expandedRowKeys || []).includes(record.id), record)}
+        >
+          {count} 只
+        </Tag>
       ),
     },
     {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
+      align: 'center' as const,
       sorter: (a: BacktestTaskInfo, b: BacktestTaskInfo) => {
         const order: Record<string, number> = { pending: 0, running: 1, completed: 2, failed: -1, cancelled: -2 };
         return (order[a.status] ?? 0) - (order[b.status] ?? 0);
@@ -383,10 +391,11 @@ const BacktestManager: React.FC = () => {
     {
       title: '操作',
       key: 'action',
+      align: 'center' as const,
       render: (_: any, record: BacktestTaskInfo) => (
         <Space size="small">
           <Button 
-            type="link" 
+            type="text" 
             size="small"
             icon={<FileTextOutlined />}
             onClick={() => {
@@ -397,7 +406,7 @@ const BacktestManager: React.FC = () => {
             日志
           </Button>
           <Button 
-            type="link" 
+            type="text" 
             size="small"
             icon={<EyeOutlined />}
             onClick={() => showTaskDetail(record)}
@@ -416,12 +425,15 @@ const BacktestManager: React.FC = () => {
       label: '回测任务',
       children: (
         <Card 
+          bordered={false}
+          bodyStyle={{ padding: '16px' }}
           extra={
-            <Space>
+            <Space size="small">
               <Button 
                 icon={<ReloadOutlined />}
                 onClick={() => fetchBacktestTasks()}
                 loading={loading}
+                size="small"
               >
                 刷新
               </Button>
@@ -429,6 +441,7 @@ const BacktestManager: React.FC = () => {
                 type="primary" 
                 icon={<PlusOutlined />}
                 onClick={handleOpenCreateModal}
+                size="small"
               >
                 创建任务
               </Button>
@@ -464,20 +477,26 @@ const BacktestManager: React.FC = () => {
       title: '当前价格',
       dataIndex: 'current_price',
       key: 'current_price',
-                    render: (price: number) => price ? price.toFixed(2) : '-',
+                    align: 'right' as const,
+                    render: (price: number) => (
+                      <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        {price ? price.toFixed(2) : '-'}
+                      </span>
+                    ),
                     sorter: (a: BacktestResult, b: BacktestResult) => (Number(a.current_price) || 0) - (Number(b.current_price) || 0),
                   },
                   {
                     title: '累计收益率',
                     dataIndex: 'pnl_ratio',
                     key: 'pnl_ratio',
+                    align: 'right' as const,
                     render: (ratio: number) => {
                       const val = Number(ratio) || 0;
                       // 金融配色（A股/港股常用）：上涨=红色，下跌=绿色
                       const color = val > 0.0001 ? '#f5222d' : val < -0.0001 ? '#52c41a' : '#8c8c8c';
                       const Icon = val > 0 ? CaretUpOutlined : val < 0 ? CaretDownOutlined : undefined;
                       return (
-                        <span style={{ color, fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ color, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
                           {Icon ? <Icon style={{ color, marginRight: 4 }} /> : null}
                           {(val * 100).toFixed(2)}%
         </span>
@@ -489,12 +508,13 @@ const BacktestManager: React.FC = () => {
                     title: '胜率',
                     dataIndex: 'win_ratio',
                     key: 'win_ratio',
+                    align: 'right' as const,
                     render: (ratio: number) => {
                       const val = Number(ratio) || 0;
                       // 避免与涨跌颜色冲突：使用蓝/橙/灰
                       const color = val >= 0.6 ? '#1677ff' : val >= 0.4 ? '#faad14' : '#8c8c8c';
                       return (
-                        <span style={{ color, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                        <span style={{ color, fontWeight: 500, fontVariantNumeric: 'tabular-nums' }}>
                           {(val * 100).toFixed(1)}%
         </span>
                       );
@@ -504,9 +524,11 @@ const BacktestManager: React.FC = () => {
                   {
                     title: '操作',
                     key: 'action',
+                    align: 'center' as const,
+                    width: 80,
                     render: (_: any, result: BacktestResult) => (
                       <Button
-                        type="link"
+                        type="text"
                         size="small"
                         icon={<FileTextOutlined />}
                         onClick={() => {
@@ -543,6 +565,7 @@ const BacktestManager: React.FC = () => {
               },
               showSizeChanger: true,
               showTotal: (total) => `共 ${total} 条记录`,
+              size: 'small' as const,
             }}
           />
         </Card>
@@ -553,11 +576,14 @@ const BacktestManager: React.FC = () => {
       label: '策略管理',
       children: (
         <Card
+          bordered={false}
+          bodyStyle={{ padding: '16px' }}
           extra={
           <Button
               icon={<ReloadOutlined />}
               onClick={() => fetchInitialData()}
               loading={loading}
+              size="small"
             >
               刷新
             </Button>
@@ -578,12 +604,12 @@ const BacktestManager: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Tabs defaultActiveKey="tasks" items={tabItems} />
+    <div style={{ padding: '16px', background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
+      <Tabs defaultActiveKey="tasks" items={tabItems} type="card" />
 
       {/* 创建回测任务模态框 */}
       <Modal
-        title="创建回测任务"
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>创建回测任务</span>}
         open={createModalVisible}
         onCancel={() => {
           setCreateModalVisible(false);
@@ -591,6 +617,7 @@ const BacktestManager: React.FC = () => {
         }}
         footer={null}
         width={600}
+        bodyStyle={{ padding: '20px' }}
       >
               <Form
                 form={form}
@@ -755,11 +782,12 @@ const BacktestManager: React.FC = () => {
 
       {/* 策略详情模态框 */}
       <Modal
-        title="策略详情"
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>策略详情</span>}
         open={strategyDetailModal}
         onCancel={() => setStrategyDetailModal(false)}
         footer={null}
         width={600}
+        bodyStyle={{ padding: '20px' }}
       >
         {selectedStrategy && (
           <div>
@@ -775,7 +803,7 @@ const BacktestManager: React.FC = () => {
               </Descriptions.Item>
             </Descriptions>
             
-            <Card title="策略参数" size="small" style={{ marginTop: 16 }}>
+            <Card title="策略参数" size="small" bordered={false} style={{ marginTop: 16 }} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
               {selectedStrategy.parameters && selectedStrategy.parameters.length > 0 ? (
                     <Table
                       dataSource={selectedStrategy.parameters}
@@ -799,10 +827,11 @@ const BacktestManager: React.FC = () => {
 
       {/* 任务详情模态框 */}
       <Modal
-        title="任务详情"
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>任务详情</span>}
         open={taskDetailModal}
         onCancel={() => setTaskDetailModal(false)}
         footer={null}
+        bodyStyle={{ padding: '20px' }}
         width={700}
       >
         {selectedTask && (
@@ -875,7 +904,11 @@ const BacktestManager: React.FC = () => {
 
       {/* 任务日志模态框 */}
       <Modal
-        title={`任务日志 - ${selectedTask?.task_id || ''}`}
+        title={
+          <span style={{ fontSize: '16px', fontWeight: 500 }}>
+            任务日志 - {selectedTask?.task_id || ''}
+          </span>
+        }
         open={taskLogModal}
         onCancel={() => setTaskLogModal(false)}
         footer={null}
@@ -893,7 +926,11 @@ const BacktestManager: React.FC = () => {
 
       {/* 个股日志模态框 */}
       <Modal
-        title={`个股日志 - ${selectedSymbol}`}
+        title={
+          <span style={{ fontSize: '16px', fontWeight: 500 }}>
+            个股日志 - {selectedSymbol}
+          </span>
+        }
         open={resultLogModal}
         onCancel={() => {
           setResultLogModal(false);

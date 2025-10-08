@@ -210,7 +210,7 @@ def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, st
         backtest_initial_cash=200000000000,
         backtest_commission_ratio=0.0001,
         backtest_slippage_ratio=0.0001,
-        serv_addr="192.168.3.139:7001"
+        # serv_addr="192.168.3.139:7001"
         )
     # 清理上下文
     clear_log_context()

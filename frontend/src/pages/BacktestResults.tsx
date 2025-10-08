@@ -243,7 +243,12 @@ const BacktestResults: React.FC = () => {
       title: '当前股价',
       dataIndex: 'current_price',
       key: 'current_price',
-      render: (value?: number) => (value != null ? value.toFixed(2) : '-'),
+      align: 'right' as const,
+      render: (value?: number) => (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {value != null ? value.toFixed(2) : '-'}
+        </span>
+      ),
     },
     {
       title: '策略名称',
@@ -287,10 +292,12 @@ const BacktestResults: React.FC = () => {
       ),
       dataIndex: 'pnl_ratio',
       key: 'pnl_ratio',
+      align: 'right' as const,
       render: (value: number) => (
         <span style={{ 
           color: value >= 0 ? '#ff4d4f' : '#52c41a',
-          fontWeight: 'bold'
+          fontWeight: 500,
+          fontVariantNumeric: 'tabular-nums'
         }}>
           {(value * 100).toFixed(2)}%
         </span>
@@ -307,10 +314,12 @@ const BacktestResults: React.FC = () => {
       ),
       dataIndex: 'win_ratio',
       key: 'win_ratio',
+      align: 'right' as const,
       render: (value: number) => (
         <span style={{ 
           color: value >= 0.5 ? '#ff4d4f' : '#52c41a',
-          fontWeight: 'bold'
+          fontWeight: 500,
+          fontVariantNumeric: 'tabular-nums'
         }}>
           {(value * 100).toFixed(1)}%
         </span>
@@ -327,7 +336,12 @@ const BacktestResults: React.FC = () => {
       ),
       dataIndex: 'sharp_ratio',
       key: 'sharp_ratio',
-      render: (value: number) => value.toFixed(2),
+      align: 'right' as const,
+      render: (value: number) => (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {value.toFixed(2)}
+        </span>
+      ),
     },
     {
       title: (
@@ -340,10 +354,12 @@ const BacktestResults: React.FC = () => {
       ),
       dataIndex: 'max_drawdown',
       key: 'max_drawdown',
+      align: 'right' as const,
       render: (value: number) => (
         <span style={{ 
           color: '#ff4d4f',
-          fontWeight: 'bold'
+          fontWeight: 500,
+          fontVariantNumeric: 'tabular-nums'
         }}>
           {(value * 100).toFixed(2)}%
         </span>
@@ -365,22 +381,27 @@ const BacktestResults: React.FC = () => {
       title: '开仓次数',
       dataIndex: 'open_count',
       key: 'open_count',
+      align: 'center' as const,
     },
     {
       title: '平仓次数',
       dataIndex: 'close_count',
       key: 'close_count',
+      align: 'center' as const,
     },
     {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
+      align: 'center' as const,
+      width: 80,
       render: (_: any, record: BacktestResult) => (
         <Tooltip title="查看详情">
           <Button 
             type="text" 
             icon={<EyeOutlined />} 
             onClick={() => showDetail(record)}
+            size="small"
           />
         </Tooltip>
       ),
@@ -388,119 +409,24 @@ const BacktestResults: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card title="回测结果" style={{ marginBottom: '16px' }}>
-        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
-          <Col xs={24} sm={12} md={4}>
-            <Search
-              placeholder="搜索股票代码或名称"
-              allowClear
-              onSearch={(value) => {
-                handleFilterChange('symbol', value);
-              }}
-              style={{ width: '100%' }}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder="选择趋势类型"
-              allowClear
-              style={{ width: '100%' }}
-              value={filters.trending_type}
-              onChange={(value) => {
-                handleFilterChange('trending_type', value);
-              }}
-            >
-              {availableStrategies.map(strategy => (
-                <Option key={strategy} value={strategy}>
-                  {strategy}
-                </Option>
-              ))}
-            </Select>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <RangePicker
-              placeholder={['开始日期', '结束日期']}
-              style={{ width: '100%' }}
-              value={filters.dateRange}
-              onChange={(dates) => {
-                handleFilterChange('dateRange', dates);
-              }}
-            />
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <InputNumber
-                placeholder="最小收益率%"
-                style={{ width: '50%' }}
-                value={filters.pnlRange?.[0]}
-                onChange={(value) => {
-                  const newRange = [value, filters.pnlRange?.[1]].filter(v => v !== undefined);
-                  handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
-                }}
-                min={-100}
-                max={1000}
-                precision={2}
-              />
-              <span>-</span>
-              <InputNumber
-                placeholder="最大收益率%"
-                style={{ width: '50%' }}
-                value={filters.pnlRange?.[1]}
-                onChange={(value) => {
-                  const newRange = [filters.pnlRange?.[0], value].filter(v => v !== undefined);
-                  handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
-                }}
-                min={-100}
-                max={1000}
-                precision={2}
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <InputNumber
-                placeholder="最小胜率%"
-                style={{ width: '50%' }}
-                value={filters.winRatioRange?.[0]}
-                onChange={(value) => {
-                  const newRange = [value, filters.winRatioRange?.[1]].filter(v => v !== undefined);
-                  handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
-                }}
-                min={0}
-                max={100}
-                precision={1}
-              />
-              <span>-</span>
-              <InputNumber
-                placeholder="最大胜率%"
-                style={{ width: '50%' }}
-                value={filters.winRatioRange?.[1]}
-                onChange={(value) => {
-                  const newRange = [filters.winRatioRange?.[0], value].filter(v => v !== undefined);
-                  handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
-                }}
-                min={0}
-                max={100}
-                precision={1}
-              />
-            </div>
-          </Col>
-        </Row>
-        
-        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
-          <Col span={24}>
-            <Space wrap>
+    <div style={{ padding: '16px', background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
+      <Card 
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '16px', fontWeight: 500 }}>回测结果</span>
+            <Space size="small">
               <Button 
                 icon={<ReloadOutlined />} 
                 onClick={() => fetchBacktestResults(pagination.current, pagination.pageSize)}
                 loading={loading}
+                size="small"
               >
                 刷新
               </Button>
               <Button 
                 onClick={clearAllFilters}
                 disabled={!filters.symbol && !filters.trending_type && !filters.dateRange && !filters.pnlRange && !filters.winRatioRange}
+                size="small"
               >
                 清除筛选
               </Button>
@@ -508,61 +434,192 @@ const BacktestResults: React.FC = () => {
                 icon={<DownloadOutlined />} 
                 onClick={exportData}
                 disabled={data.length === 0}
+                size="small"
               >
                 导出
               </Button>
-              <span style={{ color: '#666', fontSize: '14px' }}>
-                共 {pagination.total} 条记录
-                {data.length > 0 && (
-                  <>
-                    | 平均收益率: <span style={{ 
-                      color: (data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length) >= 0 ? '#ff4d4f' : '#52c41a',
-                      fontWeight: 'bold'
-                    }}>
-                      {(data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length * 100).toFixed(2)}%
-                    </span>
-                    | 平均胜率: <span style={{ 
-                      color: (data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
-                      fontWeight: 'bold'
-                    }}>
-                      {(data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length * 100).toFixed(1)}%
-                    </span>
-                  </>
-                )}
-              </span>
             </Space>
-          </Col>
-        </Row>
-        
-        <Row gutter={[16, 16]} style={{ marginBottom: '16px' }}>
-          <Col span={24}>
-            <Space wrap>
-              <span style={{ color: '#666', fontSize: '14px' }}>快速筛选:</span>
-              {quickFilters.map((filter, index) => (
-                <Button 
-                  key={index}
+          </div>
+        }
+        bordered={false}
+        bodyStyle={{ padding: '12px 16px' }}
+        headStyle={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}
+      >
+        {/* 筛选栏 - 紧凑布局 */}
+        <div style={{ 
+          background: '#fafafa', 
+          padding: '12px', 
+          borderRadius: '6px', 
+          marginBottom: '12px' 
+        }}>
+          <Row gutter={[8, 8]}>
+            <Col xs={24} sm={12} md={6} lg={5}>
+              <Search
+                placeholder="搜索股票代码或名称"
+                allowClear
+                onSearch={(value) => {
+                  handleFilterChange('symbol', value);
+                }}
+                style={{ width: '100%' }}
+                size="small"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={6} lg={4}>
+              <Select
+                placeholder="选择趋势类型"
+                allowClear
+                style={{ width: '100%' }}
+                value={filters.trending_type}
+                onChange={(value) => {
+                  handleFilterChange('trending_type', value);
+                }}
+                size="small"
+              >
+                {availableStrategies.map(strategy => (
+                  <Option key={strategy} value={strategy}>
+                    {strategy}
+                  </Option>
+                ))}
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={8} lg={6}>
+              <RangePicker
+                placeholder={['开始日期', '结束日期']}
+                style={{ width: '100%' }}
+                value={filters.dateRange}
+                onChange={(dates) => {
+                  handleFilterChange('dateRange', dates);
+                }}
+                size="small"
+              />
+            </Col>
+            <Col xs={12} sm={8} md={4} lg={4}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <InputNumber
+                  placeholder="最小收益%"
+                  style={{ width: '100%' }}
+                  value={filters.pnlRange?.[0]}
+                  onChange={(value) => {
+                    const newRange = [value, filters.pnlRange?.[1]].filter(v => v !== undefined);
+                    handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={-100}
+                  max={1000}
+                  precision={2}
                   size="small"
-                  type="default"
-                  onClick={filter.onClick}
-                >
-                  {filter.label}
-                </Button>
-              ))}
-            </Space>
-          </Col>
-        </Row>
+                />
+                <span style={{ color: '#999' }}>~</span>
+                <InputNumber
+                  placeholder="最大收益%"
+                  style={{ width: '100%' }}
+                  value={filters.pnlRange?.[1]}
+                  onChange={(value) => {
+                    const newRange = [filters.pnlRange?.[0], value].filter(v => v !== undefined);
+                    handleFilterChange('pnlRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={-100}
+                  max={1000}
+                  precision={2}
+                  size="small"
+                />
+              </div>
+            </Col>
+            <Col xs={12} sm={8} md={4} lg={5}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <InputNumber
+                  placeholder="最小胜率%"
+                  style={{ width: '100%' }}
+                  value={filters.winRatioRange?.[0]}
+                  onChange={(value) => {
+                    const newRange = [value, filters.winRatioRange?.[1]].filter(v => v !== undefined);
+                    handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  max={100}
+                  precision={1}
+                  size="small"
+                />
+                <span style={{ color: '#999' }}>~</span>
+                <InputNumber
+                  placeholder="最大胜率%"
+                  style={{ width: '100%' }}
+                  value={filters.winRatioRange?.[1]}
+                  onChange={(value) => {
+                    const newRange = [filters.winRatioRange?.[0], value].filter(v => v !== undefined);
+                    handleFilterChange('winRatioRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  max={100}
+                  precision={1}
+                  size="small"
+                />
+              </div>
+            </Col>
+          </Row>
+        </div>
+
+        {/* 快速筛选和统计信息 */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '12px',
+          flexWrap: 'wrap',
+          gap: '8px'
+        }}>
+          <Space size="small" wrap>
+            <span style={{ color: '#8c8c8c', fontSize: '13px' }}>快速筛选:</span>
+            {quickFilters.map((filter, index) => (
+              <Button 
+                key={index}
+                size="small"
+                type="text"
+                onClick={filter.onClick}
+                style={{ height: '24px', padding: '0 8px' }}
+              >
+                {filter.label}
+              </Button>
+            ))}
+          </Space>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
+            <span style={{ color: '#8c8c8c' }}>
+              共 <span style={{ color: '#1890ff', fontWeight: 500 }}>{pagination.total}</span> 条
+            </span>
+            {data.length > 0 && (
+              <>
+                <span style={{ color: '#8c8c8c' }}>
+                  平均收益: <span style={{ 
+                    color: (data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length) >= 0 ? '#ff4d4f' : '#52c41a',
+                    fontWeight: 500
+                  }}>
+                    {(data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length * 100).toFixed(2)}%
+                  </span>
+                </span>
+                <span style={{ color: '#8c8c8c' }}>
+                  平均胜率: <span style={{ 
+                    color: (data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
+                    fontWeight: 500
+                  }}>
+                    {(data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length * 100).toFixed(1)}%
+                  </span>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
 
         <Table
           columns={columns}
           dataSource={data}
           rowKey={(record) => `${record.symbol}_${record.backtest_start_time}`}
           loading={loading}
-          pagination={false} // 使用自定义分页
+          pagination={false}
           tableLayout="auto"
           size="small"
+          scroll={{ x: 'max-content' }}
         />
         
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
           <Pagination
             current={pagination.current}
             pageSize={pagination.pageSize}
@@ -589,21 +646,23 @@ const BacktestResults: React.FC = () => {
             pageSizeOptions={["10","20","50","100"]}
             showQuickJumper
             showTotal={(total) => `共 ${total} 条记录`}
+            size="small"
           />
         </div>
       </Card>
 
       <Modal
-        title="回测详情"
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>回测详情</span>}
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={800}
+        bodyStyle={{ padding: '16px' }}
       >
         {selectedResult && (
-          <Row gutter={[16, 16]}>
+          <Row gutter={[12, 12]}>
             <Col span={24}>
-              <Card title="基本信息" size="small">
+              <Card title="基本信息" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
                 <Row gutter={[16, 16]}>
                   <Col span={8}>
                     <Statistic title="股票代码" value={selectedResult.symbol} />
@@ -625,7 +684,7 @@ const BacktestResults: React.FC = () => {
             </Col>
             
             <Col span={24}>
-              <Card title="收益指标" size="small">
+              <Card title="收益指标" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
                 <Row gutter={[16, 16]}>
                   <Col span={8}>
                     <Statistic 
@@ -663,7 +722,7 @@ const BacktestResults: React.FC = () => {
             </Col>
 
             <Col span={24}>
-              <Card title="交易统计" size="small">
+              <Card title="交易统计" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
                 <Row gutter={[16, 16]}>
                   <Col span={6}>
                     <Statistic title="开仓次数" value={selectedResult.open_count} />
@@ -698,7 +757,7 @@ const BacktestResults: React.FC = () => {
             </Col>
 
             <Col span={24}>
-              <Card title="回测周期" size="small">
+              <Card title="回测周期" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
                 <Row gutter={[16, 16]}>
                   <Col span={12}>
                     <Statistic 
