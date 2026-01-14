@@ -207,7 +207,7 @@ class MacdStrategy(StrategyBase):
         return False
 
     def is_golden_x(self, macd):
-        """判断是否是金叉"""
+        """判断是否是金叉 - MACD柱状图从负变正表示DIF上穿DEA"""
         if len(macd) < 2:
             return False
         # MACD指标从负变为正即为金叉
@@ -216,7 +216,7 @@ class MacdStrategy(StrategyBase):
         return False
 
     def is_dead_x(self, macd):
-        """判断是否是死叉"""
+        """判断是否是死叉 - MACD柱状图从正变负表示DIF下穿DEA"""
         if macd[-1] < 0 and macd[-2] >= 0:
             return True
         return False

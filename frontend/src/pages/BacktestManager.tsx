@@ -77,6 +77,32 @@ const BacktestManager: React.FC = () => {
   const [selectedSymbol, setSelectedSymbol] = useState<string>('');
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [taskResultsMap, setTaskResultsMap] = useState<Record<string, BacktestResult[]>>({});
+  const [resultSearchMap, setResultSearchMap] = useState<Record<string, string>>({});
+
+  // 高亮匹配文本
+  const highlightText = (text: string, keyword: string) => {
+    const source = text || '';
+    const kw = (keyword || '').trim();
+    if (!kw) return source;
+    const parts = kw
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (parts.length === 0) return source;
+    const regex = new RegExp(`(${parts.join('|')})`, 'gi');
+    const segments = source.split(regex);
+    return (
+      <>
+        {segments.map((seg, i) =>
+          regex.test(seg) ? (
+            <mark key={i} style={{ padding: 0, background: '#ffe58f' }}>{seg}</mark>
+          ) : (
+            <span key={i}>{seg}</span>
+          )
+        )}
+      </>
+    );
+  };
 
   useEffect(() => {
     fetchInitialData();
@@ -460,18 +486,28 @@ const BacktestManager: React.FC = () => {
               onExpand: handleExpand,
               expandedRowRender: (record) => {
                 const results = taskResultsMap[record.task_id] || [];
+                const searchText = (resultSearchMap[record.task_id] || '').toLowerCase().trim();
+                const searchParts = searchText.split(/\s+/).filter(Boolean);
+                const filteredResults = searchParts.length > 0
+                  ? results.filter(r => {
+                      const text = `${r.symbol || ''} ${r.name || ''}`.toLowerCase();
+                      return searchParts.every(p => text.includes(p));
+                    })
+                  : results;
                 const resultColumns = [
                   {
                     title: '标的',
       dataIndex: 'symbol',
       key: 'symbol',
                     sorter: (a: BacktestResult, b: BacktestResult) => (a.symbol || '').localeCompare(b.symbol || ''),
+                    render: (val: string) => highlightText(val, resultSearchMap[record.task_id] || ''),
     },
     {
                     title: '名称',
       dataIndex: 'name',
       key: 'name',
                     sorter: (a: BacktestResult, b: BacktestResult) => (a.name || '').localeCompare(b.name || ''),
+                    render: (val: string) => highlightText(val, resultSearchMap[record.task_id] || ''),
     },
     {
       title: '当前价格',
@@ -543,15 +579,31 @@ const BacktestManager: React.FC = () => {
                   },
                 ];
         return (
-                  <Table
-                    columns={resultColumns}
-                    dataSource={results}
-                    rowKey="id"
-                    pagination={{ pageSize: 10, showSizeChanger: true }}
-                    size="small"
-                    tableLayout="auto"
-                    loading={!taskResultsMap[record.task_id]}
-                  />
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <Text type="secondary" style={{ fontSize: 12 }}>共 {filteredResults.length} 条</Text>
+                      <Input
+                        size="small"
+                        allowClear
+                        prefix={<SearchOutlined />}
+                        placeholder="搜索标的/名称（空格分词）"
+                        value={resultSearchMap[record.task_id] || ''}
+                        onChange={(e) =>
+                          setResultSearchMap(prev => ({ ...prev, [record.task_id]: e.target.value }))
+                        }
+                        style={{ width: 220 }}
+                      />
+                    </div>
+                    <Table
+                      columns={resultColumns}
+                      dataSource={filteredResults}
+                      rowKey="id"
+                      pagination={{ pageSize: 10, showSizeChanger: true }}
+                      size="small"
+                      tableLayout="auto"
+                      loading={!taskResultsMap[record.task_id]}
+                    />
+                  </div>
                 );
               },
             }}
