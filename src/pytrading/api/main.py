@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 """
-@Description    ：FastAPI Web服务主入口
+@Description    ：FastAPI Web服务主入口 - xTrading量化交易系统
 @Author  ：Claude
 @Date    ：2025-08-16
+@Note   ：包名为pytrading，App应用名为xTrading
 """
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,8 +32,8 @@ from sqlalchemy import func
 from gm.api import set_token, get_constituents
 
 app = FastAPI(
-    title="PyTrading API",
-    description="量化交易系统Web API",
+    title="xTrading API",
+    description="xTrading量化交易系统Web API - Python策略包pytrading",
     version="1.0.0"
 )
 

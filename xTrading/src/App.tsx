@@ -1,52 +1,29 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
-import "./App.css";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/layout/Layout';
+import Dashboard from './pages/Dashboard';
+
+// Placeholder pages
+const Market = () => <div className="text-[var(--text-primary)]">实时行情页面开发中...</div>;
+const Backtest = () => <div className="text-[var(--text-primary)]">回测管理页面开发中...</div>;
+const Strategy = () => <div className="text-[var(--text-primary)]">策略管理页面开发中...</div>;
+const Signal = () => <div className="text-[var(--text-primary)]">交易信号页面开发中...</div>;
+const Risk = () => <div className="text-[var(--text-primary)]">风险管理页面开发中...</div>;
+const Report = () => <div className="text-[var(--text-primary)]">性能报告页面开发中...</div>;
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-  }
-
   return (
-    <div className="container">
-      <h1>Welcome to Tauri!</h1>
-
-      <div className="row">
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-
-      <p>{greetMsg}</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Dashboard />} />
+        <Route path="/market" element={<Market />} />
+        <Route path="/backtest" element={<Backtest />} />
+        <Route path="/strategy" element={<Strategy />} />
+        <Route path="/signal" element={<Signal />} />
+        <Route path="/risk" element={<Risk />} />
+        <Route path="/report" element={<Report />} />
+      </Route>
+    </Routes>
   );
 }
 

@@ -1,10 +1,11 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-
 """
-@Description    ：py_trading
+@Description    ：py_trading - xTrading量化交易系统的Python策略包
 @Author  ：EEric
 @Email  : yflying7@gmail.com
-@Date    ：2022/11/4 22:16 
+@Date    ：2022/11/4 22:16
+@Note   ：包名为pytrading，App应用名为xTrading
 """
 import os
 import sys

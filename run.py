@@ -1,10 +1,11 @@
 #!/usr/bin/env python 
 # -*- coding:utf-8 -*-　　
 """
-@Description    ：run
+@Description    ：xTrading - 量化交易系统启动脚本
 @Author  ：EEric
 @Email  : yflying7@gmail.com
-@Date    ：2022/11/20 15:15 
+@Date    ：2022/11/20 15:15
+@Note   ：Python策略包名为pytrading，App应用名为xTrading
 """
 
 import sys
