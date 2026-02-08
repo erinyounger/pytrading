@@ -38,7 +38,7 @@ call .venv\Scripts\activate.bat
 echo [INFO] Checking Python version in virtual environment...
 python --version
 
-:: Start Python script
+:: Start Python script with all arguments
 echo [INFO] Starting PyTrading...
 echo.
 python start.py %*

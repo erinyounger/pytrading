@@ -25,44 +25,20 @@ python start.py
 - ✅ 自动同步 Python 依赖（使用 uv sync）
 - ✅ 自动构建前端应用（npm run build）
 - ✅ 支持热更新开发模式
-- ✅ 智能进程管理（重启时自动杀掉现有进程）
+- ✅ 智能任务调度（5秒间隔检查）
 - ✅ 详细日志和错误提示
 
-**高级用法：**
+**启动方式：**
 
 ```bash
-# 快速重启服务（先杀掉现有进程，再启动新服务）
+# 默认方式：后台运行（推荐）
+python start.py
+
+# 重启服务：杀掉现有进程并启动新服务（支持热加载）
 python start.py --restart
 
-# 仅启动后端服务
-python start.py --service backend
-
-# 仅启动前端服务
-python start.py --service frontend
-
-# 仅重启后端服务（先杀掉后端进程）
-python start.py --restart --service backend
-
-# 仅重启前端服务（先杀掉前端进程）
-python start.py --restart --service frontend
-
-# 跳过前端构建（快速启动，适用于开发环境）
-python start.py --skip-build
-
-# 跳过前端依赖安装
-python start.py --no-deps
-
-# 重新初始化 Python 虚拟环境
-python start.py --init-venv
-
-# 重新初始化前端依赖和构建
-python start.py --init-frontend
-
-# 重新初始化所有环境（虚拟环境 + 前端）
+# 初始化环境：安装venv、前后端依赖，构建前端
 python start.py --init-all
-
-# 组合使用
-python start.py --service both --skip-build
 ```
 
 启动后访问：
@@ -73,6 +49,10 @@ python start.py --service both --skip-build
 **热更新说明：**
 - 前端修改会自动刷新浏览器
 - 后端代码修改会自动重启服务器
+
+**任务调度：**
+- 系统每5秒自动检查待执行的回测任务
+- 无需手动操作，任务会自动开始执行
 
 #### 传统启动方式
 
@@ -101,7 +81,7 @@ python run.py
 ### 二、功能介绍
 
 1. **一键启动**: 跨平台启动脚本，自动检测环境、安装依赖、启动服务
-2. **智能重启**: 自动检测并杀掉现有进程，避免端口冲突，支持快速重启
+2. **后台运行**: 服务默认在后台运行，无需用户交互，任务自动调度
 3. **掘金 3.0 集成**: 统一执行框架，策略编写与执行分离
 4. **并行回测**: 多股票策略并行回测，提高效率
 5. **数据库存储**: 回测结果自动保存到 MySQL 数据库
@@ -115,69 +95,30 @@ python run.py
 #### 基本启动
 
 ```bash
-# 启动所有服务（后端 + 前端，默认快速重启模式）
+# 启动所有服务（后端 + 前端，默认后台模式）
 python start.py
 
-# 快速重启服务（先杀掉现有进程，再启动新服务）
-python start.py --restart
-```
-
-#### 服务选择
-
-```bash
-# 仅启动后端服务
-python start.py --service backend
-
-# 仅启动前端服务
-python start.py --service frontend
-
-# 启动所有服务（默认）
-python start.py --service both
-```
-
-#### 重启服务
-
-```bash
-# 重启所有服务（先杀掉现有进程）
+# 重启服务（杀掉现有进程并启动新服务，支持热加载）
 python start.py --restart
 
-# 仅重启后端服务
-python start.py --restart --service backend
-
-# 仅重启前端服务
-python start.py --restart --service frontend
-```
-
-**重启功能说明：**
-- 自动检测并杀掉占用端口 8000（后端）和 3000（前端）的进程
-- 等待端口释放后再启动新服务，避免端口冲突
-- 支持跨平台（Windows/Linux/Mac）
-
-#### 初始化选项
-
-```bash
-# 重新初始化 Python 虚拟环境
-python start.py --init-venv
-
-# 重新初始化前端依赖和构建
-python start.py --init-frontend
-
-# 重新初始化所有环境（虚拟环境 + 前端）
+# 初始化环境（安装venv、前后端依赖，构建前端）
 python start.py --init-all
 ```
 
-#### 快速启动选项
+#### 重启功能说明
 
-```bash
-# 跳过前端构建（适用于开发环境，启动更快）
-python start.py --skip-build
+- **自动检测并杀掉**占用端口 8000（后端）和 3000（前端）的进程
+- **等待端口释放**后再启动新服务，避免端口冲突
+- **重启后服务继续在后台运行**
+- **支持热加载**：前后端代码修改会自动重启
+- **跨平台支持**（Windows/Linux/Mac）
 
-# 跳过前端依赖安装
-python start.py --no-deps
+#### 初始化功能说明
 
-# 组合使用：快速重启并跳过构建
-python start.py --restart --skip-build
-```
+- **重新创建虚拟环境**：删除现有的.venv并重新创建
+- **安装前后端依赖**：使用uv sync同步Python依赖，npm install安装前端依赖
+- **构建前端应用**：执行npm run build构建生产版本
+- **一站式初始化**：一个命令完成所有环境配置
 
 #### 查看帮助
 

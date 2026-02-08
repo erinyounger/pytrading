@@ -14,6 +14,7 @@ import os
 import sys
 import asyncio
 import threading
+import time
 from datetime import datetime, timedelta
 
 # 添加项目根目录到Python路径
@@ -72,7 +73,11 @@ def task_scheduler():
     """
     global task_scheduler_running
     logger.info("回测任务调度器启动")
-    
+
+    # 快速检查间隔：5秒（原来是30秒）
+    fast_check_interval = 5
+    check_count = 0
+
     while task_scheduler_running:
         try:
             # 获取数据库连接
@@ -84,29 +89,38 @@ def task_scheduler():
                 password=config.mysql_password
             )
             session = db_client.get_session()
-            
+
             # 查询pending状态的任务
             pending_tasks = session.query(BacktestTask).filter_by(status='pending').all()
-            
+
             if pending_tasks:
                 logger.info(f"发现 {len(pending_tasks)} 个待执行的回测任务")
-                
+
                 for task in pending_tasks:
                     logger.info(f"准备执行任务: {task.task_id}")
                     # 在新线程中执行任务,避免阻塞调度器
                     thread = threading.Thread(target=execute_backtest_task, args=(task.task_id,))
                     thread.daemon = True
                     thread.start()
-            
+
             session.close()
-            
+
+            # 动态调整检查频率
+            # 如果有pending任务，加快检查频率
+            if pending_tasks:
+                check_count += 1
+                # 如果连续3次检查都有任务，则继续快速检查
+                if check_count >= 3:
+                    # 继续快速检查
+                    check_count = 0
+
         except Exception as e:
             logger.error(f"任务调度器执行出错: {str(e)}")
-        
-        # 每30秒检查一次
-        import time
-        time.sleep(30)
-    
+
+        # 动态睡眠间隔：如果有pending任务，检查更频繁
+        sleep_time = fast_check_interval
+        time.sleep(sleep_time)
+
     logger.info("回测任务调度器停止")
 
 @app.on_event("startup")
