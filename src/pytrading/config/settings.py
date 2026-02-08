@@ -40,7 +40,7 @@ class Config:
 
     live_strategy_id: str = os.getenv('LIVE_STRATEGY_ID')
     live_trading_token: str = os.getenv('LIVE_TRADING_TOKEN')
-    symbols: List[str] = None
+    symbols: List[str] = os.getenv('SYMBOLS', "")
     index_symbol: str = os.getenv('INDEX_SYMBOL', 'SHSE.000300')
 
     # 设置回测时间
@@ -63,9 +63,7 @@ class Config:
         # 设置账号ID
         self.token = self.live_trading_token if self.trading_mode == MODE_LIVE else self.backtest_trading_token
         # 设置交易标的
-        env_symbols = os.getenv('SYMBOLS', '').strip()
-        if env_symbols:
-            self.symbols = [s.strip() for s in env_symbols.split(',') if s.strip()]
+        self.symbols = [s.strip() for s in self.symbols.strip().split(',') if s.strip()]
     
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)

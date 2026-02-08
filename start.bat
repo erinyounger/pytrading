@@ -19,6 +19,25 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Check if virtual environment exists, if not create it
+if not exist ".venv" (
+    echo [INFO] Virtual environment not found, creating .venv with Python 3.11...
+    python -m venv .venv
+    if errorlevel 1 (
+        echo [ERROR] Failed to create virtual environment
+        pause
+        exit /b 1
+    )
+)
+
+:: Activate virtual environment
+echo [INFO] Activating virtual environment...
+call .venv\Scripts\activate.bat
+
+:: Verify Python version in venv
+echo [INFO] Checking Python version in virtual environment...
+python --version
+
 :: Start Python script
 echo [INFO] Starting PyTrading...
 echo.

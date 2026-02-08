@@ -201,9 +201,11 @@ class PyTrading:
             clear_log_context()
 
 if __name__ == '__main__':
-    py_trading = PyTrading(
-        start_time="2024-06-01 09:00:00",
-        end_time="2025-06-30 15:00:00",
-        strategy_name="MACD"
-    )
-    py_trading.run_backtest_task("index_SHSE.000016_20251005180052")
+    # py_trading = PyTrading(
+    #     start_time="2024-06-01 09:00:00",
+    #     end_time="2025-06-30 15:00:00",
+    #     strategy_name="MACD"
+    # )
+    # py_trading.run_backtest_task("index_SHSE.000016_20251005180052")
+    result = PyTrading.get_index_symbols("SHSE.000300")
+    print(result)
