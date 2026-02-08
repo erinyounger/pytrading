@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -14,7 +14,11 @@ interface MetricCardProps {
   loading?: boolean;
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({
+/**
+ * MetricCard 组件
+ * 用于展示关键指标，支持趋势图标、迷你图表和加载状态
+ */
+export const MetricCard: React.FC<MetricCardProps> = memo(({
   title,
   value,
   change,
@@ -25,7 +29,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   className,
   loading = false,
 }) => {
-  const getTrendIcon = () => {
+  const trendIcon = useMemo(() => {
     switch (trend) {
       case 'up':
         return <TrendingUp className="w-4 h-4" />;
@@ -36,19 +40,26 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       default:
         return null;
     }
-  };
+  }, [trend]);
 
-  const getTrendColor = () => {
+  const trendColor = useMemo(() => {
     if (changeType === 'positive') return 'text-green-400';
     if (changeType === 'negative') return 'text-red-400';
     return 'text-[var(--text-secondary)]';
-  };
+  }, [changeType]);
 
-  const getChangeColor = () => {
+  const changeColor = useMemo(() => {
     if (changeType === 'positive') return 'data-up';
     if (changeType === 'negative') return 'data-down';
     return '';
-  };
+  }, [changeType]);
+
+  const formattedValue = useMemo(() => {
+    if (typeof value === 'number') {
+      return value.toLocaleString();
+    }
+    return value;
+  }, [value]);
 
   const MiniChart: React.FC<{ data?: number[] }> = ({ data }) => {
     if (!data || data.length === 0) return null;
@@ -113,17 +124,17 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="mb-2">
         <div className="text-2xl font-bold text-[var(--text-primary)] font-mono">
-          {typeof value === 'number' ? value.toLocaleString() : value}
+          {formattedValue}
         </div>
       </div>
 
       {change && (
         <div className={cn(
           'flex items-center gap-1 text-sm font-medium',
-          getChangeColor(),
-          getTrendColor()
+          changeColor,
+          trendColor
         )}>
-          {getTrendIcon()}
+          {trendIcon}
           <span>{change}</span>
         </div>
       )}
@@ -131,6 +142,6 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       {data && <MiniChart data={data} />}
     </div>
   );
-};
+});
 
 export default MetricCard;

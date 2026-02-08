@@ -303,6 +303,18 @@
     animation: slideUp var(--transition-base) ease-out;
   }
 
+  .animate-slide-down {
+    animation: slideDown var(--transition-base) ease-out;
+  }
+
+  .animate-slide-left {
+    animation: slideLeft var(--transition-base) ease-out;
+  }
+
+  .animate-slide-right {
+    animation: slideRight var(--transition-base) ease-out;
+  }
+
   .animate-scale-in {
     animation: scaleIn var(--transition-base) ease-out;
   }
@@ -315,6 +327,14 @@
     animation: dataFlash 1s ease-in-out;
   }
 
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
   /* 数据变化高亮 */
   .data-up {
     animation: flashGreen 1s ease-in-out;
@@ -322,6 +342,29 @@
 
   .data-down {
     animation: flashRed 1s ease-in-out;
+  }
+
+  /* 页面过渡 */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: all var(--transition-base);
+  }
+
+  .page-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-exit-active {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all var(--transition-base);
   }
 }
 
@@ -348,12 +391,63 @@
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeft {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @keyframes scaleIn {
   from {
     opacity: 0;
     transform: scale(0.95);
   }
   to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
     opacity: 1;
     transform: scale(1);
   }

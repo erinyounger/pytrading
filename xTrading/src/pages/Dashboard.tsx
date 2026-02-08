@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Activity,
   BarChart3,
@@ -12,9 +11,8 @@ import {
 import {
   AreaChart,
   Area,
-  LineChart,
-  Line,
   PieChart as RechartsPieChart,
+  Pie,
   Cell,
   ResponsiveContainer,
 } from 'recharts';
@@ -204,7 +202,7 @@ export const Dashboard: React.FC = () => {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {mockPositionData.map((entry, index) => (
+                {mockPositionData.map((_, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

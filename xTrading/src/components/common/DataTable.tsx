@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronUp, ChevronDown, MoreHorizontal } from 'lucide-react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
+import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface Column {
@@ -25,7 +25,11 @@ interface DataTableProps {
   className?: string;
 }
 
-export const DataTable: React.FC<DataTableProps> = ({
+/**
+ * DataTable 组件
+ * 通用数据表格，支持排序、分页、加载状态和自定义渲染
+ */
+export const DataTable: React.FC<DataTableProps> = memo(({
   columns,
   data,
   loading = false,
@@ -38,12 +42,12 @@ export const DataTable: React.FC<DataTableProps> = ({
   onRowClick,
   className,
 }) => {
-  const [sortConfig, setSortConfig] = React.useState<{
+  const [sortConfig, setSortConfig] = useState<{
     key: string;
     order: 'asc' | 'desc';
   } | null>(null);
 
-  const handleSort = (key: string) => {
+  const handleSort = useCallback((key: string) => {
     if (!onSort) return;
 
     let order: 'asc' | 'desc' = 'asc';
@@ -53,9 +57,9 @@ export const DataTable: React.FC<DataTableProps> = ({
 
     setSortConfig({ key, order });
     onSort(key, order);
-  };
+  }, [sortConfig, onSort]);
 
-  const getSortIcon = (key: string) => {
+  const getSortIcon = useCallback((key: string) => {
     if (!sortConfig || sortConfig.key !== key) {
       return <ChevronUp className="w-4 h-4 text-[var(--text-disabled)]" />;
     }
@@ -64,9 +68,9 @@ export const DataTable: React.FC<DataTableProps> = ({
     ) : (
       <ChevronDown className="w-4 h-4 text-[var(--brand-primary)]" />
     );
-  };
+  }, [sortConfig]);
 
-  const getTextAlign = (align?: 'left' | 'center' | 'right') => {
+  const getTextAlign = useCallback((align?: 'left' | 'center' | 'right') => {
     switch (align) {
       case 'center':
         return 'text-center';
@@ -75,9 +79,9 @@ export const DataTable: React.FC<DataTableProps> = ({
       default:
         return 'text-left';
     }
-  };
+  }, []);
 
-  const totalPages = Math.ceil(total / pageSize);
+  const totalPages = useMemo(() => Math.ceil(total / pageSize), [total, pageSize]);
 
   if (loading) {
     return (
@@ -240,6 +244,6 @@ export const DataTable: React.FC<DataTableProps> = ({
       )}
     </div>
   );
-};
+});
 
 export default DataTable;

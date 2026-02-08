@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useEffect, useState, useCallback, useMemo } from 'react';
 import { Activity, Wifi, WifiOff, Clock } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -6,27 +6,34 @@ interface FooterProps {
   className?: string;
 }
 
-export const Footer: React.FC<FooterProps> = ({ className }) => {
-  const [connectionStatus, setConnectionStatus] = React.useState<'connected' | 'disconnected' | 'connecting'>('connected');
-  const [lastUpdate, setLastUpdate] = React.useState<Date>(new Date());
+/**
+ * Footer 组件
+ * 显示系统状态、性能监控和数据更新时间
+ */
+export const Footer: React.FC<FooterProps> = memo(({ className }) => {
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const connectionStatus: 'connected' | 'disconnected' | 'connecting' = 'connected';
 
-  React.useEffect(() => {
-    // 模拟数据更新
-    const interval = setInterval(() => {
-      setLastUpdate(new Date());
-    }, 1000);
-
-    return () => clearInterval(interval);
+  // 使用useCallback避免重复创建函数
+  const updateTime = useCallback(() => {
+    setLastUpdate(new Date());
   }, []);
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('zh-CN', {
+  useEffect(() => {
+    // 每秒更新时间
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [updateTime]);
+
+  // 使用useMemo缓存格式化时间
+  const formattedTime = useMemo(() => {
+    return lastUpdate.toLocaleTimeString('zh-CN', {
       hour12: false,
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
-  };
+  }, [lastUpdate]);
 
   const connectionConfig = {
     connected: {
@@ -66,7 +73,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
         {/* Data Update Time */}
         <div className="flex items-center gap-2 text-[var(--text-secondary)]">
           <Clock className="w-4 h-4" />
-          <span>数据更新: {formatTime(lastUpdate)}</span>
+          <span>数据更新: {formattedTime}</span>
         </div>
       </div>
 
@@ -111,6 +118,6 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
       </div>
     </footer>
   );
-};
+});
 
 export default Footer;
