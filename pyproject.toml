@@ -17,4 +17,4 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-ta-lib = { path = "bin/ta_lib-0.6.4-cp39-cp39-win_amd64.whl" }
+ta-lib = { path = "bin/ta_lib-0.6.4-cp311-cp311-win_amd64.whl" }
