@@ -21,6 +21,9 @@ from pytrading.db.mysql import MySQLClient, BacktestTask, Strategy, BackTestResu
 
 
 class PyTrading:
+    """量化交易主类"""
+    _active_pools = {}
+
     def __init__(self, symbols=None, index_symbol=None, start_time=None, end_time=None, strategy_name=None, task_id=None):
         self.run_strategy_path = os.path.join(config.app_root_dir, "src", "pytrading", "run")
         self.db_client = MySQLClient(
@@ -36,6 +39,7 @@ class PyTrading:
         self.end_time = end_time
         self.strategy_name = strategy_name
         self.task_id = task_id
+        self.thread_pool = None
 
     def run(self):
         clear_disk_space(template_dir=os.path.join(config.app_root_dir, "gmcache"))
@@ -68,7 +72,6 @@ class PyTrading:
 
     def run_strategy(self):
         """执行策略"""
-        # 首先检查任务是否已被取消
         if self.task_id and self._check_task_cancelled():
             logger.info(f"任务启动时被取消，跳过执行: {self.task_id}")
             return
@@ -79,18 +82,15 @@ class PyTrading:
         start_time = self.start_time
         end_time = self.end_time
 
-        # 在执行策略前，先将对应回测结果的status更新为init
         session = self.db_client.get_session()
         try:
-            from pytrading.db.mysql import BacktestStatus  # 确保已导入枚举类型
+            from pytrading.db.mysql import BacktestStatus
 
             for _syb in self.symbols:
-                # 在每个股票处理前检查任务状态
                 if self.task_id and self._check_task_cancelled():
                     logger.info(f"任务执行中被取消，停止剩余股票: {self.task_id}")
                     break
 
-                # 更新backtest_results表中对应symbol和task_id的status为init（使用枚举类型）
                 session.query(BackTestResult).filter_by(
                     symbol=_syb,
                     task_id=self.task_id
@@ -104,7 +104,6 @@ class PyTrading:
                        f"--strategy_name={self.strategy_name}",
                        f"--mode={config.trading_mode}"]
 
-                # 如果有task_id,传递给子进程用于进度更新
                 if self.task_id:
                     cmd.append(f"--task_id={self.task_id}")
 
@@ -113,9 +112,27 @@ class PyTrading:
                 run_queue.put((exec_process, cmd_args, kwargs))
         finally:
             session.close()
+
         size = len(self.symbols) if config.trading_mode == MODE_LIVE else None
         threader = ThreadPool(run_queue, size=10)
-        threader.run()
+        self.thread_pool = threader
+
+        if self.task_id:
+            PyTrading._active_pools[self.task_id] = threader
+
+        try:
+            threader.run()
+        finally:
+            if self.task_id and self.task_id in PyTrading._active_pools:
+                del PyTrading._active_pools[self.task_id]
+
+    @classmethod
+    def terminate_task(cls, task_id: str):
+        """取消任务"""
+        if task_id in cls._active_pools:
+            pool = cls._active_pools.pop(task_id)
+            pool.cancel()
+            logger.info(f"任务已取消: {task_id}")
 
     @classmethod
     def run_backtest_task(cls, task_id: str):

@@ -178,7 +178,7 @@ async def get_backtest_results(
         saver = get_backtest_saver()
         
         if not saver:
-            print("ERROR: 数据库连接失败 - BackTest saver 初始化失败")
+            logger.error("数据库连接失败 - BackTest saver 初始化失败")
             raise HTTPException(status_code=500, detail="数据库连接失败，无法获取回测结果")
         
         # 从数据库获取真实数据
@@ -198,16 +198,16 @@ async def get_backtest_results(
                 sort_by=sort_by,
                 sort_order=sort_order
             )
-            print(f"INFO: 数据库分页完成，当前页: {page}, 每页: {per_page}, 总记录数: {result_data['total']}, 排序字段: {sort_by}, 排序方向: {sort_order}")
+            logger.info(f"数据库分页完成，当前页: {page}, 每页: {per_page}, 总记录数: {result_data['total']}, 排序字段: {sort_by}, 排序方向: {sort_order}")
         except Exception as db_error:
-            print(f"ERROR: 数据库查询失败 - {str(db_error)}")
+            logger.error(f"数据库查询失败 - {str(db_error)}")
             raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(db_error)}")
         
         return result_data
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 获取回测结果时发生未知错误 - {str(e)}")
+        logger.error(f"获取回测结果时发生未知错误 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"服务器内部错误: {str(e)}")
 
 @app.get("/api/system-status")
@@ -217,24 +217,24 @@ async def get_system_status():
         saver = get_backtest_saver()
         
         if not saver:
-            print("ERROR: 数据库连接失败 - 无法获取系统状态")
+            logger.error("数据库连接失败 - 无法获取系统状态")
             raise HTTPException(status_code=500, detail="数据库连接失败，无法获取系统状态")
         
         # 从数据库统计真实数据
         try:
             result_data = saver.get_all_results(limit=100, page=1, per_page=100)
             backtest_results = result_data['data']
-            print(f"INFO: 成功从数据库获取 {len(backtest_results)} 条数据用于统计系统状态")
+            logger.info(f"成功从数据库获取 {len(backtest_results)} 条数据用于统计系统状态")
             
             active_strategies = len([r for r in backtest_results if r.get("pnl_ratio", 0) > 0])
             total_pnl = sum([r.get("pnl_ratio", 0) for r in backtest_results]) * 100000  # 计算总资金
             
         except Exception as db_error:
-            print(f"ERROR: 获取系统状态数据失败 - {str(db_error)}")
+            logger.error(f"获取系统状态数据失败 - {str(db_error)}")
             raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(db_error)}")
-        
+
         if not backtest_results:
-            print("WARNING: 数据库中没有回测结果数据")
+            logger.warning("数据库中没有回测结果数据")
             raise HTTPException(status_code=404, detail="数据库中没有回测结果数据")
         
         system_status_data = {
@@ -246,13 +246,13 @@ async def get_system_status():
             "last_update": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
-        print(f"INFO: 成功生成系统状态数据 - 活跃策略: {active_strategies}, 总盈亏: {total_pnl:.2f}")
+        logger.info(f"成功生成系统状态数据 - 活跃策略: {active_strategies}, 总盈亏: {total_pnl:.2f}")
         return system_status_data
-        
+
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 获取系统状态时发生未知错误 - {str(e)}")
+        logger.error(f"获取系统状态时发生未知错误 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"服务器内部错误: {str(e)}")
 
 def get_db_client():
@@ -354,7 +354,7 @@ async def get_strategies():
             session.close()
             
     except Exception as e:
-        print(f"ERROR: 获取策略列表失败 - {str(e)}")
+        logger.error(f"获取策略列表失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取策略列表失败: {str(e)}")
 
 @app.get("/api/symbols")
@@ -397,7 +397,7 @@ async def get_symbols():
             session.close()
             
     except Exception as e:
-        print(f"ERROR: 获取股票列表失败 - {str(e)}")
+        logger.error(f"获取股票列表失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取股票列表失败: {str(e)}")
 
 @app.post("/api/backtest/start")
@@ -446,7 +446,7 @@ async def start_backtest(backtest_config: dict):
                 symbols = [index_symbol]  # 暂存指数代码
                 task_name = index_symbol
                 
-                print(f"INFO: 创建指数回测任务 - 指数: {index_symbol}")
+                logger.info(f"创建指数回测任务 - 指数: {index_symbol}")
             
             # 生成任务ID
             task_id = f"{mode}_{task_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -478,7 +478,7 @@ async def start_backtest(backtest_config: dict):
             session.add(task)
             session.commit()
             
-            print(f"INFO: 创建回测任务成功 - task_id: {task_id}, 股票数量: {len(symbols)}")
+            logger.info(f"创建回测任务成功 - task_id: {task_id}, 股票数量: {len(symbols)}")
             
             # 返回信息
             if mode == 'index':
@@ -502,7 +502,7 @@ async def start_backtest(backtest_config: dict):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 创建回测任务失败 - {str(e)}")
+        logger.error(f"创建回测任务失败 - {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"创建回测任务失败: {str(e)}")
@@ -535,7 +535,7 @@ async def get_backtest_status(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 获取任务状态失败 - {str(e)}")
+        logger.error(f"获取任务状态失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取任务状态失败: {str(e)}")
 
 @app.post("/api/backtest/stop/{task_id}")
@@ -564,7 +564,13 @@ async def stop_backtest(task_id: str):
             task.updated_at = datetime.now()
             session.commit()
 
-            print(f"INFO: 任务已停止 - task_id: {task_id}")
+            # 取消任务，停止接收新任务
+            try:
+                PyTrading.terminate_task(task_id)
+            except Exception as e:
+                logger.error(f"取消任务失败: {e}")
+
+            logger.info(f"任务已停止 - task_id: {task_id}")
 
             return {
                 "task_id": task_id,
@@ -578,7 +584,7 @@ async def stop_backtest(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 停止任务失败 - {str(e)}")
+        logger.error(f"停止任务失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"停止任务失败: {str(e)}")
 
 @app.post("/api/backtest/restart/{task_id}")
@@ -628,7 +634,7 @@ async def restart_backtest(task_id: str):
             session.add(new_task)
             session.commit()
 
-            print(f"INFO: 任务已重启 - original_task_id: {task_id}, new_task_id: {new_task_id}")
+            logger.info(f"任务已重启 - original_task_id: {task_id}, new_task_id: {new_task_id}")
 
             return {
                 "task_id": new_task_id,
@@ -643,7 +649,7 @@ async def restart_backtest(task_id: str):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"ERROR: 重启任务失败 - {str(e)}")
+        logger.error(f"重启任务失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"重启任务失败: {str(e)}")
 
 @app.get("/api/backtest/tasks")
@@ -701,7 +707,7 @@ async def get_backtest_tasks(
             session.close()
             
     except Exception as e:
-        print(f"ERROR: 获取任务列表失败 - {str(e)}")
+        logger.error(f"获取任务列表失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取任务列表失败: {str(e)}")
 
 @app.get("/api/backtest/tasks/{task_id}/results")
