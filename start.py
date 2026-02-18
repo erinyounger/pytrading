@@ -62,33 +62,57 @@ def run_command(cmd: list, cwd: Path | None = None, check: bool = True, capture:
 
 
 def kill_process_on_port(port: int) -> bool:
-    """Kill process using the specified port"""
-    try:
-        if system() == "Windows":
-            result = run_command(f'netstat -ano | findstr :{port}', capture=True, check=False)
-            # Check if any process is using the port
-            lines = [line for line in result.stdout.splitlines() if f":{port}" in line and "LISTENING" in line]
-            if not lines:
-                # No process on this port, consider it success
-                return True
-            for line in lines:
-                pid = line.strip().split()[-1]
-                print_info(f"Killing process {pid} on port {port}...")
-                subprocess.run(f"taskkill /PID {pid} /F", shell=True)
-                return True
-        else:
-            result = run_command(f"lsof -ti:{port}", capture=True, check=False)
-            pids = result.stdout.strip().split("\n")
-            if not pids or not pids[0]:
-                # No process on this port, consider it success
-                return True
-            for pid in pids:
-                if pid:
-                    print_info(f"Killing process {pid} on port {port}...")
-                    subprocess.run(f"kill -9 {pid}", shell=True)
+    """Kill process using the specified port (with retry, cross-platform)"""
+    max_retries = 3
+    is_windows = system() == "Windows"
+
+    for attempt in range(max_retries):
+        try:
+            if is_windows:
+                result = run_command(f'netstat -ano | findstr :{port}', capture=True, check=False)
+                # Check if any process is using the port
+                lines = [line for line in result.stdout.splitlines() if f":{port}" in line and "LISTENING" in line]
+                if not lines:
                     return True
-    except Exception as e:
-        print_warning(f"Failed to kill process on port {port}: {e}")
+                for line in lines:
+                    pid = line.strip().split()[-1]
+                    print_info(f"Killing process {pid} on port {port} (attempt {attempt + 1}/{max_retries})...")
+                    # Use list args to avoid shell interpretation issues
+                    subprocess.run(["taskkill", "/PID", pid, "/T", "/F"], capture_output=True)
+                time.sleep(1)
+                # Verify port is free
+                result = run_command(f'netstat -ano | findstr :{port}', capture=True, check=False)
+                lines = [line for line in result.stdout.splitlines() if f":{port}" in line and "LISTENING" in line]
+                if not lines:
+                    return True
+            else:
+                # Linux/macOS: use fuser to kill process tree
+                result = run_command(["fuser", "-k", "-9", f"{port}/tcp"], capture=True, check=False)
+                if result.returncode == 0:
+                    print_info(f"Killed process on port {port}")
+                    time.sleep(1)
+                    # Verify port is free
+                    result = run_command(["lsof", "-ti", f":{port}"], capture=True, check=False)
+                    if not result.stdout.strip():
+                        return True
+                else:
+                    # Fallback to lsof + kill
+                    result = run_command(["lsof", "-ti", f":{port}"], capture=True, check=False)
+                    pids = result.stdout.strip().split("\n")
+                    if not pids or not pids[0]:
+                        return True
+                    for pid in pids:
+                        if pid:
+                            print_info(f"Killing process {pid} on port {port}...")
+                            # Kill process tree using pkill
+                            subprocess.run(["pkill", "-9", "-P", pid], capture_output=True)
+                            subprocess.run(["kill", "-9", pid], capture_output=True)
+                    return True
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(1)
+                continue
+            print_warning(f"Failed to kill process on port {port}: {e}")
     return False
 
 
