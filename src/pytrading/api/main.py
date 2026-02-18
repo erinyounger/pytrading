@@ -538,6 +538,114 @@ async def get_backtest_status(task_id: str):
         print(f"ERROR: 获取任务状态失败 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取任务状态失败: {str(e)}")
 
+@app.post("/api/backtest/stop/{task_id}")
+async def stop_backtest(task_id: str):
+    """停止回测任务"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+
+            if not task:
+                raise HTTPException(status_code=404, detail="任务不存在")
+
+            # 只有运行中的任务才能停止
+            if task.status != 'running':
+                return {
+                    "task_id": task_id,
+                    "status": task.status,
+                    "message": f"任务当前状态为 {task.status}，无法停止"
+                }
+
+            # 更新任务状态为 cancelled
+            task.status = 'cancelled'
+            task.updated_at = datetime.now()
+            session.commit()
+
+            print(f"INFO: 任务已停止 - task_id: {task_id}")
+
+            return {
+                "task_id": task_id,
+                "status": "cancelled",
+                "message": "任务已停止"
+            }
+
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR: 停止任务失败 - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"停止任务失败: {str(e)}")
+
+@app.post("/api/backtest/restart/{task_id}")
+async def restart_backtest(task_id: str):
+    """重启回测任务"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 查询原任务
+            original_task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+
+            if not original_task:
+                raise HTTPException(status_code=404, detail="任务不存在")
+
+            # 只有已完成、失败或取消的任务才能重启
+            if original_task.status not in ['completed', 'failed', 'cancelled']:
+                return {
+                    "task_id": task_id,
+                    "status": original_task.status,
+                    "message": f"任务当前状态为 {original_task.status}，无法重启"
+                }
+
+            # 生成新任务ID（简化格式避免超过100字符限制）
+            # 从原始task_id中提取关键部分
+            parts = task_id.split('_')
+            if len(parts) >= 2:
+                prefix = parts[0]  # 取第一个部分作为前缀，如 index
+                if len(parts) >= 3:
+                    prefix = parts[0] + '_' + parts[1][:10]  # 加上股票代码前10字符
+            else:
+                prefix = 'restart'
+            new_task_id = f"{prefix}_r{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+            # 创建新任务，复用原任务的参数
+            new_task = BacktestTask(
+                task_id=new_task_id,
+                strategy_id=original_task.strategy_id,
+                symbols=original_task.symbols,
+                start_time=original_task.start_time,
+                end_time=original_task.end_time,
+                status='pending',
+                progress=0,
+                parameters=original_task.parameters
+            )
+            session.add(new_task)
+            session.commit()
+
+            print(f"INFO: 任务已重启 - original_task_id: {task_id}, new_task_id: {new_task_id}")
+
+            return {
+                "task_id": new_task_id,
+                "status": "started",
+                "message": f"任务已重启，新任务ID: {new_task_id}",
+                "original_task_id": task_id
+            }
+
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ERROR: 重启任务失败 - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"重启任务失败: {str(e)}")
+
 @app.get("/api/backtest/tasks")
 async def get_backtest_tasks(
     status: Optional[str] = None,

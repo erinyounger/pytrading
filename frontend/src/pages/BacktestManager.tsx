@@ -18,7 +18,8 @@ import {
   Descriptions,
   Radio,
   Input,
-  Alert
+  Alert,
+  Popconfirm
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -29,7 +30,9 @@ import {
   FileTextOutlined,
   DownOutlined,
   CaretUpOutlined,
-  CaretDownOutlined
+  CaretDownOutlined,
+  PauseCircleOutlined,
+  SyncOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
@@ -420,8 +423,8 @@ const BacktestManager: React.FC = () => {
       align: 'center' as const,
       render: (_: any, record: BacktestTaskInfo) => (
         <Space size="small">
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
             icon={<FileTextOutlined />}
             onClick={() => {
@@ -431,14 +434,67 @@ const BacktestManager: React.FC = () => {
           >
             日志
           </Button>
-          <Button 
-            type="text" 
+          <Button
+            type="text"
             size="small"
             icon={<EyeOutlined />}
             onClick={() => showTaskDetail(record)}
           >
             详情
           </Button>
+          {/* 停止按钮：仅运行中状态显示 */}
+          {record.status === 'running' && (
+            <Popconfirm
+              title="停止任务"
+              description="确定要停止此任务吗？"
+              onConfirm={async () => {
+                try {
+                  await apiService.stopTask(record.task_id);
+                  message.success('任务已停止');
+                  fetchBacktestTasks();
+                } catch (error) {
+                  message.error('停止任务失败');
+                }
+              }}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<PauseCircleOutlined />}
+                danger
+              >
+                停止
+              </Button>
+            </Popconfirm>
+          )}
+          {/* 重启按钮：仅失败/已完成/取消状态显示 */}
+          {['failed', 'completed', 'cancelled'].includes(record.status) && (
+            <Popconfirm
+              title="重启任务"
+              description="确定要重新运行此任务吗？"
+              onConfirm={async () => {
+                try {
+                  const result = await apiService.restartTask(record.task_id);
+                  message.success(`任务已重启，新任务ID: ${result.task_id}`);
+                  fetchBacktestTasks();
+                } catch (error) {
+                  message.error('重启任务失败');
+                }
+              }}
+              okText="确定"
+              cancelText="取消"
+            >
+              <Button
+                type="text"
+                size="small"
+                icon={<SyncOutlined />}
+              >
+                重启
+              </Button>
+            </Popconfirm>
+          )}
         </Space>
       ),
     },

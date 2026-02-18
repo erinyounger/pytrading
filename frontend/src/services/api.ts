@@ -60,6 +60,18 @@ export const apiService = {
     return response.data;
   },
 
+  // 停止回测任务
+  stopTask: async (taskId: string): Promise<{ task_id: string; status: string; message: string }> => {
+    const response = await api.post(`/api/backtest/stop/${taskId}`);
+    return response.data;
+  },
+
+  // 重启回测任务
+  restartTask: async (taskId: string): Promise<{ task_id: string; status: string; message: string; original_task_id: string }> => {
+    const response = await api.post(`/api/backtest/restart/${taskId}`);
+    return response.data;
+  },
+
   // 配置相关
   getConfig: async (): Promise<SystemConfig> => {
     const response = await api.get('/api/config');
