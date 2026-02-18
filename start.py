@@ -65,16 +65,24 @@ def kill_process_on_port(port: int) -> bool:
     """Kill process using the specified port"""
     try:
         if system() == "Windows":
-            result = run_command(f'netstat -ano | findstr :{port}', capture=True)
-            for line in result.stdout.splitlines():
-                if f":{port}" in line and "LISTENING" in line:
-                    pid = line.strip().split()[-1]
-                    print_info(f"Killing process {pid} on port {port}...")
-                    subprocess.run(f"taskkill /PID {pid} /F", shell=True)
-                    return True
+            result = run_command(f'netstat -ano | findstr :{port}', capture=True, check=False)
+            # Check if any process is using the port
+            lines = [line for line in result.stdout.splitlines() if f":{port}" in line and "LISTENING" in line]
+            if not lines:
+                # No process on this port, consider it success
+                return True
+            for line in lines:
+                pid = line.strip().split()[-1]
+                print_info(f"Killing process {pid} on port {port}...")
+                subprocess.run(f"taskkill /PID {pid} /F", shell=True)
+                return True
         else:
-            result = run_command(f"lsof -ti:{port}", capture=True)
-            for pid in result.stdout.strip().split("\n"):
+            result = run_command(f"lsof -ti:{port}", capture=True, check=False)
+            pids = result.stdout.strip().split("\n")
+            if not pids or not pids[0]:
+                # No process on this port, consider it success
+                return True
+            for pid in pids:
                 if pid:
                     print_info(f"Killing process {pid} on port {port}...")
                     subprocess.run(f"kill -9 {pid}", shell=True)
