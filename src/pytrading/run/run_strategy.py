@@ -58,6 +58,19 @@ def on_bar(context, bars):
     # 实盘交易时，需要在盘中定时交易，回测时使用on_bar
     if is_live_mode():
         return
+
+    # 定期检查任务是否已被取消，每50个bar检查一次
+    if not hasattr(context, '_bar_count'):
+        context._bar_count = 0
+    context._bar_count += 1
+
+    if context._bar_count % 50 == 0 and hasattr(context, 'task_id') and context.task_id:
+        if check_task_cancelled(context.task_id):
+            logger.info(f"任务已被取消，停止执行: {context.task_id}, symbol: {context.symbol}")
+            # 使用gm.api的cancel方法停止回测
+            cancel()
+            return
+
     # 1.没个bar初始化订单实例
     order_controller.setup(context=context)
 
