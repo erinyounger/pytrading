@@ -50,13 +50,34 @@ class PyTrading:
         logger.info("Get {} Symbols: {}".format(index_symbol, len(index_symbols)))
         return index_symbols
 
+    def _check_task_cancelled(self) -> bool:
+        """检查任务是否已被取消"""
+        try:
+            session = self.db_client.get_session()
+            try:
+                task = session.query(BacktestTask).filter_by(task_id=self.task_id).first()
+                if task and task.status == 'cancelled':
+                    logger.info(f"任务已被取消: {self.task_id}")
+                    return True
+                return False
+            finally:
+                session.close()
+        except Exception as e:
+            logger.error(f"检查任务状态失败: {e}")
+            return False
+
     def run_strategy(self):
         """执行策略"""
+        # 首先检查任务是否已被取消
+        if self.task_id and self._check_task_cancelled():
+            logger.info(f"任务启动时被取消，跳过执行: {self.task_id}")
+            return
+
         f_name = os.path.join(self.run_strategy_path, "run_strategy.py").replace('\\', '/')
         run_queue = Queue()
 
         start_time = self.start_time
-        end_time = self.end_time    
+        end_time = self.end_time
 
         # 在执行策略前，先将对应回测结果的status更新为init
         session = self.db_client.get_session()
@@ -64,6 +85,11 @@ class PyTrading:
             from pytrading.db.mysql import BacktestStatus  # 确保已导入枚举类型
 
             for _syb in self.symbols:
+                # 在每个股票处理前检查任务状态
+                if self.task_id and self._check_task_cancelled():
+                    logger.info(f"任务执行中被取消，停止剩余股票: {self.task_id}")
+                    break
+
                 # 更新backtest_results表中对应symbol和task_id的status为init（使用枚举类型）
                 session.query(BackTestResult).filter_by(
                     symbol=_syb,
@@ -77,11 +103,11 @@ class PyTrading:
                        f"--end_time=\"{end_time}\"",
                        f"--strategy_name={self.strategy_name}",
                        f"--mode={config.trading_mode}"]
-                
+
                 # 如果有task_id,传递给子进程用于进度更新
                 if self.task_id:
                     cmd.append(f"--task_id={self.task_id}")
-                
+
                 cmd_args = (" ".join(cmd),)
                 kwargs = {}
                 run_queue.put((exec_process, cmd_args, kwargs))
@@ -152,8 +178,16 @@ class PyTrading:
             session.commit()
             # 执行回测 (复用原有逻辑)
             py_trading.run()
+
+            # 重新查询任务状态，检查是否被取消
+            session.expire(task)
+            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+            if task.status == 'cancelled':
+                logger.info(f"任务已被取消，不再更新为完成状态: {task_id}")
+                return
+
             logger.info("Subtask execution completed, start summarizing results")
-            
+
             # 汇总结果
             results = session.query(BackTestResult).filter_by(
                 strategy_name=strategy.name
@@ -161,7 +195,7 @@ class PyTrading:
                 BackTestResult.backtest_start_time == task.start_time,
                 BackTestResult.backtest_end_time == task.end_time
             ).all()
-            
+
             if results:
                 total = len(results)
                 task.result_summary = {
@@ -174,7 +208,7 @@ class PyTrading:
                 }
             else:
                 task.result_summary = {"total_count": 0, "message": "No backtest results found"}
-            
+
             task.status = 'completed'
             task.symbols = symbol_list
             task.progress = 100
