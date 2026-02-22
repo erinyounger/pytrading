@@ -30,6 +30,8 @@ class MySQLBackTestSaver(BackTestSaver):
             username=config.mysql_username,
             password=config.mysql_password
         )
+        # 自动创建表（如果不存在）
+        self.mysql_client.create_tables()
     
     def test_connection(self):
         """测试MySQL数据库连接"""

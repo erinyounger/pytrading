@@ -119,9 +119,40 @@ def wait_process(process):
     return rc
 
 
-def exec_process(cmd, env=None, cwd=None):
+def terminate_process_tree(pid):
+    """递归终止进程及其所有子进程"""
+    try:
+        parent = psutil.Process(pid)
+        children = parent.children(recursive=True)
+        for child in children:
+            try:
+                child.terminate()
+            except psutil.NoSuchProcess:
+                pass
+        parent.terminate()
+        gone, alive = psutil.wait_procs(children + [parent], timeout=3)
+        for p in alive:
+            try:
+                p.kill()
+            except psutil.NoSuchProcess:
+                pass
+    except psutil.NoSuchProcess:
+        pass
+    except Exception as e:
+        logger.warning(f"终止进程树失败 (pid={pid}): {e}")
+
+
+def exec_process(cmd, env=None, cwd=None, pool=None):
     process = start_process(cmd=cmd, env=env, cwd=cwd)
-    result = wait_process(process)
-    if result:
-        logger.error("Run Cmd: {} fail. ret: {}".format(cmd, result))
+    if process is None:
+        return 1
+    if pool:
+        pool.register_process(process)
+    try:
+        result = wait_process(process)
+        if result and not getattr(pool, '_cancelled', False):
+            logger.error("Run Cmd: {} fail. ret: {}".format(cmd, result))
+    finally:
+        if pool:
+            pool.unregister_process(process)
     return result
