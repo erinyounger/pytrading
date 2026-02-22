@@ -679,6 +679,10 @@ async def get_backtest_tasks(
             
             result = []
             for task in tasks:
+                # 计算耗时：running 状态用当前时间，其他状态用 updated_at
+                end_time = datetime.now() if task.status == 'running' else task.updated_at
+                duration = int((end_time - task.created_at).total_seconds()) if end_time and task.created_at else None
+
                 result.append({
                     "id": task.id,
                     "task_id": task.task_id,
@@ -692,7 +696,9 @@ async def get_backtest_tasks(
                     "parameters": task.parameters,
                     "result_summary": task.result_summary,
                     "error_message": task.error_message,
-                    "created_at": task.created_at.strftime('%Y-%m-%d %H:%M:%S') if task.created_at else None
+                    "created_at": task.created_at.strftime('%Y-%m-%d %H:%M:%S') if task.created_at else None,
+                    "updated_at": task.updated_at.strftime('%Y-%m-%d %H:%M:%S') if task.updated_at else None,
+                    "duration": duration
                 })
             
             return {

@@ -57,6 +57,8 @@ interface BacktestTaskInfo {
   result_summary?: any;
   error_message?: string;
   created_at: string;
+  updated_at?: string;
+  duration?: number;
 }
 
 const BacktestManager: React.FC = () => {
@@ -416,6 +418,29 @@ const BacktestManager: React.FC = () => {
         return ta - tb;
       },
       render: (time: string) => time ? dayjs(time).format('MM-DD HH:mm:ss') : '-',
+    },
+    {
+      title: '耗时',
+      dataIndex: 'duration',
+      key: 'duration',
+      align: 'center' as const,
+      sorter: (a: BacktestTaskInfo, b: BacktestTaskInfo) => (a.duration || 0) - (b.duration || 0),
+      render: (duration: number | undefined, record: BacktestTaskInfo) => {
+        if (record.status === 'pending') return '-';
+        if (duration == null) return '-';
+        const seconds = record.status === 'running'
+          ? Math.floor((Date.now() - new Date(record.created_at).getTime()) / 1000)
+          : duration;
+        if (seconds < 60) return `${seconds}秒`;
+        if (seconds < 3600) {
+          const m = Math.floor(seconds / 60);
+          const s = seconds % 60;
+          return s > 0 ? `${m}分${s}秒` : `${m}分钟`;
+        }
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        return m > 0 ? `${h}小时${m}分` : `${h}小时`;
+      },
     },
     {
       title: '操作',
