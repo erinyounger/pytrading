@@ -59,18 +59,6 @@ def on_bar(context, bars):
     if is_live_mode():
         return
 
-    # 定期检查任务是否已被取消，每50个bar检查一次
-    if not hasattr(context, '_bar_count'):
-        context._bar_count = 0
-    context._bar_count += 1
-
-    if context._bar_count % 50 == 0 and hasattr(context, 'task_id') and context.task_id:
-        if check_task_cancelled(context.task_id):
-            logger.info(f"任务已被取消，停止执行: {context.task_id}, symbol: {context.symbol}")
-            # 使用gm.api的cancel方法停止回测
-            cancel()
-            return
-
     # 1.没个bar初始化订单实例
     order_controller.setup(context=context)
 
@@ -203,41 +191,7 @@ def on_error(context, code, info):
     print('code:{}, info:{}'.format(code, info))
 
 
-def check_task_cancelled(task_id: str) -> bool:
-    """检查任务是否已被取消"""
-    if not task_id:
-        return False
-    try:
-        from pytrading.db.mysql import MySQLClient, BacktestTask
-        from pytrading import config as trading_config
-
-        db_client = MySQLClient(
-            host=trading_config.mysql_host,
-            db_name=trading_config.mysql_database,
-            port=trading_config.mysql_port,
-            username=trading_config.mysql_username,
-            password=trading_config.mysql_password
-        )
-        session = db_client.get_session()
-        try:
-            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
-            if task and task.status == 'cancelled':
-                logger.info(f"任务已被取消，停止执行: {task_id}")
-                return True
-            return False
-        finally:
-            session.close()
-    except Exception as e:
-        logger.error(f"检查任务状态失败: {e}")
-        return False
-
-
 def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, strategy_name, mode=MODE_BACKTEST, task_id=None):
-    # 首先检查任务是否已被取消
-    if task_id and check_task_cancelled(task_id):
-        logger.info(f"任务已被取消，跳过股票 {symbol} 的回测")
-        return
-
     from gm.model.storage import context
     context.symbol = symbol
     context.strategy_name = strategy_name
