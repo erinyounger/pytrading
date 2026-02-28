@@ -49,15 +49,18 @@ def get_venv_python(venv_path: Path) -> Path:
     return venv_path / suffix / ("python.exe" if system() == "Windows" else "python")
 
 
-def run_command(cmd: list, cwd: Path | None = None, check: bool = True, capture: bool = True):
+def run_command(cmd: list | str, cwd: Path | None = None, check: bool = True, capture: bool = True):
     """封装 subprocess.run 调用"""
+    # 如果是字符串命令，需要使用 shell=True
+    shell = isinstance(cmd, str)
     result = subprocess.run(
         cmd,
         cwd=cwd,
         check=check,
-        capture_output=True,
-        text=True
-    ) if capture else subprocess.run(cmd, cwd=cwd, check=check)
+        capture_output=capture,
+        text=capture,
+        shell=shell
+    ) if capture else subprocess.run(cmd, cwd=cwd, check=check, shell=shell)
     return result
 
 
