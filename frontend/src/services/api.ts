@@ -132,6 +132,18 @@ export const apiService = {
     return response.data;
   },
 
+  // 删除回测任务及其关联的回测结果
+  deleteTask: async (taskId: string): Promise<{ task_id: string; status: string; message: string }> => {
+    const response = await api.delete(`/api/backtest/tasks/${taskId}`);
+    return response.data;
+  },
+
+  // 删除单条回测结果
+  deleteResult: async (resultId: number): Promise<{ result_id: number; status: string; message: string }> => {
+    const response = await api.delete(`/api/backtest/results/${resultId}`);
+    return response.data;
+  },
+
   // 获取回测池中的股票列表（用于创建回测任务时的股票选择）
   getBacktestPoolSymbols: async (): Promise<ApiResponse<{symbol: string, name: string}[]>> => {
     const response = await api.get('/api/backtest-results', { 

@@ -766,6 +766,84 @@ async def get_task_results(task_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取任务结果失败: {str(e)}")
 
+@app.delete("/api/backtest/tasks/{task_id}")
+async def delete_backtest_task(task_id: str):
+    """删除回测任务及其关联的回测结果"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 查询任务
+            task = session.query(BacktestTask).filter_by(task_id=task_id).first()
+
+            if not task:
+                raise HTTPException(status_code=404, detail="任务不存在")
+
+            # 先删除关联的回测结果
+            deleted_results = session.query(BackTestResult).filter_by(task_id=task_id).delete()
+            logger.info(f"删除回测结果 {deleted_results} 条")
+
+            # 删除任务
+            session.delete(task)
+            session.commit()
+
+            logger.info(f"任务已删除 - task_id: {task_id}")
+
+            return {
+                "task_id": task_id,
+                "status": "deleted",
+                "message": f"任务已删除，同时删除了 {deleted_results} 条关联回测结果"
+            }
+
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除任务失败 - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"删除任务失败: {str(e)}")
+
+@app.delete("/api/backtest/results/{result_id}")
+async def delete_backtest_result(result_id: int):
+    """删除单条回测结果"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 查询回测结果
+            result = session.query(BackTestResult).filter_by(id=result_id).first()
+
+            if not result:
+                raise HTTPException(status_code=404, detail="回测结果不存在")
+
+            # 记录相关信息用于日志
+            task_id = result.task_id
+            symbol = result.symbol
+
+            # 删除回测结果
+            session.delete(result)
+            session.commit()
+
+            logger.info(f"回测结果已删除 - result_id: {result_id}, task_id: {task_id}, symbol: {symbol}")
+
+            return {
+                "result_id": result_id,
+                "status": "deleted",
+                "message": f"回测结果已删除 (task_id: {task_id}, symbol: {symbol})"
+            }
+
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除回测结果失败 - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"删除回测结果失败: {str(e)}")
+
 @app.get("/api/config")
 async def get_config():
     """获取系统配置"""
