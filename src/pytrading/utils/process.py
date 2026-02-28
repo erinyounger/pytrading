@@ -72,8 +72,14 @@ def start_process(cmd, env: dict = None, cwd: str = None):
                 os.system('chcp 65001 > nul')
             except:
                 pass
-        
-        subproc = subprocess.Popen(shlex.split(cmd),
+
+        # 支持列表或字符串格式的命令
+        if isinstance(cmd, list):
+            cmd_list = cmd
+        else:
+            cmd_list = shlex.split(cmd)
+
+        subproc = subprocess.Popen(cmd_list,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT,
                                    bufsize=1,

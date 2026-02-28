@@ -16,7 +16,7 @@ from pytrading.logger import logger, set_log_context, clear_log_context
 from pytrading.config import config
 from pytrading.utils.thread_pool import ThreadPool, Queue
 from pytrading.utils import clear_disk_space
-from pytrading.utils.process import exec_process
+from pytrading.utils.process import exec_process, is_windows
 from pytrading.db.mysql import MySQLClient, BacktestTask, Strategy, BackTestResult
 
 
@@ -97,17 +97,28 @@ class PyTrading:
                 ).update({"status": BacktestStatus.init})
                 session.commit()
 
-                cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,
-                       f"--symbol={_syb}",
-                       f"--start_time=\"{start_time}\"",
-                       f"--end_time=\"{end_time}\"",
-                       f"--strategy_name={self.strategy_name}",
-                       f"--mode={config.trading_mode}"]
+                # 跨平台命令构建
+                if is_windows():
+                    cmd = ["cmd", "/c", sys.executable.replace('\\', '/'), f_name,
+                           f"--symbol={_syb}",
+                           f"--start_time=\"{start_time}\"",
+                           f"--end_time=\"{end_time}\"",
+                           f"--strategy_name={self.strategy_name}",
+                           f"--mode={config.trading_mode}"]
+                else:
+                    # Linux: 直接使用列表，避免 shlex.split() 解析问题
+                    cmd = [sys.executable, f_name,
+                           "--symbol", _syb,
+                           "--start_time", start_time,
+                           "--end_time", end_time,
+                           "--strategy_name", self.strategy_name,
+                           "--mode", str(config.trading_mode)]
 
                 if self.task_id:
-                    cmd.append(f"--task_id={self.task_id}")
+                    cmd.extend(["--task_id", self.task_id])
 
-                cmd_args = (" ".join(cmd),)
+                # 直接传递列表，避免字符串解析问题
+                cmd_args = (cmd,)
                 kwargs = {}
                 run_queue.put((exec_process, cmd_args, kwargs))
         finally:
