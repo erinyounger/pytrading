@@ -287,7 +287,13 @@ def start_backend(venv_python: str):
     print_header("Starting Backend Service")
 
     project_root = Path(__file__).parent
-    env = {"PYTHONPATH": str(project_root / "src")}
+    # 配置 gm 量化 SDK 数据目录
+    gm_data_path = project_root / "gm_data"
+    gm_data_path.mkdir(exist_ok=True)
+    env = {
+        "PYTHONPATH": str(project_root / "src"),
+        "GM_DATA_PATH": str(gm_data_path)
+    }
 
     cmd = [
         venv_python, "-m", "uvicorn", "src.pytrading.api.main:app",
@@ -347,7 +353,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                          # Start services in background (default)
+  %(prog)s                          # Start all services in background (default)
+  %(prog)s --frontend               # Only start frontend service
+  %(prog)s --backend                # Only start backend service
   %(prog)s --restart                # Restart services (kill and restart all)
   %(prog)s --init-all              # Initialize environment (venv + dependencies + build)
         """
@@ -356,6 +364,10 @@ Examples:
                        help="Restart services (kill existing processes and start new ones)")
     parser.add_argument("--init-all", action="store_true",
                        help="Initialize everything (venv + frontend dependencies + build)")
+    parser.add_argument("--frontend", action="store_true",
+                       help="Only start frontend service")
+    parser.add_argument("--backend", action="store_true",
+                       help="Only start backend service")
     args = parser.parse_args()
 
     # Handle restart
@@ -376,30 +388,54 @@ Examples:
             shutil.rmtree(venv_path)
             print_ok("Existing virtual environment removed")
 
-    # Setup and checks
-    venv_python = setup_virtual_environment()
-    if not venv_python:
-        sys.exit(1)
+    # Handle frontend-only or backend-only mode
+    if args.frontend and not args.backend:
+        # Frontend only mode
+        if not check_node_environment():
+            sys.exit(1)
+        if not install_frontend_deps():
+            sys.exit(1)
+        if not build_frontend():
+            sys.exit(1)
+        print_header("Starting Frontend Service")
+        start_frontend()
+        _print_completion_info()
+        _wait_forever()
+    elif args.backend and not args.frontend:
+        # Backend only mode
+        venv_python = setup_virtual_environment()
+        if not venv_python:
+            sys.exit(1)
+        print_header("Starting Backend Service")
+        start_backend(venv_python)
+        _print_completion_info()
+        _wait_forever()
+    else:
+        # Default: start all services
+        # Setup and checks
+        venv_python = setup_virtual_environment()
+        if not venv_python:
+            sys.exit(1)
 
-    if not check_node_environment():
-        sys.exit(1)
+        if not check_node_environment():
+            sys.exit(1)
 
-    if not install_frontend_deps():
-        sys.exit(1)
+        if not install_frontend_deps():
+            sys.exit(1)
 
-    if not build_frontend():
-        sys.exit(1)
+        if not build_frontend():
+            sys.exit(1)
 
-    # Start services
-    print_header("Starting Services")
-    start_backend(venv_python)
-    start_frontend()
+        # Start services
+        print_header("Starting Services")
+        start_backend(venv_python)
+        start_frontend()
 
-    # Final message
-    _print_completion_info()
+        # Final message
+        _print_completion_info()
 
-    # Run services in background by default
-    _wait_forever()
+        # Run services in background by default
+        _wait_forever()
 
 
 def _wait_forever():
