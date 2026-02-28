@@ -6,7 +6,6 @@ import {
   BarChartOutlined,
   SettingOutlined,
   ExperimentOutlined,
-  MonitorOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import Dashboard from './pages/Dashboard';

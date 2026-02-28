@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Table, Spin, message, Space, Select, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert } from 'antd';
-import { 
-  ArrowUpOutlined, 
-  ArrowDownOutlined, 
-  DollarOutlined, 
+import React, { useState, useEffect, useCallback } from 'react';
+import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert } from 'antd';
+import {
   TrophyOutlined,
   BarChartOutlined,
   StarOutlined,
@@ -16,11 +13,9 @@ import {
   ThunderboltOutlined,
   ReloadOutlined,
   PieChartOutlined,
-  InfoCircleOutlined,
-  DownloadOutlined,
-  FilterOutlined
+  InfoCircleOutlined
 } from '@ant-design/icons';
-import { Line, Radar } from 'react-chartjs-2';
+import { Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -59,7 +54,7 @@ interface EnrichedStock extends BacktestResult {
 const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [backtestResults, setBacktestResults] = useState<BacktestResult[]>([]);
+  const [, setBacktestResults] = useState<BacktestResult[]>([]);
   const [summary, setSummary] = useState({
     total: 0,
     profitableRate: 0,
@@ -82,15 +77,6 @@ const Dashboard: React.FC = () => {
   const [showRadarModal, setShowRadarModal] = useState(false);
   const [showModelDesc, setShowModelDesc] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
-
-  useEffect(() => {
-    fetchData();
-    // 自动刷新：每5分钟
-    const interval = setInterval(() => {
-      handleRefresh();
-    }, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   // 智能评分算法：基于多因子模型（优化版）
   const calculateStockScore = (r: BacktestResult): { 
@@ -209,7 +195,7 @@ const Dashboard: React.FC = () => {
     };
   };
 
-  const fetchData = async (isRefresh = false) => {
+  const fetchData = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
         setRefreshing(true);
@@ -319,12 +305,21 @@ const Dashboard: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   // 手动刷新
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     await fetchData(true);
-  };
+  }, [fetchData]);
+
+  useEffect(() => {
+    fetchData();
+    // 自动刷新：每5分钟
+    const interval = setInterval(() => {
+      handleRefresh();
+    }, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchData, handleRefresh]);
 
   // 导出推荐列表为CSV
   const handleExport = () => {

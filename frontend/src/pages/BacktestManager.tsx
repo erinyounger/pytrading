@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Button,
@@ -45,11 +45,11 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
-dayjs.extend(duration);
-
 import { apiService } from '../services/api';
 import { Strategy, Symbol, BacktestConfig, BacktestResult } from '../types';
 import LogViewer from '../components/LogViewer';
+
+dayjs.extend(duration);
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -86,6 +86,7 @@ const BacktestManager: React.FC = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [symbols, setSymbols] = useState<Symbol[]>([]);
   const [backtestPoolSymbols, setBacktestPoolSymbols] = useState<{symbol: string, name: string}[]>([]);
   const [backtestTasks, setBacktestTasks] = useState<BacktestTaskInfo[]>([]);
@@ -104,6 +105,7 @@ const BacktestManager: React.FC = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [taskResultsMap, setTaskResultsMap] = useState<Record<string, BacktestResult[]>>({});
   const [resultSearchMap, setResultSearchMap] = useState<Record<string, string>>({});
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [datePreset, setDatePreset] = useState<string>('');
 
   // 日期快捷选项
@@ -115,7 +117,8 @@ const BacktestManager: React.FC = () => {
     { label: '最近两年', value: '2y', getValue: () => [dayjs().subtract(2, 'year'), dayjs()] },
   ];
 
-  // 处理快捷选项变化
+  // 处理快捷选项变化 (预留功能)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDatePresetChange = (presetValue: string) => {
     setDatePreset(presetValue);
     const preset = datePresets.find(p => p.value === presetValue);
@@ -136,10 +139,6 @@ const BacktestManager: React.FC = () => {
   useEffect(() => {
     fetchInitialData();
   }, []);
-
-  useEffect(() => {
-    fetchBacktestTasks();
-  }, [taskPage, taskPageSize]);
 
   // 计算统计信息
   useEffect(() => {
@@ -180,7 +179,7 @@ const BacktestManager: React.FC = () => {
     }
   };
 
-  const fetchBacktestTasks = async () => {
+  const fetchBacktestTasks = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiService.getBacktestTasks({
@@ -194,7 +193,11 @@ const BacktestManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [taskPage, taskPageSize]);
+
+  useEffect(() => {
+    fetchBacktestTasks();
+  }, [fetchBacktestTasks]);
 
   const handleModeChange = (e: any) => {
     setBackTestMode(e.target.value);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Table, 
   Card, 
@@ -17,7 +17,7 @@ import {
   InputNumber,
   Pagination
 } from 'antd';
-import type { ColumnsType, SortOrder } from 'antd/es/table/interface';
+import type { ColumnsType } from 'antd/es/table/interface';
 import { 
   ReloadOutlined, 
   EyeOutlined,
@@ -57,8 +57,8 @@ const BacktestResults: React.FC = () => {
     order: null
   });
 
-  const fetchBacktestResults = async (
-    page: number = 1, 
+  const fetchBacktestResults = useCallback(async (
+    page: number = 1,
     pageSize: number = 10,
     sortBy?: string,
     sortOrder?: 'asc' | 'desc'
@@ -79,16 +79,16 @@ const BacktestResults: React.FC = () => {
         sort_by: sortBy || undefined,
         sort_order: sortOrder || undefined,
       };
-      
+
       // 移除值为undefined的参数
       Object.keys(params).forEach(key => {
         if (params[key as keyof typeof params] === undefined) {
           delete params[key as keyof typeof params];
         }
       });
-      
+
       const response: PaginatedApiResponse<BacktestResult[]> = await apiService.getBacktestResults(params);
-      
+
       setData(response.data);
       setPagination({
         current: response.page,
@@ -102,11 +102,11 @@ const BacktestResults: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchBacktestResults();
-  }, []);
+  }, [fetchBacktestResults]);
 
   // 监听筛选条件变化，自动重新获取数据
   // 当筛选变化时，重置到第一页并请求数据
@@ -116,13 +116,13 @@ const BacktestResults: React.FC = () => {
     if (prev !== filters) {
       prevFiltersRef.current = filters;
       fetchBacktestResults(
-        1, 
-        pagination.pageSize, 
-        sortConfig.field || undefined, 
+        1,
+        pagination.pageSize,
+        sortConfig.field || undefined,
         sortConfig.order || undefined
       );
     }
-  }, [filters]);
+  }, [filters, fetchBacktestResults, pagination.pageSize, sortConfig.field, sortConfig.order]);
 
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));

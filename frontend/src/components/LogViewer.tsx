@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Card, Button, Space, Tag, Switch, Input, Select, Empty, Spin } from 'antd';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Card, Button, Space, Tag, Input, Select, Empty, Spin } from 'antd';
 import {
   ReloadOutlined,
   DownloadOutlined,
-  ClearOutlined,
   PauseCircleOutlined,
   PlayCircleOutlined,
   VerticalAlignBottomOutlined
@@ -26,7 +25,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
   const [logs, setLogs] = useState<BacktestLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(true);
+  const [autoScroll] = useState(true);
   const [lastId, setLastId] = useState(0);
   const [filterLevel, setFilterLevel] = useState<string>('ALL');
   const [searchText, setSearchText] = useState('');
@@ -34,12 +33,12 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
   const autoRefreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 获取日志
-  const fetchLogs = async (isIncremental: boolean = false) => {
+  const fetchLogs = useCallback(async (isIncremental: boolean = false) => {
     try {
       setLoading(true);
       const afterId = isIncremental ? lastId : 0;
-      
-      const response = symbol 
+
+      const response = symbol
         ? await apiService.getResultLogs(taskId, symbol, afterId, 500)
         : await apiService.getTaskLogs(taskId, afterId, 500);
 
@@ -48,7 +47,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
       } else {
         setLogs(response.items);
       }
-      
+
       if (response.last_id > lastId) {
         setLastId(response.last_id);
       }
@@ -57,12 +56,12 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
     } finally {
       setLoading(false);
     }
-  };
+  }, [lastId, symbol, taskId]);
 
   // 初始加载
   useEffect(() => {
     fetchLogs(false);
-  }, [taskId, symbol]);
+  }, [taskId, symbol, fetchLogs]);
 
   // 自动刷新
   useEffect(() => {
@@ -80,7 +79,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
         clearInterval(autoRefreshTimerRef.current);
       }
     };
-  }, [autoRefresh, lastId, taskId, symbol]);
+  }, [autoRefresh, fetchLogs]);
 
   // 自动滚动到底部
   useEffect(() => {
@@ -127,12 +126,6 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
     const textMatch = !searchText || log.message.toLowerCase().includes(searchText.toLowerCase());
     return levelMatch && textMatch;
   });
-
-  // 清空日志
-  const handleClear = () => {
-    setLogs([]);
-    setLastId(0);
-  };
 
   // 下载日志
   const handleDownload = () => {
