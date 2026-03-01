@@ -47,9 +47,11 @@ class MySQLBackTestSaver(BackTestSaver):
             raise e
     
     def get_all_results(self, symbol=None, start_date=None, end_date=None,
-                        trending_type=None,
+                        trending_type=None, industry=None,
                         min_pnl_ratio=None, max_pnl_ratio=None,
                         min_win_ratio=None, max_win_ratio=None,
+                        min_market_cap=None, max_market_cap=None,
+                        min_drawdown_duration=None, max_drawdown_duration=None,
                         limit=100, page=1, per_page=10,
                         sort_by=None, sort_order='desc'):
         """获取所有回测结果，支持分页、筛选和排序（全部在数据库查询层完成）"""
@@ -78,6 +80,18 @@ class MySQLBackTestSaver(BackTestSaver):
                 query = query.filter(BackTestResult.backtest_end_time <= end_date)
             if trending_type:
                 query = query.filter(BackTestResult.trending_type == trending_type)
+            if industry:
+                query = query.filter(BackTestResult.industry == industry)
+            # 市值筛选（亿元）
+            if min_market_cap is not None:
+                query = query.filter(BackTestResult.market_cap >= min_market_cap)
+            if max_market_cap is not None:
+                query = query.filter(BackTestResult.market_cap <= max_market_cap)
+            # 回撤持续时间筛选（天）
+            if min_drawdown_duration is not None:
+                query = query.filter(BackTestResult.max_drawdown_duration >= min_drawdown_duration)
+            if max_drawdown_duration is not None:
+                query = query.filter(BackTestResult.max_drawdown_duration <= max_drawdown_duration)
             # 注意：数据库中存储的 pnl_ratio / win_ratio 通常为小数(0-1)
             if min_pnl_ratio is not None:
                 query = query.filter(BackTestResult.pnl_ratio >= (min_pnl_ratio / 100.0))
@@ -100,6 +114,8 @@ class MySQLBackTestSaver(BackTestSaver):
                 'win_ratio': BackTestResult.win_ratio,
                 'sharp_ratio': BackTestResult.sharp_ratio,
                 'max_drawdown': BackTestResult.max_drawdown,
+                'market_cap': BackTestResult.market_cap,
+                'max_drawdown_duration': BackTestResult.max_drawdown_duration,
                 'created_at': BackTestResult.created_at
             }
             
@@ -137,6 +153,12 @@ class MySQLBackTestSaver(BackTestSaver):
                     'win_ratio': float(row.win_ratio) if row.win_ratio else 0.0,
                     'trending_type': row.trending_type,
                     'current_price': row.current_price,
+                    'volume_avg_7d': float(row.volume_avg_7d) if row.volume_avg_7d else None,
+                    'atr': float(row.atr) if row.atr else None,
+                    'is_blacklist': row.is_blacklist or False,
+                    'industry': row.industry,
+                    'market_cap': float(row.market_cap) if row.market_cap else None,
+                    'max_drawdown_duration': row.max_drawdown_duration or None,
                     'created_at': row.created_at.strftime('%Y-%m-%d %H:%M:%S') if row.created_at else None,
                 }
                 results.append(result_dict)

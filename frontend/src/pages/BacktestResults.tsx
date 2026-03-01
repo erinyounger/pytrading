@@ -15,7 +15,8 @@ import {
   message,
   Tooltip,
   InputNumber,
-  Pagination
+  Pagination,
+  Typography
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import { 
@@ -28,6 +29,7 @@ import { apiService } from '../services/api';
 import { BacktestResult, PaginatedApiResponse } from '../types';
 
 const { Search } = Input;
+const { Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
@@ -36,12 +38,17 @@ const BacktestResults: React.FC = () => {
   const [data, setData] = useState<BacktestResult[]>([]);
   const [selectedResult, setSelectedResult] = useState<BacktestResult | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [compareModalVisible, setCompareModalVisible] = useState(false);
+  const [compareData, setCompareData] = useState<{strategy: string; pnl: number; winRate: number; sharpe: number}[]>([]);
   const [filters, setFilters] = useState({
     symbol: '',
     trending_type: '', // 改为trending_type以匹配后端API
+    industry: '', // 行业筛选
     dateRange: null as any,
     pnlRange: null as any, // 收益率范围
     winRatioRange: null as any, // 胜率范围
+    marketCapRange: null as any, // 市值范围（亿元）
+    drawdownDurationRange: null as any, // 回撤持续时间（天）
   });
   const [pagination, setPagination] = useState({
     current: 1,
@@ -70,12 +77,17 @@ const BacktestResults: React.FC = () => {
         per_page: pageSize,
         symbol: filters.symbol || undefined,
         trending_type: filters.trending_type || undefined,
+        industry: filters.industry || undefined,
         start_date: filters.dateRange?.[0]?.format('YYYY-MM-DD'),
         end_date: filters.dateRange?.[1]?.format('YYYY-MM-DD'),
         min_pnl_ratio: filters.pnlRange?.[0],
         max_pnl_ratio: filters.pnlRange?.[1],
         min_win_ratio: filters.winRatioRange?.[0],
         max_win_ratio: filters.winRatioRange?.[1],
+        min_market_cap: filters.marketCapRange?.[0],
+        max_market_cap: filters.marketCapRange?.[1],
+        min_drawdown_duration: filters.drawdownDurationRange?.[0],
+        max_drawdown_duration: filters.drawdownDurationRange?.[1],
         sort_by: sortBy || undefined,
         sort_order: sortOrder || undefined,
       };
@@ -132,9 +144,12 @@ const BacktestResults: React.FC = () => {
     setFilters({
       symbol: '',
       trending_type: '',
+      industry: '',
       dateRange: null,
       pnlRange: null,
       winRatioRange: null,
+      marketCapRange: null,
+      drawdownDurationRange: null,
     });
     // 清除筛选后由 filters effect 触发刷新
   };
@@ -249,6 +264,62 @@ const BacktestResults: React.FC = () => {
           {value != null ? value.toFixed(2) : '-'}
         </span>
       ),
+    },
+    {
+      title: '日均成交量',
+      dataIndex: 'volume_avg_7d',
+      key: 'volume_avg_7d',
+      align: 'right' as const,
+      render: (value?: number) => (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {value != null ? value.toFixed(2) : '-'}
+        </span>
+      ),
+    },
+    {
+      title: '止损价位',
+      key: 'stop_loss_price',
+      align: 'right' as const,
+      render: (_: any, record: BacktestResult) => {
+        if (record.current_price && record.atr) {
+          const stopLoss = record.current_price - (record.atr * 2);
+          return <span style={{ fontVariantNumeric: 'tabular-nums' }}>{stopLoss.toFixed(2)}</span>;
+        }
+        return <span style={{ color: '#999' }}>-</span>;
+      },
+    },
+    {
+      title: '黑名单',
+      dataIndex: 'is_blacklist',
+      key: 'is_blacklist',
+      align: 'center' as const,
+      render: (value?: boolean) => (
+        value ? <Tag color="red">是</Tag> : <Tag color="green">否</Tag>
+      ),
+    },
+    {
+      title: '行业',
+      dataIndex: 'industry',
+      key: 'industry',
+      render: (value?: string) => value || '-',
+    },
+    {
+      title: '市值(亿)',
+      dataIndex: 'market_cap',
+      key: 'market_cap',
+      align: 'right' as const,
+      render: (value?: number) => (
+        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+          {value != null ? value.toFixed(0) : '-'}
+        </span>
+      ),
+    },
+    {
+      title: '回撤天数',
+      dataIndex: 'max_drawdown_duration',
+      key: 'max_drawdown_duration',
+      align: 'center' as const,
+      render: (value?: number) => value != null ? value : '-',
     },
     {
       title: '策略名称',
@@ -378,6 +449,12 @@ const BacktestResults: React.FC = () => {
       render: (value: string) => dayjs(value).format('YYYY-MM-DD'),
     },
     {
+      title: '创建时间',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (value: string) => value ? dayjs(value).format('MM-DD HH:mm') : '-',
+    },
+    {
       title: '开仓次数',
       dataIndex: 'open_count',
       key: 'open_count',
@@ -438,6 +515,42 @@ const BacktestResults: React.FC = () => {
               >
                 导出
               </Button>
+              <Button 
+                icon={<EyeOutlined />}
+                onClick={async () => {
+                  // 获取所有策略的统计数据
+                  try {
+                    const response = await apiService.getBacktestResults({ per_page: 1000 });
+                    const allData = response.data;
+                    // 按策略分组计算统计数据
+                    const strategyStats = new Map<string, {total: number; win: number; pnl: number; sharpe: number}>();
+                    allData.forEach((item: BacktestResult) => {
+                      const strat = item.strategy_name || 'Unknown';
+                      if (!strategyStats.has(strat)) {
+                        strategyStats.set(strat, { total: 0, win: 0, pnl: 0, sharpe: 0 });
+                      }
+                      const stat = strategyStats.get(strat)!;
+                      stat.total++;
+                      if (item.win_count > 0) stat.win++;
+                      stat.pnl += item.pnl_ratio;
+                      stat.sharpe += item.sharp_ratio;
+                    });
+                    const compare = Array.from(strategyStats.entries()).map(([strategy, stat]) => ({
+                      strategy,
+                      pnl: stat.total > 0 ? (stat.pnl / stat.total) * 100 : 0,
+                      winRate: stat.total > 0 ? (stat.win / stat.total) * 100 : 0,
+                      sharpe: stat.total > 0 ? stat.sharpe / stat.total : 0,
+                    }));
+                    setCompareData(compare);
+                    setCompareModalVisible(true);
+                  } catch (error) {
+                    message.error('获取策略对比数据失败');
+                  }
+                }}
+                size="small"
+              >
+                策略对比
+              </Button>
             </Space>
           </div>
         }
@@ -491,6 +604,14 @@ const BacktestResults: React.FC = () => {
                   handleFilterChange('dateRange', dates);
                 }}
                 size="small"
+                presets={[
+                  { label: '最近一周', value: [dayjs().subtract(1, 'week'), dayjs()] },
+                  { label: '最近1个月', value: [dayjs().subtract(1, 'month'), dayjs()] },
+                  { label: '最近3个月', value: [dayjs().subtract(3, 'month'), dayjs()] },
+                  { label: '最近半年', value: [dayjs().subtract(6, 'month'), dayjs()] },
+                  { label: '最近1年', value: [dayjs().subtract(1, 'year'), dayjs()] },
+                  { label: '最近2年', value: [dayjs().subtract(2, 'year'), dayjs()] },
+                ]}
               />
             </Col>
             <Col xs={12} sm={8} md={4} lg={4}>
@@ -555,8 +676,112 @@ const BacktestResults: React.FC = () => {
                 />
               </div>
             </Col>
+            {/* 行业筛选 */}
+            <Col xs={24} sm={12} md={6} lg={4}>
+              <Select
+                placeholder="选择行业"
+                allowClear
+                style={{ width: '100%' }}
+                value={filters.industry || undefined}
+                onChange={(value) => {
+                  handleFilterChange('industry', value || '');
+                }}
+                size="small"
+              >
+                <Option value="电子">电子</Option>
+                <Option value="计算机">计算机</Option>
+                <Option value="医药生物">医药生物</Option>
+                <Option value="机械设备">机械设备</Option>
+                <Option value="化工">化工</Option>
+                <Option value="汽车">汽车</Option>
+                <Option value="电力设备">电力设备</Option>
+                <Option value="房地产">房地产</Option>
+                <Option value="银行">银行</Option>
+                <Option value="非银金融">非银金融</Option>
+              </Select>
+            </Col>
+            {/* 市值筛选（亿元） */}
+            <Col xs={12} sm={8} md={4} lg={4}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <InputNumber
+                  placeholder="最小市值"
+                  style={{ width: '100%' }}
+                  value={filters.marketCapRange?.[0]}
+                  onChange={(value) => {
+                    const newRange = [value, filters.marketCapRange?.[1]].filter(v => v !== undefined);
+                    handleFilterChange('marketCapRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  precision={0}
+                  size="small"
+                />
+                <span style={{ color: '#999' }}>~</span>
+                <InputNumber
+                  placeholder="最大市值"
+                  style={{ width: '100%' }}
+                  value={filters.marketCapRange?.[1]}
+                  onChange={(value) => {
+                    const newRange = [filters.marketCapRange?.[0], value].filter(v => v !== undefined);
+                    handleFilterChange('marketCapRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  precision={0}
+                  size="small"
+                />
+              </div>
+            </Col>
+            {/* 回撤持续时间筛选（天） */}
+            <Col xs={12} sm={8} md={4} lg={4}>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <InputNumber
+                  placeholder="最小回撤天数"
+                  style={{ width: '100%' }}
+                  value={filters.drawdownDurationRange?.[0]}
+                  onChange={(value) => {
+                    const newRange = [value, filters.drawdownDurationRange?.[1]].filter(v => v !== undefined);
+                    handleFilterChange('drawdownDurationRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  precision={0}
+                  size="small"
+                />
+                <span style={{ color: '#999' }}>~</span>
+                <InputNumber
+                  placeholder="最大回撤天数"
+                  style={{ width: '100%' }}
+                  value={filters.drawdownDurationRange?.[1]}
+                  onChange={(value) => {
+                    const newRange = [filters.drawdownDurationRange?.[0], value].filter(v => v !== undefined);
+                    handleFilterChange('drawdownDurationRange', newRange.length > 0 ? newRange : null);
+                  }}
+                  min={0}
+                  precision={0}
+                  size="small"
+                />
+              </div>
+            </Col>
           </Row>
         </div>
+
+        {/* 实时行情占位卡片 */}
+        <Card size="small" bordered={false} style={{ marginBottom: '12px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <Text style={{ color: 'white', fontSize: '14px', fontWeight: 500 }}>📈 实时行情监控</Text>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '4px' }}>
+                点击查看重点关注股票的实时行情 →
+              </div>
+            </div>
+            <Button 
+              type="primary" 
+              size="small"
+              onClick={() => window.location.href = '/realtime-monitor'}
+              style={{ background: 'white', borderColor: 'white', color: '#667eea' }}
+            >
+              进入实时行情 →
+            </Button>
+          </div>
+        </Card>
 
         {/* 快速筛选和统计信息 */}
         <div style={{ 
@@ -776,6 +1001,72 @@ const BacktestResults: React.FC = () => {
             </Col>
           </Row>
         )}
+      </Modal>
+
+      {/* 多策略对比 Modal */}
+      <Modal
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>📊 多策略对比</span>}
+        open={compareModalVisible}
+        onCancel={() => setCompareModalVisible(false)}
+        footer={null}
+        width={800}
+        bodyStyle={{ padding: '16px' }}
+      >
+        <Table
+          dataSource={compareData}
+          rowKey="strategy"
+          pagination={false}
+          size="small"
+          columns={[
+            {
+              title: '策略名称',
+              dataIndex: 'strategy',
+              key: 'strategy',
+              render: (text: string) => <Tag color="blue">{text}</Tag>,
+            },
+            {
+              title: '平均收益率',
+              dataIndex: 'pnl',
+              key: 'pnl',
+              align: 'right' as const,
+              render: (value: number) => (
+                <span style={{ 
+                  color: value >= 0 ? '#ff4d4f' : '#52c41a',
+                  fontWeight: 500,
+                  fontVariantNumeric: 'tabular-nums'
+                }}>
+                  {value.toFixed(2)}%
+                </span>
+              ),
+            },
+            {
+              title: '胜率',
+              dataIndex: 'winRate',
+              key: 'winRate',
+              align: 'right' as const,
+              render: (value: number) => (
+                <span style={{ 
+                  color: value >= 50 ? '#ff4d4f' : '#52c41a',
+                  fontWeight: 500,
+                  fontVariantNumeric: 'tabular-nums'
+                }}>
+                  {value.toFixed(1)}%
+                </span>
+              ),
+            },
+            {
+              title: '平均夏普比率',
+              dataIndex: 'sharpe',
+              key: 'sharpe',
+              align: 'right' as const,
+              render: (value: number) => (
+                <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {value.toFixed(2)}
+                </span>
+              ),
+            },
+          ]}
+        />
       </Modal>
     </div>
   );

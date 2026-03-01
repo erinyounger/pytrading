@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert } from 'antd';
+import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert, Checkbox } from 'antd';
 import {
   TrophyOutlined,
   BarChartOutlined,
@@ -170,20 +170,20 @@ const Dashboard: React.FC = () => {
     if (recommendation === 'strong_buy') {
       // 五星标的：根据MACD信号强度分配仓位
       if (r.trending_type === 'ZeroAxisUp' && r.pnl_ratio > 0.30 && r.win_ratio > 0.60) {
-        // 上穿零轴 + 优秀指标：15-20%重仓
-        position_suggestion = risk_level === 'low' ? 20 : 15;
+        // 上穿零轴 + 优秀指标：3-5%仓位
+        position_suggestion = risk_level === 'low' ? 10 : 7;
       } else if (r.trending_type === 'RisingUp') {
-        // 快线穿慢线：10-15%
-        position_suggestion = risk_level === 'low' ? 15 : 10;
+        // 快线穿慢线：5-7%
+        position_suggestion = risk_level === 'low' ? 7 : 5;
       } else {
-        position_suggestion = 10;
+        position_suggestion = 5;
       }
     } else if (recommendation === 'buy') {
-      // 推荐买入：5-10%
-      position_suggestion = risk_level === 'low' ? 10 : 5;
+      // 推荐买入：3-5%
+      position_suggestion = risk_level === 'low' ? 5 : 3;
     } else if (recommendation === 'watch') {
-      // 观察：3%小仓位试探
-      position_suggestion = 3;
+      // 观察：1-2%小仓位试探
+      position_suggestion = 2;
     }
     // 谨慎不建议配置仓位
 

@@ -16,6 +16,13 @@ export interface BacktestResult {
   win_ratio: number;
   trending_type: string;
   current_price?: number;
+  volume_avg_7d?: number; // 7日平均成交量（万手）
+  atr?: number; // 平均真实波幅（用于止损计算）
+  is_blacklist?: boolean; // 是否在黑名单中
+  stop_loss_price?: number; // 止损价位（计算得出）
+  industry?: string; // 所属行业
+  market_cap?: number; // 市值（亿元）
+  max_drawdown_duration?: number; // 最大回撤持续天数
   created_at?: string;
 }
 
