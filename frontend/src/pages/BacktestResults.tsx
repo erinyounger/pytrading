@@ -27,269 +27,17 @@ import {
   DollarOutlined,
   TrophyOutlined,
   RiseOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
 import { BacktestResult, PaginatedApiResponse } from '../types';
 import StockChart from '../components/StockChart';
+import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 
 const { Search } = Input;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
-
-// 金融终端深色主题样式
-const darkTheme = {
-  // 背景色
-  background: '#0f0f1a',
-  cardBackground: '#1a1a2e',
-  cardBackgroundAlt: '#15152a',
-  border: '#2a2a4a',
-  // 文字颜色
-  textPrimary: '#e8e8e8',
-  textSecondary: '#8888aa',
-  textMuted: '#666680',
-  // 强调色
-  positive: '#ff4d4f',  // 证券红 - 上涨/盈利
-  negative: '#52c41a',  // 证券绿 - 下跌/亏损
-  accent: '#4d7cff',    // 蓝色强调
-  // 表头和行
-  tableHeader: '#252545',
-  tableRow: '#1a1a2e',
-  tableRowAlt: '#15152a',
-  tableHover: '#1f1f3a',
-  // 渐变色卡片
-  gradientGreen: 'linear-gradient(135deg, rgba(82, 196, 26, 0.15) 0%, rgba(82, 196, 26, 0.05) 100%)',
-  gradientRed: 'linear-gradient(135deg, rgba(255, 77, 79, 0.15) 0%, rgba(255, 77, 79, 0.05) 100%)',
-  gradientBlue: 'linear-gradient(135deg, rgba(77, 124, 255, 0.15) 0%, rgba(77, 124, 255, 0.05) 100%)',
-  gradientPurple: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
-  gradientGold: 'linear-gradient(135deg, rgba(250, 169, 22, 0.15) 0%, rgba(250, 169, 22, 0.05) 100%)',
-};
-
-// 注入全局深色主题样式
-const globalDarkStyles = `
-  /* 表格深色主题 */
-  .ant-table-thead > tr > th {
-    background: ${darkTheme.tableHeader} !important;
-    color: ${darkTheme.textSecondary} !important;
-    border-bottom: 1px solid ${darkTheme.border} !important;
-    font-weight: 600;
-    padding: 10px 8px !important;
-  }
-  .ant-table-tbody > tr > td {
-    background: ${darkTheme.cardBackground} !important;
-    color: ${darkTheme.textPrimary} !important;
-    border-bottom: 1px solid ${darkTheme.border} !important;
-    padding: 8px !important;
-  }
-  .ant-table-tbody > tr:hover > td {
-    background: ${darkTheme.tableHover} !important;
-  }
-  .ant-table-tbody > tr:nth-child(even) > td {
-    background: ${darkTheme.tableRowAlt} !important;
-  }
-  .ant-table-column-sorter {
-    color: ${darkTheme.textMuted} !important;
-  }
-  .ant-table-column-sorter-up.active, .ant-table-column-sorter-down.active {
-    color: ${darkTheme.accent} !important;
-  }
-
-  /* 分页深色主题 */
-  .ant-pagination-item {
-    background: ${darkTheme.cardBackground} !important;
-    border-color: ${darkTheme.border} !important;
-  }
-  .ant-pagination-item a {
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-pagination-item-active {
-    background: ${darkTheme.accent} !important;
-    border-color: ${darkTheme.accent} !important;
-  }
-  .ant-pagination-item-active a {
-    color: #fff !important;
-  }
-  .ant-pagination-prev .ant-pagination-item-link,
-  .ant-pagination-next .ant-pagination-item-link {
-    background: ${darkTheme.cardBackground} !important;
-    border-color: ${darkTheme.border} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-pagination-options .ant-select-selector {
-    background: ${darkTheme.cardBackground} !important;
-    border-color: ${darkTheme.border} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-
-  /* 输入框深色主题 */
-  .ant-input, .ant-input-number, .ant-picker {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-    border-color: ${darkTheme.border} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-input::placeholder, .ant-picker-input input::placeholder {
-    color: ${darkTheme.textMuted} !important;
-  }
-  .ant-input:hover, .ant-input-number:hover, .ant-picker:hover {
-    border-color: ${darkTheme.accent} !important;
-  }
-  .ant-input:focus, .ant-input-number:focus, .ant-picker-focused {
-    border-color: ${darkTheme.accent} !important;
-    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
-  }
-
-  /* 选择器深色主题 */
-  .ant-select-selector {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-    border-color: ${darkTheme.border} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-select-dropdown {
-    background: ${darkTheme.cardBackground} !important;
-    border: 1px solid ${darkTheme.border} !important;
-  }
-  .ant-select-item {
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-select-item-option-active {
-    background: ${darkTheme.tableHover} !important;
-  }
-  .ant-select-item-option-selected {
-    background: ${darkTheme.accent}30 !important;
-  }
-
-  /* 模态框深色主题 */
-  .ant-modal-content {
-    background: ${darkTheme.cardBackground} !important;
-    border: 1px solid ${darkTheme.border};
-  }
-  .ant-modal-header {
-    background: ${darkTheme.cardBackground} !important;
-    border-bottom: 1px solid ${darkTheme.border} !important;
-  }
-  .ant-modal-title {
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-modal-close {
-    color: ${darkTheme.textSecondary} !important;
-  }
-  .ant-modal-body {
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-modal-footer {
-    border-top: 1px solid ${darkTheme.border} !important;
-  }
-
-  /* 按钮深色主题 */
-  .ant-btn {
-    background: ${darkTheme.cardBackground} !important;
-    border-color: ${darkTheme.border} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-btn:hover {
-    border-color: ${darkTheme.accent} !important;
-    color: ${darkTheme.accent} !important;
-  }
-
-  /* 工具提示深色主题 */
-  .ant-tooltip-inner {
-    background: ${darkTheme.tableHeader} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-tooltip-arrow::before {
-    background: ${darkTheme.tableHeader} !important;
-  }
-
-  /* 空状态深色主题 */
-  .ant-empty-description {
-    color: ${darkTheme.textSecondary} !important;
-  }
-
-  /* 搜索输入框深色主题 */
-  .ant-input-search .ant-input {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-    color: ${darkTheme.textPrimary} !important;
-  }
-  .ant-input-search .ant-input-search-button {
-    background: ${darkTheme.cardBackground} !important;
-    border-color: ${darkTheme.border} !important;
-  }
-  .ant-input-search .ant-input-search-button .anticon {
-    color: ${darkTheme.textSecondary} !important;
-  }
-
-  /* 表格滚动条深色主题 */
-  .ant-table-body::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .ant-table-body::-webkit-scrollbar-track {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-  }
-  .ant-table-body::-webkit-scrollbar-thumb {
-    background: ${darkTheme.border} !important;
-    border-radius: 4px;
-  }
-  .ant-table-body::-webkit-scrollbar-thumb:hover {
-    background: ${darkTheme.textMuted} !important;
-  }
-
-  /* 表格容器滚动条 */
-  .ant-table-scroll {
-    overflow: auto;
-  }
-  .ant-table-scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .ant-table-scroll::-webkit-scrollbar-track {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-  }
-  .ant-table-scroll::-webkit-scrollbar-thumb {
-    background: ${darkTheme.border} !important;
-    border-radius: 4px;
-  }
-  .ant-table-scroll::-webkit-scrollbar-thumb:hover {
-    background: ${darkTheme.textMuted} !important;
-  }
-
-  /* 固定列滚动条 */
-  .ant-table-cell-fix-left, .ant-table-cell-fix-right {
-    background: ${darkTheme.cardBackground} !important;
-  }
-
-  /* 表格横向滚动条 */
-  .ant-table-h_scroll .ant-table {
-    overflow-x: auto;
-  }
-  .ant-table-h_scroll::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  .ant-table-h_scroll::-webkit-scrollbar-track {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-  }
-  .ant-table-h_scroll::-webkit-scrollbar-thumb {
-    background: ${darkTheme.border} !important;
-    border-radius: 4px;
-  }
-
-  /* 所有滚动条通用样式 */
-  *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  *::-webkit-scrollbar-track {
-    background: ${darkTheme.cardBackgroundAlt} !important;
-  }
-  *::-webkit-scrollbar-thumb {
-    background: ${darkTheme.border} !important;
-    border-radius: 4px;
-  }
-  *::-webkit-scrollbar-thumb:hover {
-    background: ${darkTheme.textMuted} !important;
-  }
-`;
 
 // 趋势类型中文映射
 const TRENDING_TYPE_MAP: Record<string, string> = {
@@ -319,6 +67,23 @@ const BacktestResults: React.FC = () => {
   const [chartName, setChartName] = useState('');
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
+  const scrollPosRef = useRef<number>(0);
+  // 公司信息Modal相关状态
+  const [stockInfoModalVisible, setStockInfoModalVisible] = useState(false);
+  const [stockInfo, setStockInfo] = useState<any>(null);
+  const [stockInfoLoading, setStockInfoLoading] = useState(false);
+
+  // 保持滚动位置
+  useEffect(() => {
+    if (chartModalVisible) {
+      scrollPosRef.current = window.scrollY;
+    } else {
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosRef.current);
+      }, 100);
+    }
+  }, [chartModalVisible]);
+
   const [filters, setFilters] = useState({
     symbol: '',
     trending_type: '', // 改为trending_type以匹配后端API
@@ -527,38 +292,64 @@ const BacktestResults: React.FC = () => {
       dataIndex: 'symbol',
       key: 'symbol',
       fixed: 'left' as const,
+      width: 130,
       render: (value: string, record: BacktestResult) => (
-        // eslint-disable-next-line jsx-a11y/anchor-is-valid
-        <a
-          onClick={async () => {
-            setChartSymbol(value);
-            setChartName(record.name || '');
-            setChartModalVisible(true);
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+          <a
+            onClick={async () => {
+              setChartSymbol(value);
+              setChartName(record.name || '');
+              setChartModalVisible(true);
 
-            // 加载K线数据
-            try {
-              setKlineLoading(true);
-              const response = await apiService.getKlineData(value);
-              setKlineData(response.data || []);
-            } catch (error) {
-              console.error('获取K线数据失败:', error);
-              setKlineData([]);
-            } finally {
-              setKlineLoading(false);
-            }
-          }}
-          href="#"
-          onMouseDown={(e) => e.preventDefault()}
-          style={{
-            cursor: 'pointer',
-            color: darkTheme.accent,
-            fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
-            fontWeight: 500,
-            textDecoration: 'none',
-          }}
-        >
-          {value}
-        </a>
+              // 加载K线数据
+              try {
+                setKlineLoading(true);
+                const response = await apiService.getKlineData(value);
+                setKlineData(response.data || []);
+              } catch (error) {
+                console.error('获取K线数据失败:', error);
+                setKlineData([]);
+              } finally {
+                setKlineLoading(false);
+              }
+            }}
+            href="#"
+            onMouseDown={(e) => e.preventDefault()}
+            style={{
+              cursor: 'pointer',
+              color: darkTheme.accent,
+              fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+              fontWeight: 500,
+              textDecoration: 'none',
+            }}
+          >
+            {value}
+          </a>
+          <Tooltip title="查看公司信息">
+            <Button
+              type="text"
+              size="small"
+              icon={<InfoCircleOutlined />}
+              onClick={async (e) => {
+                e.stopPropagation();
+                setStockInfoModalVisible(true);
+                setStockInfoLoading(true);
+                try {
+                  const response = await apiService.getStockInfo(value);
+                  setStockInfo(response.data);
+                } catch (error) {
+                  console.error('获取公司信息失败:', error);
+                  message.error('获取公司信息失败');
+                  setStockInfo(null);
+                } finally {
+                  setStockInfoLoading(false);
+                }
+              }}
+              style={{ color: darkTheme.textSecondary, padding: '0 4px' }}
+            />
+          </Tooltip>
+        </div>
       ),
     },
     {
@@ -1336,6 +1127,7 @@ const BacktestResults: React.FC = () => {
           </div>
         }
         open={detailModalVisible}
+        getContainer={false}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={900}
@@ -1509,6 +1301,7 @@ const BacktestResults: React.FC = () => {
       <Modal
         title={<span style={{ fontSize: '16px', fontWeight: 500 }}>📊 多策略对比</span>}
         open={compareModalVisible}
+        getContainer={false}
         onCancel={() => setCompareModalVisible(false)}
         footer={null}
         width={800}
@@ -1575,6 +1368,9 @@ const BacktestResults: React.FC = () => {
       <Modal
         title={<span style={{ fontSize: '16px', fontWeight: 500 }}>{chartSymbol} - {chartName} K线图</span>}
         open={chartModalVisible}
+        getContainer={false}
+        transitionName=""
+        maskTransitionName=""
         onCancel={() => {
           setChartModalVisible(false);
           setKlineData([]);
@@ -1622,6 +1418,102 @@ const BacktestResults: React.FC = () => {
             symbol={chartSymbol}
             name={chartName}
           />
+        )}
+      </Modal>
+
+      {/* 公司信息 Modal */}
+      <Modal
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>公司信息</span>}
+        open={stockInfoModalVisible}
+        getContainer={false}
+        transitionName=""
+        maskTransitionName=""
+        onCancel={() => {
+          setStockInfoModalVisible(false);
+          setStockInfo(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setStockInfoModalVisible(false);
+            setStockInfo(null);
+          }}>
+            关闭
+          </Button>
+        ]}
+        width={600}
+        bodyStyle={{ padding: '16px' }}
+      >
+        {stockInfoLoading ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            加载中...
+          </div>
+        ) : stockInfo ? (
+          <div style={{ color: darkTheme.textPrimary }}>
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  {stockInfo.name}
+                </div>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '13px' }}>
+                  {stockInfo.symbol}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>上市日期</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.list_date || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>交易所</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.exchange || stockInfo.market || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>所属行业</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.industry || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>股票类型</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.type || stockInfo.share_type || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>总股本</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.total_share ? `${(stockInfo.total_share / 10000).toFixed(2)} 万股` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>流通股本</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.float_share ? `${(stockInfo.float_share / 10000).toFixed(2)} 万股` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>总市值</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.total_mv ? `${(stockInfo.total_mv / 100000000).toFixed(2)} 亿` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>流通市值</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.float_mv ? `${(stockInfo.float_mv / 100000000).toFixed(2)} 亿` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>上市状态</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.listing_state || stockInfo.status || '-'}</div>
+              </Col>
+              {stockInfo.province && (
+                <Col span={12}>
+                  <div style={{ color: darkTheme.textSecondary, fontSize: '12px' }}>所在地区</div>
+                  <div style={{ fontSize: '14px' }}>{stockInfo.province}{stockInfo.city ? ` ${stockInfo.city}` : ''}</div>
+                </Col>
+              )}
+            </Row>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '50px', color: darkTheme.textSecondary }}>
+            暂无公司信息
+          </div>
         )}
       </Modal>
     </div>

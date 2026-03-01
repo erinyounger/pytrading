@@ -29,7 +29,7 @@ from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask,
 from pytrading.py_trading import PyTrading
 from pytrading.logger import logger
 from sqlalchemy import func
-from gm.api import set_token, get_constituents, history
+from gm.api import set_token, get_constituents, history, get_instruments
 from pytrading.utils.talib_util import TA_MACD
 import pandas as pd
 
@@ -1057,6 +1057,86 @@ async def sync_kline(sync_request: dict):
     except Exception as e:
         logger.error(f"同步K线数据失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"同步K线数据失败: {str(e)}")
+
+@app.get("/api/stock-info/{symbol}")
+async def get_stock_info(symbol: str):
+    """获取股票基本信息"""
+    try:
+        # 先从数据库获取股票基本信息（复用 /api/symbols 的逻辑）
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        db_name = None
+        db_industry = None
+
+        try:
+            # 获取所有活跃的股票
+            all_symbols = session.query(StockSymbol).filter_by(is_active=True).all()
+
+            if all_symbols:
+                # 精确匹配或部分匹配
+                symbol_lower = symbol.lower()
+                for s in all_symbols:
+                    if s.symbol.lower() == symbol_lower or symbol_lower.endswith(s.symbol.lower()) or s.symbol.lower().endswith(symbol_lower):
+                        db_name = s.name
+                        db_industry = s.industry
+                        break
+            else:
+                # 如果数据库没有，返回默认股票池中查找
+                default_symbols = [
+                    {"symbol": "SHSE.600000", "name": "浦发银行", "industry": "银行"},
+                    {"symbol": "SHSE.600036", "name": "招商银行", "industry": "银行"},
+                    {"symbol": "SHSE.600519", "name": "贵州茅台", "industry": "白酒"},
+                    {"symbol": "SHSE.600887", "name": "伊利股份", "industry": "食品饮料"},
+                    {"symbol": "SZSE.000001", "name": "平安银行", "industry": "银行"},
+                    {"symbol": "SZSE.000002", "name": "万科A", "industry": "房地产"},
+                    {"symbol": "SZSE.000625", "name": "长安汽车", "industry": "汽车"},
+                    {"symbol": "SZSE.000858", "name": "五粮液", "industry": "白酒"},
+                ]
+                for ds in default_symbols:
+                    if ds["symbol"].lower() == symbol.lower():
+                        db_name = ds["name"]
+                        db_industry = ds["industry"]
+                        break
+
+        finally:
+            session.close()
+
+        # 调用掘金API获取更多股票信息
+        try:
+            stock_info_list = get_instruments(symbols=symbol)
+            stock_info = stock_info_list[0] if stock_info_list and len(stock_info_list) > 0 else {}
+        except Exception as e:
+            logger.warning(f"掘金API获取失败: {symbol}, error: {str(e)}")
+            stock_info = {}
+
+        # 构建返回数据
+        result = {
+            "symbol": symbol,
+            "name": db_name or stock_info.get('name'),
+            "industry": db_industry,
+            "exchange": stock_info.get('exchange'),
+            "sec_type": stock_info.get('sec_type'),
+            "list_date": stock_info.get('list_date'),
+            "delist_date": stock_info.get('delist_date'),
+            "prev_trading_date": stock_info.get('prev_trading_date'),
+            "market": stock_info.get('market'),
+            "currency": stock_info.get('currency'),
+            "tick_size": stock_info.get('tick_size'),
+            "limit_up": stock_info.get('limit_up'),
+            "limit_down": stock_info.get('limit_down'),
+            "is_hs": stock_info.get('is_hs'),
+            "status": stock_info.get('status'),
+        }
+
+        logger.info(f"成功获取股票信息: {symbol}, name: {result.get('name')}")
+        return {"data": result}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取股票信息失败: {symbol}, error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取股票信息失败: {str(e)}")
 
 if __name__ == "__main__":
     # 开发模式运行

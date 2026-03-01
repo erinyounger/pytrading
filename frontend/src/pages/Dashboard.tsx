@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert, Checkbox } from 'antd';
 import {
   TrophyOutlined,
@@ -30,6 +30,8 @@ import {
 } from 'chart.js';
 import { apiService } from '../services/api';
 import { BacktestResult } from '../types';
+import StockChart from '../components/StockChart';
+import { globalDarkStyles } from '../styles/darkTheme';
 
 ChartJS.register(
   CategoryScale,
@@ -74,9 +76,32 @@ const Dashboard: React.FC = () => {
   const [filterRisk, setFilterRisk] = useState<string | null>(null);
   const [filterTrend, setFilterTrend] = useState<string | null>(null);
   const [availableTrends, setAvailableTrends] = useState<string[]>([]);
+  // K线图表相关状态
+  const [chartModalVisible, setChartModalVisible] = useState(false);
+  const [chartSymbol, setChartSymbol] = useState('');
+  const [chartName, setChartName] = useState('');
+  const [klineData, setKlineData] = useState<any[]>([]);
+  const [klineLoading, setKlineLoading] = useState(false);
   const [showRadarModal, setShowRadarModal] = useState(false);
+  const scrollPosRef = useRef<number>(0);
+
+  // 保持滚动位置
+  useEffect(() => {
+    if (chartModalVisible) {
+      scrollPosRef.current = window.scrollY;
+    } else {
+      // 延迟恢复滚动位置，确保 Modal 已关闭
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosRef.current);
+      }, 100);
+    }
+  }, [chartModalVisible]);
   const [showModelDesc, setShowModelDesc] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  // 公司信息Modal相关状态
+  const [stockInfoModalVisible, setStockInfoModalVisible] = useState(false);
+  const [stockInfo, setStockInfo] = useState<any>(null);
+  const [stockInfoLoading, setStockInfoLoading] = useState(false);
 
   // 智能评分算法：基于多因子模型（优化版）
   const calculateStockScore = (r: BacktestResult): { 
@@ -387,12 +412,12 @@ const Dashboard: React.FC = () => {
   // 风险等级渲染
   const riskLevelTag = (risk: string) => {
     const config = {
-      low: { color: 'success' as const, icon: <SafetyOutlined />, text: '低风险' },
-      medium: { color: 'warning' as const, icon: <BarChartOutlined />, text: '中风险' },
-      high: { color: 'error' as const, icon: <WarningOutlined />, text: '高风险' },
+      low: { color: 'success' as const, icon: <SafetyOutlined />, text: '低风险', textColor: '#52c41a' },
+      medium: { color: 'warning' as const, icon: <BarChartOutlined />, text: '中风险', textColor: '#faad14' },
+      high: { color: 'error' as const, icon: <WarningOutlined />, text: '高风险', textColor: '#ff4d4f' },
     };
     const c = config[risk as keyof typeof config] || config.medium;
-    return <Badge status={c.color} text={<span><span style={{ marginRight: 4 }}>{c.icon}</span>{c.text}</span>} />;
+    return <Badge status={c.color} text={<span style={{ color: c.textColor }}><span style={{ marginRight: 4 }}>{c.icon}</span>{c.text}</span>} />;
   };
 
   // 趋势标签（带提醒）
@@ -505,8 +530,69 @@ const Dashboard: React.FC = () => {
       ellipsis: true,
       render: (_: any, record: EnrichedStock) => (
         <div style={{ maxWidth: 130 }}>
-          <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{record.symbol}</div>
-          <div style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</div>
+          <a
+            onClick={async () => {
+              setChartSymbol(record.symbol);
+              setChartName(record.name || '');
+              setChartModalVisible(true);
+
+              // 加载K线数据
+              try {
+                setKlineLoading(true);
+                const response = await apiService.getKlineData(record.symbol);
+                if (response.data && response.data.length > 0) {
+                  setKlineData(response.data);
+                } else {
+                  message.warning('暂无K线数据，请先同步数据');
+                  setKlineData([]);
+                }
+              } catch (error) {
+                console.error('获取K线数据失败:', error);
+                message.error('获取K线数据失败');
+                setKlineData([]);
+              } finally {
+                setKlineLoading(false);
+              }
+            }}
+            href="#"
+            onMouseDown={(e) => e.preventDefault()}
+            style={{
+              cursor: 'pointer',
+              color: 'var(--dark-accent)',
+              fontWeight: 500,
+              textDecoration: 'none',
+            }}
+          >
+            <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{record.symbol}</div>
+          </a>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+              {record.name}
+            </div>
+            <Tooltip title="查看公司信息">
+              <Button
+                type="text"
+                size="small"
+                icon={<InfoCircleOutlined />}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setStockInfoModalVisible(true);
+                  setStockInfoLoading(true);
+                  try {
+                    const response = await apiService.getStockInfo(record.symbol);
+                    setStockInfo(response.data);
+                  } catch (error) {
+                    console.error('获取公司信息失败:', error);
+                    message.error('获取公司信息失败');
+                    setStockInfo(null);
+                  } finally {
+                    setStockInfoLoading(false);
+                  }
+                }}
+                style={{ color: 'var(--dark-text-secondary)', padding: '0 2px', marginLeft: 2 }}
+              />
+            </Tooltip>
+          </div>
         </div>
       ),
     },
@@ -522,7 +608,8 @@ const Dashboard: React.FC = () => {
             percent={score}
             size="small"
             strokeColor={score >= 70 ? '#52c41a' : score >= 55 ? '#1890ff' : '#faad14'}
-            format={(percent) => `${percent?.toFixed(0)}分`}
+            trailColor="var(--dark-border)"
+            format={(percent) => <span style={{ color: 'var(--dark-text-secondary)' }}>{percent?.toFixed(0)}分</span>}
           />
         </div>
       ),
@@ -617,7 +704,7 @@ const Dashboard: React.FC = () => {
       width: 70,
       sorter: (a: EnrichedStock, b: EnrichedStock) => b.win_ratio - a.win_ratio,
       render: (value: number) => (
-        <span style={{ fontSize: '13px', color: value >= 0.6 ? '#52c41a' : '#666' }}>
+        <span style={{ fontSize: '13px', color: value >= 0.6 ? '#52c41a' : 'var(--dark-text-muted)' }}>
           {(value * 100).toFixed(0)}%
         </span>
       ),
@@ -674,7 +761,7 @@ const Dashboard: React.FC = () => {
       dataIndex: 'avgPnl', 
       key: 'avgPnl', 
       render: (v: number) => (
-        <span style={{ color: v >= 0.1 ? '#52c41a' : v >= 0.05 ? '#1890ff' : '#999', fontWeight: 'bold' }}>
+        <span style={{ color: v >= 0.1 ? '#52c41a' : v >= 0.05 ? '#1890ff' : 'var(--dark-text-secondary)', fontWeight: 'bold' }}>
           {(v * 100).toFixed(2)}%
         </span>
       )
@@ -930,19 +1017,19 @@ const Dashboard: React.FC = () => {
           <Col flex="auto">
             <Space size={24} wrap>
               <div>
-                <span style={{ fontSize: '12px', color: '#999' }}>📌 当前建议买入：</span>
+                <span style={{ fontSize: '12px', color: 'var(--dark-text-secondary)' }}>📌 当前建议买入：</span>
                 <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#ff4d4f', marginLeft: '8px' }}>
                   {trendStats.zeroAxisUp.strongBuy}只
                 </span>
-                <span style={{ fontSize: '11px', color: '#999', marginLeft: '4px' }}>（上穿零轴+强推）</span>
+                <span style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', marginLeft: '4px' }}>（上穿零轴+强推）</span>
               </div>
               <Divider type="vertical" style={{ height: '24px' }} />
               <div>
-                <span style={{ fontSize: '12px', color: '#999' }}>⚠️ 需要关注：</span>
+                <span style={{ fontSize: '12px', color: 'var(--dark-text-secondary)' }}>⚠️ 需要关注：</span>
                 <span style={{ fontSize: '16px', fontWeight: 'bold', color: '#fa8c16', marginLeft: '8px' }}>
                   {trendStats.turnDown.total}只
                 </span>
-                <span style={{ fontSize: '11px', color: '#999', marginLeft: '4px' }}>（趋势翻转）</span>
+                <span style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', marginLeft: '4px' }}>（趋势翻转）</span>
               </div>
             </Space>
           </Col>
@@ -989,7 +1076,7 @@ const Dashboard: React.FC = () => {
               <Row gutter={[16, 8]}>
                 <Col xs={24} md={8}>
                   <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>📊 评分权重</div>
-                  <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.6' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--dark-text-muted)', lineHeight: '1.6' }}>
                     收益率40分 + 胜率30分 + 夏普15分 - 回撤20分 + MACD趋势±18分
                   </div>
                 </Col>
@@ -1001,7 +1088,7 @@ const Dashboard: React.FC = () => {
                 </Col>
                 <Col xs={24} md={8}>
                   <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>🎯 筛选标准</div>
-                  <div style={{ fontSize: '11px', color: '#666', lineHeight: '1.6' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--dark-text-muted)', lineHeight: '1.6' }}>
                     仅大盘股，排除ST，胜率≥50%，收益≥3%
                   </div>
                 </Col>
@@ -1071,7 +1158,7 @@ const Dashboard: React.FC = () => {
                 <span>
                   当前筛选结果: <strong style={{ color: '#1890ff', fontSize: '16px' }}>{filteredStocks.length}</strong> 个标的
                   {filterTrend && (
-                    <span style={{ marginLeft: '16px', fontSize: '12px', color: '#666' }}>
+                    <span style={{ marginLeft: '16px', fontSize: '12px', color: 'var(--dark-text-muted)' }}>
                       趋势类型: <strong>
                         {filterTrend === 'ZeroAxisUp' ? '上穿零轴⚡' : 
                          filterTrend === 'RisingUp' ? '快线穿慢线↗' : 
@@ -1080,7 +1167,7 @@ const Dashboard: React.FC = () => {
                     </span>
                   )}
                   {filteredStocks.length > 0 && (
-                    <span style={{ marginLeft: '16px', fontSize: '12px', color: '#666' }}>
+                    <span style={{ marginLeft: '16px', fontSize: '12px', color: 'var(--dark-text-muted)' }}>
                       建议总仓位: <strong>{filteredStocks.slice(0, 10).reduce((sum, s) => sum + s.position_suggestion, 0).toFixed(0)}%</strong>
                     </span>
                   )}
@@ -1136,10 +1223,10 @@ const Dashboard: React.FC = () => {
         ) : (
           <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--dark-card-alt)', borderRadius: '4px' }}>
             <InfoCircleOutlined style={{ fontSize: '48px', color: 'var(--dark-text-muted)' }} />
-            <h4 style={{ marginTop: '16px', color: '#999' }}>
+            <h4 style={{ marginTop: '16px', color: 'var(--dark-text-secondary)' }}>
               {filterRecommendation || filterRisk ? '当前筛选条件下没有匹配的标的' : '暂无符合推荐条件的标的'}
             </h4>
-            <p style={{ color: '#999', marginTop: '8px' }}>
+            <p style={{ color: 'var(--dark-text-secondary)', marginTop: '8px' }}>
               {filterRecommendation || filterRisk ? '请尝试调整筛选条件' : '系统会持续分析回测数据，发现优质标的后会自动展示'}
             </p>
           </div>
@@ -1169,6 +1256,7 @@ const Dashboard: React.FC = () => {
       <Modal
         title="Top 5 推荐标的多维度对比分析"
         open={showRadarModal}
+        getContainer={false}
         onCancel={() => setShowRadarModal(false)}
         footer={[
           <Button key="close" onClick={() => setShowRadarModal(false)}>
@@ -1179,23 +1267,23 @@ const Dashboard: React.FC = () => {
       >
         <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--dark-card-alt)', borderRadius: '4px' }}>
           <Space direction="vertical" size={4}>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               <InfoCircleOutlined style={{ marginRight: '4px' }} />
               <strong>图表说明：</strong>五个维度均已归一化到0-100分，分数越高表现越好
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               • <strong>收益率</strong>: 历史回测期间收益表现
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               • <strong>胜率</strong>: 盈利交易占比
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               • <strong>夏普比率</strong>: 风险调整后收益
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               • <strong>低回撤</strong>: 最大回撤越小，此项得分越高
             </div>
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
               • <strong>综合评分</strong>: 多因子加权综合得分
             </div>
           </Space>
@@ -1224,6 +1312,9 @@ const Dashboard: React.FC = () => {
           />
         </div>
       </Modal>
+
+      {/* 全局深色主题样式 */}
+      <style>{globalDarkStyles}</style>
 
       {/* 自定义样式 */}
       <style>{`
@@ -1280,6 +1371,159 @@ const Dashboard: React.FC = () => {
           background: var(--dark-card-alt) !important;
         }
       `}</style>
+
+      {/* K线图表 Modal */}
+      <Modal
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>{chartSymbol} - {chartName} K线图</span>}
+        open={chartModalVisible}
+        getContainer={false}
+        transitionName=""
+        maskTransitionName=""
+        onCancel={() => {
+          setChartModalVisible(false);
+          setKlineData([]);
+        }}
+        footer={[
+          <Button
+            key="sync"
+            type="primary"
+            loading={klineLoading}
+            onClick={async () => {
+              if (!chartSymbol) return;
+              try {
+                setKlineLoading(true);
+                await apiService.syncKlineData(chartSymbol);
+                message.success('K线数据同步成功');
+                // 重新获取数据
+                const response = await apiService.getKlineData(chartSymbol);
+                setKlineData(response.data || []);
+              } catch (error) {
+                message.error('K线数据同步失败');
+              } finally {
+                setKlineLoading(false);
+              }
+            }}
+          >
+            同步最新数据
+          </Button>,
+          <Button key="close" onClick={() => {
+            setChartModalVisible(false);
+            setKlineData([]);
+          }}>
+            关闭
+          </Button>
+        ]}
+        width={1000}
+        bodyStyle={{ padding: '16px' }}
+      >
+        {klineLoading && !klineData.length ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            加载中...
+          </div>
+        ) : (
+          <StockChart
+            data={klineData}
+            symbol={chartSymbol}
+            name={chartName}
+          />
+        )}
+      </Modal>
+
+      {/* 公司信息 Modal */}
+      <Modal
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>公司信息</span>}
+        open={stockInfoModalVisible}
+        getContainer={false}
+        transitionName=""
+        maskTransitionName=""
+        onCancel={() => {
+          setStockInfoModalVisible(false);
+          setStockInfo(null);
+        }}
+        footer={[
+          <Button key="close" onClick={() => {
+            setStockInfoModalVisible(false);
+            setStockInfo(null);
+          }}>
+            关闭
+          </Button>
+        ]}
+        width={600}
+        bodyStyle={{ padding: '16px' }}
+      >
+        {stockInfoLoading ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            加载中...
+          </div>
+        ) : stockInfo ? (
+          <div style={{ color: 'var(--dark-text)' }}>
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <div style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '8px' }}>
+                  {stockInfo.name}
+                </div>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '13px' }}>
+                  {stockInfo.symbol}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>上市日期</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.list_date || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>交易所</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.exchange || stockInfo.market || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>所属行业</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.industry || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>股票类型</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.type || stockInfo.share_type || '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>总股本</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.total_share ? `${(stockInfo.total_share / 10000).toFixed(2)} 万股` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>流通股本</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.float_share ? `${(stockInfo.float_share / 10000).toFixed(2)} 万股` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>总市值</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.total_mv ? `${(stockInfo.total_mv / 100000000).toFixed(2)} 亿` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>流通市值</div>
+                <div style={{ fontSize: '14px' }}>
+                  {stockInfo.float_mv ? `${(stockInfo.float_mv / 100000000).toFixed(2)} 亿` : '-'}
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>上市状态</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.listing_state || stockInfo.status || '-'}</div>
+              </Col>
+              {stockInfo.province && (
+                <Col span={12}>
+                  <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>所在地区</div>
+                  <div style={{ fontSize: '14px' }}>{stockInfo.province}{stockInfo.city ? ` ${stockInfo.city}` : ''}</div>
+                </Col>
+              )}
+            </Row>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '50px', color: 'var(--dark-text-secondary)' }}>
+            暂无公司信息
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

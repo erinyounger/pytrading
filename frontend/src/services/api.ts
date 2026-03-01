@@ -199,4 +199,32 @@ export const apiService = {
     const response = await api.post('/api/kline/sync', { symbol, days });
     return response.data;
   },
+
+  // 股票信息相关
+  // 获取股票基本信息
+  getStockInfo: async (symbol: string): Promise<{
+    data: {
+      symbol: string;
+      name: string;
+      market: string;
+      industry: string;
+      list_date: string;
+      exchange: string;
+      type: string;
+      status: string;
+      share_type: string;
+      is_hs: string;
+      listing_state: string;
+      total_share?: number;
+      float_share?: number;
+      total_mv?: number;
+      float_mv?: number;
+      company_name?: string;
+      province?: string;
+      city?: string;
+    };
+  }> => {
+    const response = await api.get(`/api/stock-info/${symbol}`);
+    return response.data;
+  },
 };
