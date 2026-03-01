@@ -1,37 +1,55 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Table, 
-  Card, 
-  Button, 
-  Space, 
-  Input, 
-  DatePicker, 
-  Select, 
-  Tag, 
-  Modal, 
-  Row, 
-  Col, 
+import {
+  Table,
+  Card,
+  Button,
+  Space,
+  Input,
+  DatePicker,
+  Select,
+  Tag,
+  Modal,
+  Row,
+  Col,
   Statistic,
   message,
   Tooltip,
   InputNumber,
   Pagination,
-  Typography
+  Typography,
+  Progress,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import { 
-  ReloadOutlined, 
+import {
+  ReloadOutlined,
   EyeOutlined,
-  DownloadOutlined 
+  DownloadOutlined,
+  ArrowRightOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
 import { BacktestResult, PaginatedApiResponse } from '../types';
+import StockChart from '../components/StockChart';
 
 const { Search } = Input;
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+
+// 趋势类型中文映射
+const TRENDING_TYPE_MAP: Record<string, string> = {
+  'Unknown': '未知',
+  'Observing': '关注',
+  'RisingUp': '上涨',
+  'ZeroAxisUp': '零轴上攻',
+  'DeadXDown': '死叉下跌',
+  'FallingDown': '下跌',
+  'UpDown': '横盘震荡',
+};
+
+const translateTrendingType = (type: string): string => {
+  return TRENDING_TYPE_MAP[type] || type;
+};
 
 const BacktestResults: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -40,6 +58,12 @@ const BacktestResults: React.FC = () => {
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [compareModalVisible, setCompareModalVisible] = useState(false);
   const [compareData, setCompareData] = useState<{strategy: string; pnl: number; winRate: number; sharpe: number}[]>([]);
+  // K线图表相关状态
+  const [chartModalVisible, setChartModalVisible] = useState(false);
+  const [chartSymbol, setChartSymbol] = useState('');
+  const [chartName, setChartName] = useState('');
+  const [klineData, setKlineData] = useState<any[]>([]);
+  const [klineLoading, setKlineLoading] = useState(false);
   const [filters, setFilters] = useState({
     symbol: '',
     trending_type: '', // 改为trending_type以匹配后端API
@@ -248,6 +272,30 @@ const BacktestResults: React.FC = () => {
       dataIndex: 'symbol',
       key: 'symbol',
       fixed: 'left' as const,
+      render: (value: string, record: BacktestResult) => (
+        <a
+          onClick={async () => {
+            setChartSymbol(value);
+            setChartName(record.name || '');
+            setChartModalVisible(true);
+
+            // 加载K线数据
+            try {
+              setKlineLoading(true);
+              const response = await apiService.getKlineData(value);
+              setKlineData(response.data || []);
+            } catch (error) {
+              console.error('获取K线数据失败:', error);
+              setKlineData([]);
+            } finally {
+              setKlineLoading(false);
+            }
+          }}
+          style={{ cursor: 'pointer', color: '#1890ff' }}
+        >
+          {value}
+        </a>
+      ),
     },
     {
       title: '股票名称',
@@ -297,12 +345,13 @@ const BacktestResults: React.FC = () => {
         value ? <Tag color="red">是</Tag> : <Tag color="green">否</Tag>
       ),
     },
-    {
-      title: '行业',
-      dataIndex: 'industry',
-      key: 'industry',
-      render: (value?: string) => value || '-',
-    },
+    // 行业为付费接口，暂不显示，留空以后扩展
+    // {
+    //   title: '行业',
+    //   dataIndex: 'industry',
+    //   key: 'industry',
+    //   render: (value?: string) => value || '-',
+    // },
     {
       title: '市值(亿)',
       dataIndex: 'market_cap',
@@ -343,7 +392,7 @@ const BacktestResults: React.FC = () => {
           'Unknown': { text: '未识别', color: 'default' },
           'Observing': { text: '关注', color: 'blue' },
           'RisingUp': { text: '上涨', color: 'red' },
-          'ZeroAxisUp': { text: '零轴上穿', color: 'purple' },
+          'ZeroAxisUp': { text: '零轴上攻', color: 'purple' },
           'DeadXDown': { text: '死叉下跌', color: 'orange' },
           'FallingDown': { text: '下跌', color: 'volcano' },
           'UpDown': { text: '震荡', color: 'cyan' }
@@ -590,7 +639,7 @@ const BacktestResults: React.FC = () => {
               >
                 {availableStrategies.map(strategy => (
                   <Option key={strategy} value={strategy}>
-                    {strategy}
+                    {translateTrendingType(strategy)}
                   </Option>
                 ))}
               </Select>
@@ -676,8 +725,8 @@ const BacktestResults: React.FC = () => {
                 />
               </div>
             </Col>
-            {/* 行业筛选 */}
-            <Col xs={24} sm={12} md={6} lg={4}>
+            {/* 行业筛选 - 付费接口，暂不显示，留空以后扩展 */}
+            {/* <Col xs={24} sm={12} md={6} lg={4}>
               <Select
                 placeholder="选择行业"
                 allowClear
@@ -699,9 +748,9 @@ const BacktestResults: React.FC = () => {
                 <Option value="银行">银行</Option>
                 <Option value="非银金融">非银金融</Option>
               </Select>
-            </Col>
-            {/* 市值筛选（亿元） */}
-            <Col xs={12} sm={8} md={4} lg={4}>
+            </Col> */}
+            {/* 市值筛选（亿元）- 暂不使用 */}
+            {/* <Col xs={12} sm={8} md={4} lg={4}>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 <InputNumber
                   placeholder="最小市值"
@@ -729,9 +778,9 @@ const BacktestResults: React.FC = () => {
                   size="small"
                 />
               </div>
-            </Col>
-            {/* 回撤持续时间筛选（天） */}
-            <Col xs={12} sm={8} md={4} lg={4}>
+            </Col> */}
+            {/* 回撤持续时间筛选（天）- 暂不使用 */}
+            {/* <Col xs={12} sm={8} md={4} lg={4}>
               <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                 <InputNumber
                   placeholder="最小回撤天数"
@@ -759,29 +808,9 @@ const BacktestResults: React.FC = () => {
                   size="small"
                 />
               </div>
-            </Col>
+            </Col> */}
           </Row>
         </div>
-
-        {/* 实时行情占位卡片 */}
-        <Card size="small" bordered={false} style={{ marginBottom: '12px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Text style={{ color: 'white', fontSize: '14px', fontWeight: 500 }}>📈 实时行情监控</Text>
-              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '4px' }}>
-                点击查看重点关注股票的实时行情 →
-              </div>
-            </div>
-            <Button 
-              type="primary" 
-              size="small"
-              onClick={() => window.location.href = '/realtime-monitor'}
-              style={{ background: 'white', borderColor: 'white', color: '#667eea' }}
-            >
-              进入实时行情 →
-            </Button>
-          </div>
-        </Card>
 
         {/* 快速筛选和统计信息 */}
         <div style={{ 
@@ -877,129 +906,179 @@ const BacktestResults: React.FC = () => {
       </Card>
 
       <Modal
-        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>回测详情</span>}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 16, fontWeight: 600 }}>回测详情</span>
+            <Tag color="blue" style={{ marginLeft: 8 }}>{selectedResult?.strategy_name}</Tag>
+          </div>
+        }
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
-        width={800}
-        bodyStyle={{ padding: '16px' }}
+        width={900}
+        bodyStyle={{ padding: '16px', background: '#f5f5f5' }}
       >
         {selectedResult && (
-          <Row gutter={[12, 12]}>
-            <Col span={24}>
-              <Card title="基本信息" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
-                <Row gutter={[16, 16]}>
-                  <Col span={8}>
-                    <Statistic title="股票代码" value={selectedResult.symbol} />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic title="股票名称" value={selectedResult.name} />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic 
-                      title="策略名称" 
-                      value={selectedResult.strategy_name || '-'} 
-                    />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic title="趋势类型" value={selectedResult.trending_type} />
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
-            
-            <Col span={24}>
-              <Card title="收益指标" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
-                <Row gutter={[16, 16]}>
-                  <Col span={8}>
-                    <Statistic 
-                      title="收益率" 
-                      value={selectedResult.pnl_ratio * 100} 
-                      precision={2}
-                      suffix="%" 
-                      valueStyle={{ 
-                        color: selectedResult.pnl_ratio >= 0 ? '#ff4d4f' : '#52c41a',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic 
-                      title="夏普比率" 
-                      value={selectedResult.sharp_ratio} 
-                      precision={2}
-                    />
-                  </Col>
-                  <Col span={8}>
-                    <Statistic 
-                      title="最大回撤" 
-                      value={selectedResult.max_drawdown * 100} 
-                      precision={2}
-                      suffix="%" 
-                      valueStyle={{ 
-                        color: '#ff4d4f',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* 头部信息卡片 */}
+            <Card
+              bordered={false}
+              bodyStyle={{ padding: 16 }}
+              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 8 }}
+            >
+              <Row gutter={24} align="middle">
+                <Col>
+                  <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12 }}>股票信息</div>
+                  <div style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>
+                    {selectedResult.name} <span style={{ fontSize: 16, fontWeight: 'normal' }}>{selectedResult.symbol}</span>
+                  </div>
+                </Col>
+                <Col style={{ textAlign: 'center' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12 }}>当前趋势</div>
+                  <Tag
+                    color={
+                      selectedResult.trending_type === 'RisingUp' ? 'red' :
+                      selectedResult.trending_type === 'DeadXDown' ? 'orange' :
+                      selectedResult.trending_type === 'FallingDown' ? 'volcano' :
+                      selectedResult.trending_type === 'Observing' ? 'blue' :
+                      selectedResult.trending_type === 'UpDown' ? 'cyan' : 'default'
+                    }
+                    style={{ fontSize: 14, padding: '4px 12px' }}
+                  >
+                    {translateTrendingType(selectedResult.trending_type)}
+                  </Tag>
+                </Col>
+                <Col style={{ textAlign: 'right' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 12 }}>收益率</div>
+                  <div style={{
+                    color: selectedResult.pnl_ratio >= 0 ? '#ffccc7' : '#b7eb8f',
+                    fontSize: 28,
+                    fontWeight: 'bold'
+                  }}>
+                    {selectedResult.pnl_ratio >= 0 ? '+' : ''}{(selectedResult.pnl_ratio * 100).toFixed(2)}%
+                  </div>
+                </Col>
+              </Row>
+            </Card>
 
-            <Col span={24}>
-              <Card title="交易统计" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
-                <Row gutter={[16, 16]}>
-                  <Col span={6}>
-                    <Statistic title="开仓次数" value={selectedResult.open_count} />
-                  </Col>
-                  <Col span={6}>
-                    <Statistic title="平仓次数" value={selectedResult.close_count} />
-                  </Col>
-                  <Col span={6}>
-                    <Statistic 
-                      title="盈利次数" 
-                      value={selectedResult.win_count}
-                      valueStyle={{ 
-                        color: '#ff4d4f',
+            {/* 核心指标 */}
+            <Row gutter={[12, 12]}>
+              <Col span={12}>
+                <Card title="📊 收益指标" size="small" bordered={false} bodyStyle={{ padding: 12 }}>
+                  <Row gutter={[8, 12]}>
+                    <Col span={12}>
+                      <div style={{ color: '#888', fontSize: 12 }}>收益率</div>
+                      <div style={{
+                        color: selectedResult.pnl_ratio >= 0 ? '#f5222d' : '#52c41a',
+                        fontSize: 20,
                         fontWeight: 'bold'
-                      }}
-                    />
-                  </Col>
-                  <Col span={6}>
-                    <Statistic 
-                      title="胜率" 
-                      value={selectedResult.win_ratio * 100} 
-                      precision={1}
-                      suffix="%" 
-                      valueStyle={{ 
-                        color: selectedResult.win_ratio >= 0.5 ? '#ff4d4f' : '#52c41a',
-                        fontWeight: 'bold'
-                      }}
-                    />
-                  </Col>
-                </Row>
-              </Card>
-            </Col>
+                      }}>
+                        {selectedResult.pnl_ratio >= 0 ? '+' : ''}{(selectedResult.pnl_ratio * 100).toFixed(2)}%
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div style={{ color: '#888', fontSize: 12 }}>夏普比率</div>
+                      <div style={{ fontSize: 20, fontWeight: 'bold', color: selectedResult.sharp_ratio >= 1 ? '#1890ff' : '#666' }}>
+                        {selectedResult.sharp_ratio.toFixed(2)}
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div style={{ color: '#888', fontSize: 12 }}>风险比率</div>
+                      <div style={{ fontSize: 20, fontWeight: 'bold' }}>
+                        {selectedResult.risk_ratio.toFixed(2)}
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div style={{ color: '#888', fontSize: 12 }}>最大回撤</div>
+                      <div style={{ color: '#f5222d', fontSize: 20, fontWeight: 'bold' }}>
+                        -{(selectedResult.max_drawdown * 100).toFixed(2)}%
+                      </div>
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
 
-            <Col span={24}>
-              <Card title="回测周期" size="small" bordered={false} headStyle={{ padding: '8px 12px' }} bodyStyle={{ padding: '12px' }}>
-                <Row gutter={[16, 16]}>
-                  <Col span={12}>
-                    <Statistic 
-                      title="开始时间" 
-                      value={dayjs(selectedResult.backtest_start_time).format('YYYY-MM-DD HH:mm:ss')} 
-                    />
-                  </Col>
-                  <Col span={12}>
-                    <Statistic 
-                      title="结束时间" 
-                      value={dayjs(selectedResult.backtest_end_time).format('YYYY-MM-DD HH:mm:ss')} 
-                    />
-                  </Col>
+              <Col span={12}>
+                <Card title="📈 交易统计" size="small" bordered={false} bodyStyle={{ padding: 12 }}>
+                  <Row gutter={[8, 12]}>
+                    <Col span={8}>
+                      <div style={{ color: '#888', fontSize: 12 }}>开仓次数</div>
+                      <div style={{ fontSize: 20, fontWeight: 'bold' }}>{selectedResult.open_count}</div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ color: '#888', fontSize: 12 }}>平仓次数</div>
+                      <div style={{ fontSize: 20, fontWeight: 'bold' }}>{selectedResult.close_count}</div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ color: '#888', fontSize: 12 }}>亏损次数</div>
+                      <div style={{ color: '#52c41a', fontSize: 20, fontWeight: 'bold' }}>{selectedResult.lose_count}</div>
+                    </Col>
+                    <Col span={24}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ color: '#888', fontSize: 12, flex: '0 0 60px' }}>胜率</div>
+                        <Progress
+                          percent={(selectedResult.win_ratio * 100)}
+                          strokeColor={selectedResult.win_ratio >= 0.5 ? '#f5222d' : '#52c41a'}
+                          trailColor="#f0f0f0"
+                          size="small"
+                        />
+                        <span style={{ fontWeight: 'bold', color: selectedResult.win_ratio >= 0.5 ? '#f5222d' : '#52c41a' }}>
+                          {(selectedResult.win_ratio * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div style={{ color: '#888', fontSize: 12 }}>盈利次数</div>
+                      <div style={{ color: '#f5222d', fontSize: 20, fontWeight: 'bold' }}>{selectedResult.win_count}</div>
+                    </Col>
+                  </Row>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* 回测周期 */}
+            <Card title="📅 回测周期" size="small" bordered={false} bodyStyle={{ padding: 12 }}>
+              <Row gutter={24}>
+                <Col>
+                  <div style={{ color: '#888', fontSize: 12 }}>开始时间</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{dayjs(selectedResult.backtest_start_time).format('YYYY-MM-DD HH:mm')}</div>
+                </Col>
+                <Col>
+                  <ArrowRightOutlined style={{ color: '#888' }} />
+                </Col>
+                <Col>
+                  <div style={{ color: '#888', fontSize: 12 }}>结束时间</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{dayjs(selectedResult.backtest_end_time).format('YYYY-MM-DD HH:mm')}</div>
+                </Col>
+                <Col>
+                  <div style={{ color: '#888', fontSize: 12 }}>持续天数</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>
+                    {dayjs(selectedResult.backtest_end_time).diff(dayjs(selectedResult.backtest_start_time), 'day')} 天
+                  </div>
+                </Col>
+              </Row>
+            </Card>
+
+            {/* 附加信息 */}
+            {(selectedResult.industry || selectedResult.market_cap) && (
+              <Card title="🏢 基本信息" size="small" bordered={false} bodyStyle={{ padding: 12 }}>
+                <Row gutter={24}>
+                  {selectedResult.industry && (
+                    <Col>
+                      <div style={{ color: '#888', fontSize: 12 }}>所属行业</div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>{selectedResult.industry}</div>
+                    </Col>
+                  )}
+                  {selectedResult.market_cap && (
+                    <Col>
+                      <div style={{ color: '#888', fontSize: 12 }}>市值</div>
+                      <div style={{ fontSize: 14, fontWeight: 500 }}>{selectedResult.market_cap} 亿</div>
+                    </Col>
+                  )}
                 </Row>
               </Card>
-            </Col>
-          </Row>
+            )}
+          </div>
         )}
       </Modal>
 
@@ -1030,7 +1109,7 @@ const BacktestResults: React.FC = () => {
               key: 'pnl',
               align: 'right' as const,
               render: (value: number) => (
-                <span style={{ 
+                <span style={{
                   color: value >= 0 ? '#ff4d4f' : '#52c41a',
                   fontWeight: 500,
                   fontVariantNumeric: 'tabular-nums'
@@ -1045,7 +1124,7 @@ const BacktestResults: React.FC = () => {
               key: 'winRate',
               align: 'right' as const,
               render: (value: number) => (
-                <span style={{ 
+                <span style={{
                   color: value >= 50 ? '#ff4d4f' : '#52c41a',
                   fontWeight: 500,
                   fontVariantNumeric: 'tabular-nums'
@@ -1067,6 +1146,60 @@ const BacktestResults: React.FC = () => {
             },
           ]}
         />
+      </Modal>
+
+      {/* K线图表 Modal */}
+      <Modal
+        title={<span style={{ fontSize: '16px', fontWeight: 500 }}>{chartSymbol} - {chartName} K线图</span>}
+        open={chartModalVisible}
+        onCancel={() => {
+          setChartModalVisible(false);
+          setKlineData([]);
+        }}
+        footer={[
+          <Button
+            key="sync"
+            type="primary"
+            loading={klineLoading}
+            onClick={async () => {
+              if (!chartSymbol) return;
+              try {
+                setKlineLoading(true);
+                await apiService.syncKlineData(chartSymbol);
+                message.success('K线数据同步成功');
+                // 重新获取数据
+                const response = await apiService.getKlineData(chartSymbol);
+                setKlineData(response.data || []);
+              } catch (error) {
+                message.error('K线数据同步失败');
+              } finally {
+                setKlineLoading(false);
+              }
+            }}
+          >
+            同步最新数据
+          </Button>,
+          <Button key="close" onClick={() => {
+            setChartModalVisible(false);
+            setKlineData([]);
+          }}>
+            关闭
+          </Button>
+        ]}
+        width={1000}
+        bodyStyle={{ padding: '16px' }}
+      >
+        {klineLoading && !klineData.length ? (
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            加载中...
+          </div>
+        ) : (
+          <StockChart
+            data={klineData}
+            symbol={chartSymbol}
+            name={chartName}
+          />
+        )}
       </Modal>
     </div>
   );
