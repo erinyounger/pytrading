@@ -17,11 +17,11 @@ TalibExpAdjust = False  # pandas默认是True，同花顺默认是False。True�
 
 def TA_MACD(close, fastperiod=12, slowperiod=26, signalperiod=9):
     """利用talib计算MACD"""
-    diff, dea, macd = talib.MACD(close, fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=signalperiod)
-    diff = np.array(list(map(float_fmt, diff)))
-    dea = np.array(list(map(float_fmt, dea)))
-    macd = np.array(list(map(float_fmt, macd)))
-    return diff, dea, macd[-1] * 2
+    diff, dea, macd = talib.MACD(close, fastperiod=fastperiod, slowperiod=slowperiod, signalperiod=9)
+    diff = np.array([float_fmt(d) for d in diff], dtype=float)
+    dea = np.array([float_fmt(d) for d in dea], dtype=float)
+    macd = np.array([float_fmt(m) * 2 for m in macd], dtype=float)
+    return diff, dea, macd
 
 
 def MACD_CN(close: pd.DataFrame, fastperiod=12, slowperiod=26, signalperiod=9):

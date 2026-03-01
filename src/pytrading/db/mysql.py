@@ -6,7 +6,7 @@
 @Email  : yflying7@gmail.com
 @Date    ：2022/11/20 21:36 
 """
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, UniqueConstraint, text, Boolean, JSON, Enum as SQLEnum, ForeignKey, DECIMAL, Text
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, UniqueConstraint, text, Boolean, JSON, Enum as SQLEnum, ForeignKey, DECIMAL, Text, BigInteger, Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -163,12 +163,35 @@ class MySQLClient:
 class BacktestLog(Base):
     """统一回测日志表(任务/个股)"""
     __tablename__ = 'backtest_logs'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True, comment='自增ID')
     task_id = Column(String(100), nullable=False, comment='任务ID')
     symbol = Column(String(20), nullable=True, comment='股票代码(为空表示任务级日志)')
     level = Column(SQLEnum('DEBUG', 'INFO', 'WARN', 'ERROR', name='log_level_enum'), default='INFO', nullable=False, comment='日志级别')
     message = Column(Text, nullable=False, comment='日志内容')
     created_at = Column(DateTime, default=datetime.now, comment='创建时间')
+
+
+class StockKline(Base):
+    """股票K线数据表"""
+    __tablename__ = 'stock_kline'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
+    symbol = Column(String(20), nullable=False, comment='股票代码')
+    date = Column(Date, nullable=False, comment='日期')
+    open = Column(DECIMAL(10, 2), comment='开盘价')
+    high = Column(DECIMAL(10, 2), comment='最高价')
+    low = Column(DECIMAL(10, 2), comment='最低价')
+    close = Column(DECIMAL(10, 2), comment='收盘价')
+    volume = Column(BigInteger, comment='成交量')
+    # MACD指标
+    macd_diff = Column(DECIMAL(10, 4), comment='DIF (MACD快线)')
+    macd_dea = Column(DECIMAL(10, 4), comment='DEA (MACD慢线)')
+    macd_hist = Column(DECIMAL(10, 4), comment='MACD柱')
+    created_at = Column(DateTime, default=datetime.now, comment='创建时间')
+
+    __table_args__ = (
+        UniqueConstraint('symbol', 'date', name='uq_symbol_date'),
+    )
 
 

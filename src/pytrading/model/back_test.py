@@ -34,6 +34,12 @@ class BackTest:
         self.trending_type = None # 趋势类型
         self.strategy_name = None # 策略名称
         self.current_price = None # 当前价格
+        self.volume_avg_7d = None  # 7日平均成交量（万手）
+        self.atr = None  # 平均真实波幅
+        self.is_blacklist = False  # 是否在黑名单中
+        self.industry = None  # 所属行业
+        self.market_cap = None  # 市值（亿元）
+        self.max_drawdown_duration = None  # 最大回撤持续天数
         self.status = None  # 回测状态: running-运行中, finished-已完成, null-未开始
 
     def init_attr(self, **kwargs):
@@ -66,6 +72,12 @@ class BackTest:
             "trending_type": self.trending_type,
             "strategy_name": self.strategy_name,
             "current_price": self.current_price,
+            "volume_avg_7d": self.volume_avg_7d,
+            "atr": self.atr,
+            "is_blacklist": self.is_blacklist,
+            "industry": self.industry,
+            "market_cap": self.market_cap,
+            "max_drawdown_duration": self.max_drawdown_duration,
             "status": self.status,
         }
     

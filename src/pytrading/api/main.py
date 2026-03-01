@@ -25,11 +25,16 @@ sys.path.insert(0, os.path.join(project_root, 'src'))
 from pytrading.config.settings import config
 from pytrading.model.back_test import BackTest
 from pytrading.model.back_test_saver_factory import get_backtest_saver
-from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask, SystemConfig, BackTestResult
+from pytrading.db.mysql import MySQLClient, Strategy, StockSymbol, BacktestTask, SystemConfig, BackTestResult, StockKline
 from pytrading.py_trading import PyTrading
 from pytrading.logger import logger
 from sqlalchemy import func
-from gm.api import set_token, get_constituents
+from gm.api import set_token, get_constituents, history
+from pytrading.utils.talib_util import TA_MACD
+import pandas as pd
+
+# 设置掘金量化token
+set_token(config.token)
 
 app = FastAPI(
     title="PyTrading API",
@@ -877,6 +882,181 @@ async def update_config(config: dict):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def sync_kline_data(symbol: str, days: int = 365):
+    """
+    同步K线数据到数据库
+    Args:
+        symbol: 股票代码
+        days: 获取天数，默认为365天
+    """
+    from datetime import datetime, timedelta
+
+    try:
+        # 计算日期范围
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=days + 60)).strftime('%Y-%m-%d')  # 多取60天以确保有足够数据计算MACD
+
+        # 获取历史K线数据
+        bars = history(
+            symbol=symbol,
+            frequency='1d',
+            start_time=start_date,
+            end_time=end_date,
+            fields='symbol,open,high,low,close,volume,eob',
+            df=True
+        )
+
+        if bars is None or bars.empty:
+            logger.warning(f"获取K线数据失败: {symbol}")
+            return False
+
+        # 计算MACD
+        close_prices = bars['close'].values.astype(float)
+        diff, dea, macd_hist = TA_MACD(close_prices, fastperiod=12, slowperiod=26, signalperiod=9)
+
+        # 获取数据库连接
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 保留最近的 days 天数据
+            bars = bars.tail(days).reset_index(drop=True)
+            diff = diff[-days:]
+            dea = dea[-days:]
+            macd_hist = macd_hist[-days:]
+
+            saved_count = 0
+            for i in range(len(bars)):
+                row = bars.iloc[i]
+                # 解析日期
+                if 'eob' in row:
+                    date_val = row['eob']
+                else:
+                    continue
+
+                # 检查是否已存在
+                existing = session.query(StockKline).filter_by(
+                    symbol=symbol,
+                    date=date_val.date() if isinstance(date_val, datetime) else date_val
+                ).first()
+
+                if existing:
+                    # 更新
+                    existing.open = float(row['open']) if pd.notna(row['open']) else None
+                    existing.high = float(row['high']) if pd.notna(row['high']) else None
+                    existing.low = float(row['low']) if pd.notna(row['low']) else None
+                    existing.close = float(row['close']) if pd.notna(row['close']) else None
+                    existing.volume = int(row['volume']) if pd.notna(row['volume']) and row['volume'] else 0
+                    existing.macd_diff = float(diff[i]) if i < len(diff) and pd.notna(diff[i]) else None
+                    existing.macd_dea = float(dea[i]) if i < len(dea) and pd.notna(dea[i]) else None
+                    existing.macd_hist = float(macd_hist[i]) if i < len(macd_hist) and pd.notna(macd_hist[i]) else None
+                else:
+                    # 新增
+                    kline = StockKline(
+                        symbol=symbol,
+                        date=date_val.date() if isinstance(date_val, datetime) else date_val,
+                        open=float(row['open']) if pd.notna(row['open']) else None,
+                        high=float(row['high']) if pd.notna(row['high']) else None,
+                        low=float(row['low']) if pd.notna(row['low']) else None,
+                        close=float(row['close']) if pd.notna(row['close']) else None,
+                        volume=int(row['volume']) if pd.notna(row['volume']) and row['volume'] else 0,
+                        macd_diff=float(diff[i]) if i < len(diff) and pd.notna(diff[i]) else None,
+                        macd_dea=float(dea[i]) if i < len(dea) and pd.notna(dea[i]) else None,
+                        macd_hist=float(macd_hist[i]) if i < len(macd_hist) and pd.notna(macd_hist[i]) else None
+                    )
+                    session.add(kline)
+                    saved_count += 1
+
+            session.commit()
+            logger.info(f"K线数据同步完成: {symbol}, 新增/更新 {saved_count} 条")
+            return True
+
+        finally:
+            session.close()
+
+    except Exception as e:
+        logger.error(f"同步K线数据失败: {symbol}, error: {str(e)}")
+        return False
+
+
+@app.get("/api/kline/{symbol}")
+async def get_kline_data(symbol: str):
+    """获取K线数据"""
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 查询K线数据，按日期升序排列
+            klines = session.query(StockKline).filter_by(
+                symbol=symbol
+            ).order_by(StockKline.date.asc()).all()
+
+            if not klines:
+                # 如果没有数据，返回提示信息
+                return {
+                    "symbol": symbol,
+                    "data": [],
+                    "message": "暂无K线数据，请先同步"
+                }
+
+            result = []
+            for k in klines:
+                result.append({
+                    "date": k.date.strftime('%Y-%m-%d') if k.date else None,
+                    "open": float(k.open) if k.open else None,
+                    "high": float(k.high) if k.high else None,
+                    "low": float(k.low) if k.low else None,
+                    "close": float(k.close) if k.close else None,
+                    "volume": k.volume,
+                    "macd_diff": float(k.macd_diff) if k.macd_diff else None,
+                    "macd_dea": float(k.macd_dea) if k.macd_dea else None,
+                    "macd_hist": float(k.macd_hist) if k.macd_hist else None
+                })
+
+            return {
+                "symbol": symbol,
+                "data": result
+            }
+
+        finally:
+            session.close()
+
+    except Exception as e:
+        logger.error(f"获取K线数据失败: {symbol}, error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取K线数据失败: {str(e)}")
+
+
+@app.post("/api/kline/sync")
+async def sync_kline(sync_request: dict):
+    """同步K线数据"""
+    try:
+        symbol = sync_request.get("symbol")
+        days = sync_request.get("days", 365)  # 默认365天
+
+        if not symbol:
+            raise HTTPException(status_code=400, detail="缺少symbol参数")
+
+        # 调用同步函数
+        success = sync_kline_data(symbol, days)
+
+        if success:
+            return {
+                "status": "success",
+                "message": f"K线数据同步成功: {symbol}",
+                "symbol": symbol,
+                "days": days
+            }
+        else:
+            raise HTTPException(status_code=500, detail=f"K线数据同步失败: {symbol}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"同步K线数据失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"同步K线数据失败: {str(e)}")
 
 if __name__ == "__main__":
     # 开发模式运行

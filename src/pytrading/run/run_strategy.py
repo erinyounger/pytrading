@@ -29,8 +29,47 @@ from pytrading.utils import is_live_mode
 from pytrading.config.strategy_enum import StrategyType
 from pytrading.utils.myquant import get_current_price
 from pytrading.db.mysql import BacktestStatus
+from pytrading.utils.talib_util import ATR
 
 order_controller = OrderController()
+
+
+def get_market_data(symbol):
+    """获取市场数据：7日平均成交量、市值、ATR"""
+    import pandas as pd
+    from datetime import datetime, timedelta
+
+    try:
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+
+        # 获取历史行情数据
+        bars = history(symbol=symbol, frequency='1d', start_time=start_date, end_time=end_date,
+                       fields='symbol,open,high,low,close,volume', df=True)
+
+        if bars is None or bars.empty:
+            return None, None, None
+
+        # 计算7日平均成交量（单位：万手）
+        volume_avg_7d = bars['volume'].tail(7).mean() / 10000 if len(bars) >= 7 else None
+
+        # 计算ATR
+        atr = ATR(bars['high'].values, bars['low'].values, bars['close'].values, timeperiod=14)
+        atr_value = float(atr[-1]) if not pd.isna(atr[-1]) else None
+
+        # 获取市值（使用最新数据）
+        try:
+            # 尝试获取市值数据
+            mkt_data = stk_get_daily_mktvalue_pt(symbols=symbol, fields='symbol,total_mv', df=True)
+            market_cap = float(mkt_data['total_mv'].iloc[0]) / 10000 if mkt_data is not None and not mkt_data.empty else None
+        except:
+            market_cap = None
+
+        return volume_avg_7d, atr_value, market_cap
+
+    except Exception as e:
+        logger.warning(f"获取市场数据失败: {symbol}, error: {e}")
+        return None, None, None
 
 
 def init(context):
@@ -110,7 +149,14 @@ def on_backtest_finished(context, indicator):
         back_test_obj.backtest_end_time = context.backtest_end_time
         back_test_obj.current_price = get_current_price(back_test_obj.symbol)
         back_test_obj.status = BacktestStatus.finished  # 标记为已完成
-        
+
+        # 获取市场数据：7日平均成交量、ATR、市值
+        # 注意：行业数据为付费功能，此处不再获取
+        volume_avg_7d, atr_value, market_cap = get_market_data(context.symbol)
+        back_test_obj.volume_avg_7d = volume_avg_7d
+        back_test_obj.atr = atr_value
+        back_test_obj.market_cap = market_cap
+
         # 填充 task_id
         if hasattr(context, 'task_id') and context.task_id:
             back_test_obj.task_id = context.task_id
@@ -137,7 +183,13 @@ def on_backtest_finished(context, indicator):
         # 如果需要保存到数据库
         if config.save_db:
             back_test_obj.save()
-        
+
+        # 保存K线数据（每次回测完成后同步最新K线数据）
+        try:
+            save_kline_data(context.symbol)
+        except Exception as e:
+            logger.warning(f"保存K线数据失败: {context.symbol}, error: {e}")
+
         # 更新任务进度
         if hasattr(context, 'task_id') and context.task_id:
             update_task_progress(context.task_id)
@@ -185,6 +237,103 @@ def update_task_progress(task_id: str):
             session.close()
     except Exception as e:
         logger.error(f"Update task progress failed: {str(e)}, Task ID: {task_id}")
+
+
+def save_kline_data(symbol: str, days: int = 365):
+    """保存K线数据到数据库"""
+    from datetime import datetime, timedelta
+    from pytrading.db.mysql import MySQLClient, StockKline
+    from pytrading.utils.talib_util import TA_MACD
+    import pandas as pd
+
+    try:
+        # 计算日期范围
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=days + 60)).strftime('%Y-%m-%d')
+
+        # 获取历史K线数据
+        bars = history(
+            symbol=symbol,
+            frequency='1d',
+            start_time=start_date,
+            end_time=end_date,
+            fields='symbol,open,high,low,close,volume,eob',
+            df=True
+        )
+
+        if bars is None or bars.empty:
+            logger.warning(f"获取K线数据失败: {symbol}")
+            return
+
+        # 计算MACD
+        close_prices = bars['close'].values.astype(float)
+        diff, dea, macd_hist = TA_MACD(close_prices, fastperiod=12, slowperiod=26, signalperiod=9)
+
+        # 获取数据库连接
+        db_client = MySQLClient(
+            host=config.mysql_host,
+            db_name=config.mysql_database,
+            port=config.mysql_port,
+            username=config.mysql_username,
+            password=config.mysql_password
+        )
+        session = db_client.get_session()
+
+        try:
+            # 保留最近的 days 天数据
+            bars = bars.tail(days).reset_index(drop=True)
+            diff = diff[-days:] if len(diff) >= days else diff
+            dea = dea[-days:] if len(dea) >= days else dea
+            macd_hist = macd_hist[-days:] if len(macd_hist) >= days else macd_hist
+
+            for i in range(len(bars)):
+                row = bars.iloc[i]
+                # 解析日期
+                if 'eob' in row:
+                    date_val = row['eob']
+                else:
+                    continue
+
+                # 检查是否已存在
+                existing = session.query(StockKline).filter_by(
+                    symbol=symbol,
+                    date=date_val.date() if isinstance(date_val, datetime) else date_val
+                ).first()
+
+                if existing:
+                    # 更新
+                    existing.open = float(row['open']) if pd.notna(row['open']) else None
+                    existing.high = float(row['high']) if pd.notna(row['high']) else None
+                    existing.low = float(row['low']) if pd.notna(row['low']) else None
+                    existing.close = float(row['close']) if pd.notna(row['close']) else None
+                    existing.volume = int(row['volume']) if pd.notna(row['volume']) and row['volume'] else 0
+                    existing.macd_diff = float(diff[i]) if i < len(diff) and pd.notna(diff[i]) else None
+                    existing.macd_dea = float(dea[i]) if i < len(dea) and pd.notna(dea[i]) else None
+                    existing.macd_hist = float(macd_hist[i]) if i < len(macd_hist) and pd.notna(macd_hist[i]) else None
+                else:
+                    # 新增
+                    kline = StockKline(
+                        symbol=symbol,
+                        date=date_val.date() if isinstance(date_val, datetime) else date_val,
+                        open=float(row['open']) if pd.notna(row['open']) else None,
+                        high=float(row['high']) if pd.notna(row['high']) else None,
+                        low=float(row['low']) if pd.notna(row['low']) else None,
+                        close=float(row['close']) if pd.notna(row['close']) else None,
+                        volume=int(row['volume']) if pd.notna(row['volume']) and row['volume'] else 0,
+                        macd_diff=float(diff[i]) if i < len(diff) and pd.notna(diff[i]) else None,
+                        macd_dea=float(dea[i]) if i < len(dea) and pd.notna(dea[i]) else None,
+                        macd_hist=float(macd_hist[i]) if i < len(macd_hist) and pd.notna(macd_hist[i]) else None
+                    )
+                    session.add(kline)
+
+            session.commit()
+            logger.info(f"K线数据保存完成: {symbol}")
+
+        finally:
+            session.close()
+
+    except Exception as e:
+        logger.error(f"保存K线数据失败: {symbol}, error: {str(e)}")
 
 
 def on_error(context, code, info):
