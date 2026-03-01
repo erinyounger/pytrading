@@ -292,7 +292,7 @@ const RealtimeMonitor: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="realtime-monitor-container">
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col span={24}>
           <Alert

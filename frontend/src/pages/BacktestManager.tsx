@@ -663,7 +663,7 @@ const BacktestManager: React.FC = () => {
         </span>
       ),
       children: (
-        <div style={{ background: '#fff', borderRadius: 8 }}>
+        <div style={{ background: 'var(--dark-card)', borderRadius: 8 }}>
           {/* 统计卡片 */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
@@ -704,7 +704,7 @@ const BacktestManager: React.FC = () => {
           </Row>
 
           {/* 操作栏 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '12px 16px', background: '#fafafa', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '12px 16px', background: 'var(--dark-card-alt)', borderRadius: 8 }}>
             <Space>
               <Button icon={<ReloadOutlined />} onClick={() => fetchBacktestTasks()} loading={loading}>
                 刷新
@@ -805,18 +805,19 @@ const BacktestManager: React.FC = () => {
   let record: BacktestTaskInfo;
 
   return (
-    <div style={{ padding: 16, background: '#f5f5f5', minHeight: 'calc(100vh - 64px)' }}>
-      <Tabs items={tabItems} type="card" size="large" />
+    <div className="backtest-manager-container">
+      <Tabs className="dark-tabs" items={tabItems} type="card" size="large" />
 
       {/* 创建回测任务模态框 */}
       <Modal
+        className="dark-modal"
         title={<><PlusOutlined /> 创建回测任务</>}
         open={createModalVisible}
         onCancel={() => { setCreateModalVisible(false); form.resetFields(); }}
         footer={null}
         width={560}
       >
-        <Form form={form} layout="vertical" onFinish={handleStartBacktest}>
+        <Form className="dark-form" form={form} layout="vertical" onFinish={handleStartBacktest}>
           <Form.Item label="回测模式">
             <Radio.Group value={backTestMode} onChange={handleModeChange}>
               <Radio.Button value="single">单股票</Radio.Button>
@@ -873,6 +874,7 @@ const BacktestManager: React.FC = () => {
 
       {/* 策略详情模态框 */}
       <Modal
+        className="dark-modal"
         title="策略详情"
         open={strategyDetailModal}
         onCancel={() => setStrategyDetailModal(false)}
@@ -890,6 +892,7 @@ const BacktestManager: React.FC = () => {
 
       {/* 任务详情模态框 */}
       <Modal
+        className="dark-modal"
         title="任务详情"
         open={taskDetailModal}
         onCancel={() => setTaskDetailModal(false)}
@@ -916,6 +919,7 @@ const BacktestManager: React.FC = () => {
 
       {/* 日志模态框 */}
       <Modal
+        className="dark-modal"
         title={`日志 - ${selectedTask?.task_id || ''}`}
         open={taskLogModal}
         onCancel={() => setTaskLogModal(false)}
@@ -927,6 +931,7 @@ const BacktestManager: React.FC = () => {
       </Modal>
 
       <Modal
+        className="dark-modal"
         title={`个股日志 - ${selectedSymbol}`}
         open={resultLogModal}
         onCancel={() => { setResultLogModal(false); setSelectedSymbol(''); }}

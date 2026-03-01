@@ -146,12 +146,12 @@ export const apiService = {
 
   // 获取回测池中的股票列表（用于创建回测任务时的股票选择）
   getBacktestPoolSymbols: async (): Promise<ApiResponse<{symbol: string, name: string}[]>> => {
-    const response = await api.get('/api/backtest-results', { 
-      params: { 
+    const response = await api.get('/api/backtest-results', {
+      params: {
         per_page: 5000 // 获取足够数量的回测结果
-      } 
+      }
     });
-    
+
     // 从回测结果中提取唯一的股票列表
     const uniqueSymbols = new Map();
     response.data.data.forEach((result: BacktestResult) => {
@@ -162,9 +162,41 @@ export const apiService = {
         });
       }
     });
-    
+
     return {
       data: Array.from(uniqueSymbols.values())
     };
+  },
+
+  // K线数据相关
+  // 获取K线数据
+  getKlineData: async (symbol: string): Promise<{
+    symbol: string;
+    data: Array<{
+      date: string;
+      open: number;
+      high: number;
+      low: number;
+      close: number;
+      volume: number;
+      macd_diff?: number;
+      macd_dea?: number;
+      macd_hist?: number;
+    }>;
+    message?: string;
+  }> => {
+    const response = await api.get(`/api/kline/${symbol}`);
+    return response.data;
+  },
+
+  // 同步K线数据
+  syncKlineData: async (symbol: string, days: number = 365): Promise<{
+    status: string;
+    message: string;
+    symbol: string;
+    days: number;
+  }> => {
+    const response = await api.post('/api/kline/sync', { symbol, days });
+    return response.data;
   },
 };

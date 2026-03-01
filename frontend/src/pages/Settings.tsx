@@ -131,16 +131,17 @@ const Settings: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Title level={2}>系统设置</Title>
-      
-      <Tabs defaultActiveKey="general" type="card">
+    <div className="settings-container">
+      <Title level={2} style={{ color: 'var(--dark-text)' }}>系统设置</Title>
+
+      <Tabs className="dark-tabs" defaultActiveKey="general" type="card">
         <Tabs.TabPane tab={
           <span>
             <SettingOutlined />
             常规设置
           </span>
         } key="general">
+          <div className="dark-card dark-form">
           <Card>
             <Form
               form={form}
@@ -208,6 +209,7 @@ const Settings: React.FC = () => {
               </Row>
             </Form>
           </Card>
+          </div>
         </Tabs.TabPane>
 
         <Tabs.TabPane tab={
@@ -216,11 +218,12 @@ const Settings: React.FC = () => {
             股票池管理
           </span>
         } key="symbols">
-          <Card 
+          <div className="dark-card dark-table">
+          <Card
             title="股票池配置"
             extra={
-              <Button 
-                type="primary" 
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setSymbolModalVisible(true)}
               >
@@ -229,13 +232,14 @@ const Settings: React.FC = () => {
             }
           >
             <Alert
+              className="dark-alert"
               message="股票池管理"
               description="管理系统中用于交易的股票代码。如果为空，系统将使用默认的上证50成分股。"
               type="info"
               showIcon
               style={{ marginBottom: 16 }}
             />
-            
+
             <Table
               columns={symbolColumns}
               dataSource={config.symbols}
@@ -244,6 +248,7 @@ const Settings: React.FC = () => {
               size="small"
             />
           </Card>
+          </div>
         </Tabs.TabPane>
 
         <Tabs.TabPane tab={
@@ -254,6 +259,7 @@ const Settings: React.FC = () => {
         } key="api">
           <Row gutter={[16, 16]}>
             <Col span={24}>
+              <div className="dark-card">
               <Card title="掘金量化API配置">
                 <Alert
                   message="API配置说明"
@@ -262,8 +268,8 @@ const Settings: React.FC = () => {
                   showIcon
                   style={{ marginBottom: 16 }}
                 />
-                
-                <Form layout="vertical">
+
+                <Form className="dark-form" layout="vertical">
                   <Row gutter={[16, 16]}>
                     <Col xs={24} md={12}>
                       <Form.Item label="回测策略ID">
@@ -304,6 +310,7 @@ const Settings: React.FC = () => {
                   </Row>
                 </Form>
               </Card>
+              </div>
             </Col>
           </Row>
         </Tabs.TabPane>
@@ -316,8 +323,9 @@ const Settings: React.FC = () => {
         } key="security">
           <Row gutter={[16, 16]}>
             <Col span={24}>
+              <div className="dark-card dark-form">
               <Card title="风险控制">
-                <Form layout="vertical">
+                <Form className="dark-form" layout="vertical">
                   <Row gutter={[16, 16]}>
                     <Col xs={24} md={8}>
                       <Form.Item label="最大仓位比例">
@@ -352,9 +360,11 @@ const Settings: React.FC = () => {
                   </Row>
                 </Form>
               </Card>
+              </div>
             </Col>
 
             <Col span={24}>
+              <div className="dark-card">
               <Card title="数据安全">
                 <Alert
                   message="数据安全建议"
@@ -371,6 +381,7 @@ const Settings: React.FC = () => {
                   showIcon
                 />
               </Card>
+              </div>
             </Col>
           </Row>
         </Tabs.TabPane>
@@ -378,6 +389,7 @@ const Settings: React.FC = () => {
 
       {/* 添加股票模态框 */}
       <Modal
+        className="dark-modal"
         title="添加股票"
         open={symbolModalVisible}
         onOk={addSymbol}
@@ -388,7 +400,7 @@ const Settings: React.FC = () => {
         okText="添加"
         cancelText="取消"
       >
-        <Form layout="vertical">
+        <Form className="dark-form" layout="vertical">
           <Form.Item label="股票代码" required>
             <Input
               placeholder="例如: SZSE.000625"

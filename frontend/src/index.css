@@ -1,3 +1,17 @@
+/* 深色主题全局变量 */
+:root {
+  --dark-bg: #0f0f1a;
+  --dark-card: #1a1a2e;
+  --dark-card-alt: #15152a;
+  --dark-border: #2a2a4a;
+  --dark-text: #e8e8e8;
+  --dark-text-secondary: #8888aa;
+  --dark-text-muted: #666680;
+  --dark-accent: #4d7cff;
+  --dark-positive: #ff4d4f;
+  --dark-negative: #52c41a;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -103,4 +117,459 @@ code {
   justify-content: center;
   align-items: center;
   min-height: 200px;
+}
+
+/* 回测结果页面深色主题样式 - 搜索输入框 */
+.backtest-search .ant-input {
+  background-color: var(--dark-card-alt) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.backtest-search .ant-input::placeholder {
+  color: var(--dark-text-muted) !important;
+}
+
+.backtest-search .ant-input-search-button {
+  background-color: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+}
+
+.backtest-search .ant-input-search-button .anticon {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* 回测结果页面深色主题样式 - 表格滚动条 */
+.backtest-results .ant-table-body::-webkit-scrollbar,
+.backtest-results .ant-table-scroll::-webkit-scrollbar,
+.backtest-results .ant-table-h_scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.backtest-results .ant-table-body::-webkit-scrollbar-track,
+.backtest-results .ant-table-scroll::-webkit-scrollbar-track,
+.backtest-results .ant-table-h_scroll::-webkit-scrollbar-track {
+  background: var(--dark-card-alt) !important;
+}
+
+.backtest-results .ant-table-body::-webkit-scrollbar-thumb,
+.backtest-results .ant-table-scroll::-webkit-scrollbar-thumb,
+.backtest-results .ant-table-h_scroll::-webkit-scrollbar-thumb {
+  background: var(--dark-border) !important;
+  border-radius: 4px;
+}
+
+.backtest-results .ant-table-body::-webkit-scrollbar-thumb:hover,
+.backtest-results .ant-table-scroll::-webkit-scrollbar-thumb:hover,
+.backtest-results .ant-table-h_scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-text-muted) !important;
+}
+
+/* Firefox 滚动条 */
+.backtest-results .ant-table-body,
+.backtest-results .ant-table-scroll,
+.backtest-results .ant-table-h_scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-border) var(--dark-card-alt);
+}
+
+/* ========== 页面容器深色主题 ========== */
+
+/* 仪表盘容器 */
+.dashboard-container {
+  background: var(--dark-bg) !important;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.dashboard-container .page-title {
+  color: var(--dark-text) !important;
+}
+
+.dashboard-container .page-description {
+  color: var(--dark-text-secondary) !important;
+}
+
+.dashboard-container .ant-card {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.dashboard-container .ant-card-head {
+  border-bottom-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.dashboard-container .ant-card-body {
+  color: var(--dark-text);
+}
+
+.dashboard-container .ant-statistic-title {
+  color: var(--dark-text-secondary) !important;
+}
+
+.dashboard-container .ant-statistic-content-value {
+  color: var(--dark-text) !important;
+}
+
+.dashboard-container h1,
+.dashboard-container h2,
+.dashboard-container h3,
+.dashboard-container h4,
+.dashboard-container h5,
+.dashboard-container h6 {
+  color: var(--dark-text) !important;
+}
+
+.dashboard-container p {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* 回测管理容器 */
+.backtest-manager-container {
+  background: var(--dark-bg) !important;
+  min-height: calc(100vh - 64px);
+  padding: 16px;
+}
+
+.backtest-manager-container .ant-tabs-nav::before {
+  border-bottom-color: var(--dark-border) !important;
+}
+
+.backtest-manager-container .ant-tabs-tab {
+  background: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.backtest-manager-container .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--dark-accent) !important;
+}
+
+.backtest-manager-container .ant-tabs-content-holder {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+  padding: 16px;
+  border-radius: 0 8px 8px 8px;
+}
+
+/* 系统设置容器 */
+.settings-container {
+  background: var(--dark-bg) !important;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.settings-container .ant-card {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.settings-container .ant-card-head {
+  border-bottom-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.settings-container .ant-card-body {
+  color: var(--dark-text);
+}
+
+.settings-container h1,
+.settings-container h2,
+.settings-container h3,
+.settings-container h4,
+.settings-container h5,
+.settings-container h6 {
+  color: var(--dark-text) !important;
+}
+
+.settings-container .ant-form-item-label > label {
+  color: var(--dark-text-secondary) !important;
+}
+
+.settings-container .ant-tabs-tab {
+  background: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.settings-container .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--dark-accent) !important;
+}
+
+/* 策略管理容器 */
+.strategy-manager-container {
+  background: var(--dark-bg) !important;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.strategy-manager-container .ant-card {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.strategy-manager-container .ant-card-head {
+  border-bottom-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.strategy-manager-container .ant-card-body {
+  color: var(--dark-text);
+}
+
+.strategy-manager-container h1,
+.strategy-manager-container h2,
+.strategy-manager-container h3,
+.strategy-manager-container h4,
+.strategy-manager-container h5,
+.strategy-manager-container h6 {
+  color: var(--dark-text) !important;
+}
+
+/* 实时监控容器 */
+.realtime-monitor-container {
+  background: var(--dark-bg) !important;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.realtime-monitor-container h1,
+.realtime-monitor-container h2,
+.realtime-monitor-container h3,
+.realtime-monitor-container h4,
+.realtime-monitor-container h5,
+.realtime-monitor-container h6 {
+  color: var(--dark-text) !important;
+}
+
+/* ========== 通用深色组件样式 ========== */
+
+/* 深色输入框 */
+.dark-input .ant-input,
+.dark-input input.ant-input,
+.dark-input .ant-select-selector,
+.dark-input .ant-picker {
+  background-color: var(--dark-card-alt) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.dark-input .ant-input::placeholder,
+.dark-input input.ant-input::placeholder {
+  color: var(--dark-text-muted) !important;
+}
+
+.dark-input .ant-select-selection-placeholder {
+  color: var(--dark-text-muted) !important;
+}
+
+.dark-input .ant-select-arrow,
+.dark-input .ant-picker-suffix {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* 深色表格 */
+.dark-table .ant-table {
+  background: var(--dark-card) !important;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background: var(--dark-card-alt) !important;
+  color: var(--dark-text-secondary) !important;
+  border-bottom-color: var(--dark-border) !important;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  border-bottom-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.dark-table .ant-table-tbody > tr:hover > td {
+  background: var(--dark-card-alt) !important;
+}
+
+.dark-table .ant-table-cell {
+  background: transparent !important;
+}
+
+/* 深色表格滚动条 */
+.dark-table .ant-table-body::-webkit-scrollbar,
+.dark-table .ant-table-scroll::-webkit-scrollbar,
+.dark-table .ant-table-h_scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark-table .ant-table-body::-webkit-scrollbar-track,
+.dark-table .ant-table-scroll::-webkit-scrollbar-track,
+.dark-table .ant-table-h_scroll::-webkit-scrollbar-track {
+  background: var(--dark-card-alt) !important;
+}
+
+.dark-table .ant-table-body::-webkit-scrollbar-thumb,
+.dark-table .ant-table-scroll::-webkit-scrollbar-thumb,
+.dark-table .ant-table-h_scroll::-webkit-scrollbar-thumb {
+  background: var(--dark-border) !important;
+  border-radius: 4px;
+}
+
+.dark-table .ant-table-body::-webkit-scrollbar-thumb:hover,
+.dark-table .ant-table-scroll::-webkit-scrollbar-thumb:hover,
+.dark-table .ant-table-h_scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-text-muted) !important;
+}
+
+.dark-table .ant-table-body,
+.dark-table .ant-table-scroll,
+.dark-table .ant-table-h_scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--dark-border) var(--dark-card-alt);
+}
+
+/* 深色标签页 */
+.dark-tabs .ant-tabs-nav::before {
+  border-bottom-color: var(--dark-border) !important;
+}
+
+.dark-tabs .ant-tabs-tab {
+  background: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.dark-tabs .ant-tabs-tab:hover {
+  color: var(--dark-text) !important;
+}
+
+.dark-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--dark-accent) !important;
+}
+
+.dark-tabs .ant-tabs-content-holder {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+  padding: 16px;
+  border-radius: 0 8px 8px 8px;
+}
+
+/* 深色模态框 */
+.dark-modal .ant-modal-content {
+  background: var(--dark-card) !important;
+  border: 1px solid var(--dark-border);
+}
+
+.dark-modal .ant-modal-header {
+  background: var(--dark-card) !important;
+  border-bottom-color: var(--dark-border) !important;
+}
+
+.dark-modal .ant-modal-title {
+  color: var(--dark-text) !important;
+}
+
+.dark-modal .ant-modal-close {
+  color: var(--dark-text-secondary) !important;
+}
+
+.dark-modal .ant-modal-body {
+  color: var(--dark-text);
+}
+
+.dark-modal .ant-modal-footer {
+  border-top-color: var(--dark-border) !important;
+}
+
+/* 深色表单 */
+.dark-form .ant-form-item-label > label {
+  color: var(--dark-text-secondary) !important;
+}
+
+.dark-form .ant-input,
+.dark-form input.ant-input,
+.dark-form .ant-select-selector,
+.dark-form .ant-picker {
+  background-color: var(--dark-card-alt) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.dark-form .ant-input::placeholder,
+.dark-form input.ant-input::placeholder {
+  color: var(--dark-text-muted) !important;
+}
+
+/* 深色 Alert */
+.dark-alert .ant-alert-message {
+  color: var(--dark-text) !important;
+}
+
+.dark-alert .ant-alert-description {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* 深色 Card */
+.dark-card .ant-card {
+  background: var(--dark-card);
+  border-color: var(--dark-border);
+}
+
+.dark-card .ant-card-head {
+  border-bottom-color: var(--dark-border);
+  color: var(--dark-text);
+}
+
+.dark-card .ant-card-body {
+  color: var(--dark-text);
+}
+
+/* 深色 Descriptions */
+.dark-modal .ant-descriptions-bordered .ant-descriptions-item-label,
+.dark-modal .ant-descriptions-bordered .ant-descriptions-item-content {
+  background: var(--dark-card-alt) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text) !important;
+}
+
+.dark-modal .ant-descriptions .ant-descriptions-item-label {
+  color: var(--dark-text-secondary) !important;
+}
+
+/* 深色 Radio Button */
+.dark-form .ant-radio-button-wrapper {
+  background: var(--dark-card-alt) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.dark-form .ant-radio-button-wrapper:hover {
+  color: var(--dark-text) !important;
+}
+
+.dark-form .ant-radio-button-wrapper-checked {
+  background: var(--dark-accent) !important;
+  border-color: var(--dark-accent) !important;
+  color: #fff !important;
+}
+
+/* 深色 Progress */
+.dark-modal .ant-progress-text {
+  color: var(--dark-text) !important;
+}
+
+/* 深色 Select 下拉菜单 */
+.dark-form .ant-select-dropdown,
+.dark-input .ant-select-dropdown {
+  background: var(--dark-card) !important;
+  border: 1px solid var(--dark-border);
+}
+
+.dark-form .ant-select-item {
+  color: var(--dark-text) !important;
+}
+
+.dark-form .ant-select-item-option-active,
+.dark-form .ant-select-item-option-selected {
+  background: var(--dark-card-alt) !important;
 }

@@ -11,12 +11,10 @@ import {
   Modal,
   Row,
   Col,
-  Statistic,
   message,
   Tooltip,
   InputNumber,
   Pagination,
-  Typography,
   Progress,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
@@ -24,7 +22,11 @@ import {
   ReloadOutlined,
   EyeOutlined,
   DownloadOutlined,
-  ArrowRightOutlined
+  ArrowRightOutlined,
+  LineChartOutlined,
+  DollarOutlined,
+  TrophyOutlined,
+  RiseOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
@@ -32,9 +34,262 @@ import { BacktestResult, PaginatedApiResponse } from '../types';
 import StockChart from '../components/StockChart';
 
 const { Search } = Input;
-const { Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+
+// 金融终端深色主题样式
+const darkTheme = {
+  // 背景色
+  background: '#0f0f1a',
+  cardBackground: '#1a1a2e',
+  cardBackgroundAlt: '#15152a',
+  border: '#2a2a4a',
+  // 文字颜色
+  textPrimary: '#e8e8e8',
+  textSecondary: '#8888aa',
+  textMuted: '#666680',
+  // 强调色
+  positive: '#ff4d4f',  // 证券红 - 上涨/盈利
+  negative: '#52c41a',  // 证券绿 - 下跌/亏损
+  accent: '#4d7cff',    // 蓝色强调
+  // 表头和行
+  tableHeader: '#252545',
+  tableRow: '#1a1a2e',
+  tableRowAlt: '#15152a',
+  tableHover: '#1f1f3a',
+  // 渐变色卡片
+  gradientGreen: 'linear-gradient(135deg, rgba(82, 196, 26, 0.15) 0%, rgba(82, 196, 26, 0.05) 100%)',
+  gradientRed: 'linear-gradient(135deg, rgba(255, 77, 79, 0.15) 0%, rgba(255, 77, 79, 0.05) 100%)',
+  gradientBlue: 'linear-gradient(135deg, rgba(77, 124, 255, 0.15) 0%, rgba(77, 124, 255, 0.05) 100%)',
+  gradientPurple: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(168, 85, 247, 0.05) 100%)',
+  gradientGold: 'linear-gradient(135deg, rgba(250, 169, 22, 0.15) 0%, rgba(250, 169, 22, 0.05) 100%)',
+};
+
+// 注入全局深色主题样式
+const globalDarkStyles = `
+  /* 表格深色主题 */
+  .ant-table-thead > tr > th {
+    background: ${darkTheme.tableHeader} !important;
+    color: ${darkTheme.textSecondary} !important;
+    border-bottom: 1px solid ${darkTheme.border} !important;
+    font-weight: 600;
+    padding: 10px 8px !important;
+  }
+  .ant-table-tbody > tr > td {
+    background: ${darkTheme.cardBackground} !important;
+    color: ${darkTheme.textPrimary} !important;
+    border-bottom: 1px solid ${darkTheme.border} !important;
+    padding: 8px !important;
+  }
+  .ant-table-tbody > tr:hover > td {
+    background: ${darkTheme.tableHover} !important;
+  }
+  .ant-table-tbody > tr:nth-child(even) > td {
+    background: ${darkTheme.tableRowAlt} !important;
+  }
+  .ant-table-column-sorter {
+    color: ${darkTheme.textMuted} !important;
+  }
+  .ant-table-column-sorter-up.active, .ant-table-column-sorter-down.active {
+    color: ${darkTheme.accent} !important;
+  }
+
+  /* 分页深色主题 */
+  .ant-pagination-item {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-pagination-item a {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-pagination-item-active {
+    background: ${darkTheme.accent} !important;
+    border-color: ${darkTheme.accent} !important;
+  }
+  .ant-pagination-item-active a {
+    color: #fff !important;
+  }
+  .ant-pagination-prev .ant-pagination-item-link,
+  .ant-pagination-next .ant-pagination-item-link {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-pagination-options .ant-select-selector {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* 输入框深色主题 */
+  .ant-input, .ant-input-number, .ant-picker {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-input::placeholder, .ant-picker-input input::placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+  .ant-input:hover, .ant-input-number:hover, .ant-picker:hover {
+    border-color: ${darkTheme.accent} !important;
+  }
+  .ant-input:focus, .ant-input-number:focus, .ant-picker-focused {
+    border-color: ${darkTheme.accent} !important;
+    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
+  }
+
+  /* 选择器深色主题 */
+  .ant-select-selector {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-select-dropdown {
+    background: ${darkTheme.cardBackground} !important;
+    border: 1px solid ${darkTheme.border} !important;
+  }
+  .ant-select-item {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-select-item-option-active {
+    background: ${darkTheme.tableHover} !important;
+  }
+  .ant-select-item-option-selected {
+    background: ${darkTheme.accent}30 !important;
+  }
+
+  /* 模态框深色主题 */
+  .ant-modal-content {
+    background: ${darkTheme.cardBackground} !important;
+    border: 1px solid ${darkTheme.border};
+  }
+  .ant-modal-header {
+    background: ${darkTheme.cardBackground} !important;
+    border-bottom: 1px solid ${darkTheme.border} !important;
+  }
+  .ant-modal-title {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-modal-close {
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-modal-body {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-modal-footer {
+    border-top: 1px solid ${darkTheme.border} !important;
+  }
+
+  /* 按钮深色主题 */
+  .ant-btn {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-btn:hover {
+    border-color: ${darkTheme.accent} !important;
+    color: ${darkTheme.accent} !important;
+  }
+
+  /* 工具提示深色主题 */
+  .ant-tooltip-inner {
+    background: ${darkTheme.tableHeader} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-tooltip-arrow::before {
+    background: ${darkTheme.tableHeader} !important;
+  }
+
+  /* 空状态深色主题 */
+  .ant-empty-description {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* 搜索输入框深色主题 */
+  .ant-input-search .ant-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-input-search .ant-input-search-button {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-input-search .ant-input-search-button .anticon {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* 表格滚动条深色主题 */
+  .ant-table-body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .ant-table-body::-webkit-scrollbar-track {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  .ant-table-body::-webkit-scrollbar-thumb {
+    background: ${darkTheme.border} !important;
+    border-radius: 4px;
+  }
+  .ant-table-body::-webkit-scrollbar-thumb:hover {
+    background: ${darkTheme.textMuted} !important;
+  }
+
+  /* 表格容器滚动条 */
+  .ant-table-scroll {
+    overflow: auto;
+  }
+  .ant-table-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .ant-table-scroll::-webkit-scrollbar-track {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  .ant-table-scroll::-webkit-scrollbar-thumb {
+    background: ${darkTheme.border} !important;
+    border-radius: 4px;
+  }
+  .ant-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: ${darkTheme.textMuted} !important;
+  }
+
+  /* 固定列滚动条 */
+  .ant-table-cell-fix-left, .ant-table-cell-fix-right {
+    background: ${darkTheme.cardBackground} !important;
+  }
+
+  /* 表格横向滚动条 */
+  .ant-table-h_scroll .ant-table {
+    overflow-x: auto;
+  }
+  .ant-table-h_scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .ant-table-h_scroll::-webkit-scrollbar-track {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  .ant-table-h_scroll::-webkit-scrollbar-thumb {
+    background: ${darkTheme.border} !important;
+    border-radius: 4px;
+  }
+
+  /* 所有滚动条通用样式 */
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: ${darkTheme.border} !important;
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: ${darkTheme.textMuted} !important;
+  }
+`;
 
 // 趋势类型中文映射
 const TRENDING_TYPE_MAP: Record<string, string> = {
@@ -273,6 +528,7 @@ const BacktestResults: React.FC = () => {
       key: 'symbol',
       fixed: 'left' as const,
       render: (value: string, record: BacktestResult) => (
+        // eslint-disable-next-line jsx-a11y/anchor-is-valid
         <a
           onClick={async () => {
             setChartSymbol(value);
@@ -291,7 +547,15 @@ const BacktestResults: React.FC = () => {
               setKlineLoading(false);
             }
           }}
-          style={{ cursor: 'pointer', color: '#1890ff' }}
+          href="#"
+          onMouseDown={(e) => e.preventDefault()}
+          style={{
+            cursor: 'pointer',
+            color: darkTheme.accent,
+            fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+            fontWeight: 500,
+            textDecoration: 'none',
+          }}
         >
           {value}
         </a>
@@ -387,24 +651,34 @@ const BacktestResults: React.FC = () => {
       dataIndex: 'trending_type',
       key: 'trending_type',
       render: (type: string) => {
-        // 这里trending_type实际上是趋势阶段，不是策略类型
-        const typeMap: Record<string, { text: string; color: string }> = {
-          'Unknown': { text: '未识别', color: 'default' },
-          'Observing': { text: '关注', color: 'blue' },
-          'RisingUp': { text: '上涨', color: 'red' },
-          'ZeroAxisUp': { text: '零轴上攻', color: 'purple' },
-          'DeadXDown': { text: '死叉下跌', color: 'orange' },
-          'FallingDown': { text: '下跌', color: 'volcano' },
-          'UpDown': { text: '震荡', color: 'cyan' }
+        // 这里trending_type实际上是趋势阶段，不是策略类型 - 使用渐变风格的Tag
+        const typeMap: Record<string, { text: string; bg: string; color: string }> = {
+          'Unknown': { text: '未识别', bg: 'rgba(136, 136, 170, 0.2)', color: '#8888aa' },
+          'Observing': { text: '关注', bg: 'rgba(77, 124, 255, 0.2)', color: '#4d7cff' },
+          'RisingUp': { text: '上涨', bg: 'rgba(255, 77, 79, 0.2)', color: '#ff4d4f' },
+          'ZeroAxisUp': { text: '零轴上攻', bg: 'rgba(168, 85, 247, 0.2)', color: '#a855f7' },
+          'DeadXDown': { text: '死叉下跌', bg: 'rgba(250, 169, 22, 0.2)', color: '#faa916' },
+          'FallingDown': { text: '下跌', bg: 'rgba(255, 77, 79, 0.2)', color: '#ff4d4f' },
+          'UpDown': { text: '震荡', bg: 'rgba(82, 196, 26, 0.2)', color: '#52c41a' }
         };
-        const config = typeMap[type] || { text: type, color: 'default' };
-        return <Tag color={config.color}>{config.text}</Tag>;
+        const config = typeMap[type] || { text: type, bg: 'rgba(136, 136, 170, 0.2)', color: '#8888aa' };
+        return (
+          <Tag style={{
+            background: config.bg,
+            color: config.color,
+            border: `1px solid ${config.color}40`,
+            borderRadius: '4px',
+            fontWeight: 500,
+          }}>
+            {config.text}
+          </Tag>
+        );
       }
     },
     {
       title: (
-        <span 
-          style={{ cursor: 'pointer', userSelect: 'none' }}
+        <span
+          style={{ cursor: 'pointer', userSelect: 'none', color: darkTheme.textSecondary }}
           onClick={() => handleSort('pnl_ratio')}
         >
           收益率 {sortConfig.field === 'pnl_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
@@ -414,19 +688,21 @@ const BacktestResults: React.FC = () => {
       key: 'pnl_ratio',
       align: 'right' as const,
       render: (value: number) => (
-        <span style={{ 
-          color: value >= 0 ? '#ff4d4f' : '#52c41a',
-          fontWeight: 500,
-          fontVariantNumeric: 'tabular-nums'
+        <span style={{
+          color: value >= 0 ? darkTheme.positive : darkTheme.negative,
+          fontWeight: 600,
+          fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+          fontVariantNumeric: 'tabular-nums',
+          textShadow: value >= 0 ? 'rgba(255, 77, 79, 0.2)' : 'rgba(82, 196, 26, 0.2)',
         }}>
-          {(value * 100).toFixed(2)}%
+          {value >= 0 ? '+' : ''}{(value * 100).toFixed(2)}%
         </span>
       ),
     },
     {
       title: (
-        <span 
-          style={{ cursor: 'pointer', userSelect: 'none' }}
+        <span
+          style={{ cursor: 'pointer', userSelect: 'none', color: darkTheme.textSecondary }}
           onClick={() => handleSort('win_ratio')}
         >
           胜率 {sortConfig.field === 'win_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
@@ -436,10 +712,11 @@ const BacktestResults: React.FC = () => {
       key: 'win_ratio',
       align: 'right' as const,
       render: (value: number) => (
-        <span style={{ 
-          color: value >= 0.5 ? '#ff4d4f' : '#52c41a',
-          fontWeight: 500,
-          fontVariantNumeric: 'tabular-nums'
+        <span style={{
+          color: value >= 0.5 ? darkTheme.positive : darkTheme.negative,
+          fontWeight: 600,
+          fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+          fontVariantNumeric: 'tabular-nums',
         }}>
           {(value * 100).toFixed(1)}%
         </span>
@@ -447,8 +724,8 @@ const BacktestResults: React.FC = () => {
     },
     {
       title: (
-        <span 
-          style={{ cursor: 'pointer', userSelect: 'none' }}
+        <span
+          style={{ cursor: 'pointer', userSelect: 'none', color: darkTheme.textSecondary }}
           onClick={() => handleSort('sharp_ratio')}
         >
           夏普比率 {sortConfig.field === 'sharp_ratio' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
@@ -458,15 +735,20 @@ const BacktestResults: React.FC = () => {
       key: 'sharp_ratio',
       align: 'right' as const,
       render: (value: number) => (
-        <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <span style={{
+          color: value >= 1 ? darkTheme.positive : value < 0 ? darkTheme.negative : darkTheme.textPrimary,
+          fontWeight: 600,
+          fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+          fontVariantNumeric: 'tabular-nums',
+        }}>
           {value.toFixed(2)}
         </span>
       ),
     },
     {
       title: (
-        <span 
-          style={{ cursor: 'pointer', userSelect: 'none' }}
+        <span
+          style={{ cursor: 'pointer', userSelect: 'none', color: darkTheme.textSecondary }}
           onClick={() => handleSort('max_drawdown')}
         >
           最大回撤 {sortConfig.field === 'max_drawdown' ? (sortConfig.order === 'asc' ? '↑' : '↓') : ''}
@@ -476,12 +758,13 @@ const BacktestResults: React.FC = () => {
       key: 'max_drawdown',
       align: 'right' as const,
       render: (value: number) => (
-        <span style={{ 
-          color: '#ff4d4f',
-          fontWeight: 500,
-          fontVariantNumeric: 'tabular-nums'
+        <span style={{
+          color: darkTheme.positive,
+          fontWeight: 600,
+          fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+          fontVariantNumeric: 'tabular-nums',
         }}>
-          {(value * 100).toFixed(2)}%
+          -{Math.abs(value * 100).toFixed(2)}%
         </span>
       ),
     },
@@ -534,37 +817,148 @@ const BacktestResults: React.FC = () => {
     },
   ];
 
+  // 计算统计数据用于顶部展示
+  const statsData = data.length > 0 ? {
+    avgPnl: data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length * 100,
+    avgWinRate: data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length * 100,
+    avgSharpe: data.reduce((sum, item) => sum + item.sharp_ratio, 0) / data.length,
+    totalCount: data.length,
+  } : { avgPnl: 0, avgWinRate: 0, avgSharpe: 0, totalCount: 0 };
+
+  // 顶部统计卡片样式
+  const StatCard: React.FC<{
+    title: string;
+    value: string | number;
+    suffix?: string;
+    icon: React.ReactNode;
+    trend?: 'up' | 'down' | 'neutral';
+    gradient: string;
+  }> = ({ title, value, suffix, icon, trend = 'neutral', gradient }) => (
+    <div style={{
+      background: gradient,
+      border: `1px solid ${darkTheme.border}`,
+      borderRadius: '8px',
+      padding: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px',
+      transition: 'all 0.3s ease',
+      cursor: 'default',
+    }}>
+      <div style={{
+        width: '48px',
+        height: '48px',
+        borderRadius: '12px',
+        background: darkTheme.cardBackground,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        color: trend === 'up' ? darkTheme.positive : trend === 'down' ? darkTheme.negative : darkTheme.accent,
+      }}>
+        {icon}
+      </div>
+      <div>
+        <div style={{ color: darkTheme.textSecondary, fontSize: '13px', marginBottom: '4px' }}>{title}</div>
+        <div style={{
+          color: trend === 'up' ? darkTheme.positive : trend === 'down' ? darkTheme.negative : darkTheme.textPrimary,
+          fontSize: '24px',
+          fontWeight: 600,
+          fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
+          lineHeight: 1.2,
+        }}>
+          {typeof value === 'number' ? value.toFixed(2) : value}{suffix && <span style={{ fontSize: '14px', marginLeft: '2px' }}>{suffix}</span>}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ padding: '16px', background: '#f0f2f5', minHeight: 'calc(100vh - 64px)' }}>
-      <Card 
+    <>
+      <style>{globalDarkStyles}</style>
+      <div
+        className="backtest-results"
+        style={{
+          padding: '16px',
+          background: darkTheme.background,
+          minHeight: 'calc(100vh - 64px)',
+        }}>
+      {/* 顶部统计卡片 */}
+      <div style={{ marginBottom: '16px' }}>
+        <Row gutter={[12, 12]}>
+          <Col xs={24} sm={12} lg={6}>
+            <StatCard
+              title="平均收益率"
+              value={statsData.avgPnl}
+              suffix="%"
+              icon={<RiseOutlined />}
+              trend={statsData.avgPnl >= 0 ? 'up' : 'down'}
+              gradient={statsData.avgPnl >= 0 ? darkTheme.gradientRed : darkTheme.gradientGreen}
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <StatCard
+              title="平均胜率"
+              value={statsData.avgWinRate}
+              suffix="%"
+              icon={<TrophyOutlined />}
+              trend={statsData.avgWinRate >= 50 ? 'up' : 'down'}
+              gradient={statsData.avgWinRate >= 50 ? darkTheme.gradientGold : darkTheme.gradientPurple}
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <StatCard
+              title="平均夏普比率"
+              value={statsData.avgSharpe.toFixed(2)}
+              icon={<LineChartOutlined />}
+              trend={statsData.avgSharpe >= 1 ? 'up' : statsData.avgSharpe < 0 ? 'down' : 'neutral'}
+              gradient={darkTheme.gradientBlue}
+            />
+          </Col>
+          <Col xs={24} sm={12} lg={6}>
+            <StatCard
+              title="策略数量"
+              value={pagination.total}
+              icon={<DollarOutlined />}
+              trend="neutral"
+              gradient={darkTheme.gradientPurple}
+            />
+          </Col>
+        </Row>
+      </div>
+
+      <Card
         title={
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '16px', fontWeight: 500 }}>回测结果</span>
+            <span style={{ fontSize: '16px', fontWeight: 500, color: darkTheme.textPrimary }}>回测结果</span>
             <Space size="small">
-              <Button 
-                icon={<ReloadOutlined />} 
+              <Button
+                icon={<ReloadOutlined />}
                 onClick={() => fetchBacktestResults(pagination.current, pagination.pageSize)}
                 loading={loading}
                 size="small"
+                style={{ background: darkTheme.cardBackground, borderColor: darkTheme.border, color: darkTheme.textPrimary }}
               >
                 刷新
               </Button>
-              <Button 
+              <Button
                 onClick={clearAllFilters}
                 disabled={!filters.symbol && !filters.trending_type && !filters.dateRange && !filters.pnlRange && !filters.winRatioRange}
                 size="small"
+                style={{ background: darkTheme.cardBackground, borderColor: darkTheme.border, color: darkTheme.textPrimary }}
               >
                 清除筛选
               </Button>
-              <Button 
-                icon={<DownloadOutlined />} 
+              <Button
+                icon={<DownloadOutlined />}
                 onClick={exportData}
                 disabled={data.length === 0}
                 size="small"
+                style={{ background: darkTheme.cardBackground, borderColor: darkTheme.border, color: darkTheme.textPrimary }}
               >
                 导出
               </Button>
-              <Button 
+              <Button
                 icon={<EyeOutlined />}
                 onClick={async () => {
                   // 获取所有策略的统计数据
@@ -597,6 +991,7 @@ const BacktestResults: React.FC = () => {
                   }
                 }}
                 size="small"
+                style={{ background: darkTheme.accent, borderColor: darkTheme.accent, color: '#fff' }}
               >
                 策略对比
               </Button>
@@ -604,27 +999,36 @@ const BacktestResults: React.FC = () => {
           </div>
         }
         bordered={false}
-        bodyStyle={{ padding: '12px 16px' }}
-        headStyle={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}
+        bodyStyle={{ padding: '12px 16px', background: darkTheme.cardBackground, borderRadius: '0 0 8px 8px' }}
+        headStyle={{
+          padding: '12px 16px',
+          borderBottom: `1px solid ${darkTheme.border}`,
+          background: darkTheme.cardBackground,
+          borderRadius: '8px 8px 0 0',
+        }}
+        style={{ borderRadius: '8px', border: `1px solid ${darkTheme.border}` }}
       >
-        {/* 筛选栏 - 紧凑布局 */}
-        <div style={{ 
-          background: '#fafafa', 
-          padding: '12px', 
-          borderRadius: '6px', 
-          marginBottom: '12px' 
+        {/* 筛选栏 - 深色主题 */}
+        <div style={{
+          background: darkTheme.cardBackgroundAlt,
+          padding: '12px',
+          borderRadius: '6px',
+          marginBottom: '12px',
+          border: `1px solid ${darkTheme.border}`,
         }}>
           <Row gutter={[8, 8]}>
             <Col xs={24} sm={12} md={6} lg={5}>
-              <Search
-                placeholder="搜索股票代码或名称"
-                allowClear
-                onSearch={(value) => {
-                  handleFilterChange('symbol', value);
-                }}
-                style={{ width: '100%' }}
-                size="small"
-              />
+              <div className="backtest-search">
+                <Search
+                  placeholder="搜索股票代码或名称"
+                  allowClear
+                  onSearch={(value) => {
+                    handleFilterChange('symbol', value);
+                  }}
+                  style={{ width: '100%' }}
+                  size="small"
+                />
+              </div>
             </Col>
             <Col xs={24} sm={12} md={6} lg={4}>
               <Select
@@ -812,47 +1216,54 @@ const BacktestResults: React.FC = () => {
           </Row>
         </div>
 
-        {/* 快速筛选和统计信息 */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
+        {/* 快速筛选和统计信息 - 深色主题 */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '12px',
           flexWrap: 'wrap',
           gap: '8px'
         }}>
           <Space size="small" wrap>
-            <span style={{ color: '#8c8c8c', fontSize: '13px' }}>快速筛选:</span>
+            <span style={{ color: darkTheme.textSecondary, fontSize: '13px' }}>快速筛选:</span>
             {quickFilters.map((filter, index) => (
-              <Button 
+              <Button
                 key={index}
                 size="small"
-                type="text"
                 onClick={filter.onClick}
-                style={{ height: '24px', padding: '0 8px' }}
+                style={{
+                  height: '24px',
+                  padding: '0 8px',
+                  background: darkTheme.cardBackgroundAlt,
+                  borderColor: darkTheme.border,
+                  color: darkTheme.textSecondary,
+                }}
               >
                 {filter.label}
               </Button>
             ))}
           </Space>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px' }}>
-            <span style={{ color: '#8c8c8c' }}>
-              共 <span style={{ color: '#1890ff', fontWeight: 500 }}>{pagination.total}</span> 条
+            <span style={{ color: darkTheme.textSecondary }}>
+              共 <span style={{ color: darkTheme.accent, fontWeight: 500 }}>{pagination.total}</span> 条
             </span>
             {data.length > 0 && (
               <>
-                <span style={{ color: '#8c8c8c' }}>
-                  平均收益: <span style={{ 
-                    color: (data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length) >= 0 ? '#ff4d4f' : '#52c41a',
-                    fontWeight: 500
+                <span style={{ color: darkTheme.textSecondary }}>
+                  平均收益: <span style={{
+                    color: (data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length) >= 0 ? darkTheme.positive : darkTheme.negative,
+                    fontWeight: 500,
+                    fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
                   }}>
                     {(data.reduce((sum, item) => sum + item.pnl_ratio, 0) / data.length * 100).toFixed(2)}%
                   </span>
                 </span>
-                <span style={{ color: '#8c8c8c' }}>
-                  平均胜率: <span style={{ 
-                    color: (data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length) >= 0.5 ? '#ff4d4f' : '#52c41a',
-                    fontWeight: 500
+                <span style={{ color: darkTheme.textSecondary }}>
+                  平均胜率: <span style={{
+                    color: (data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length) >= 0.5 ? darkTheme.positive : darkTheme.negative,
+                    fontWeight: 500,
+                    fontFamily: "'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace",
                   }}>
                     {(data.reduce((sum, item) => sum + item.win_ratio, 0) / data.length * 100).toFixed(1)}%
                   </span>
@@ -866,11 +1277,23 @@ const BacktestResults: React.FC = () => {
           columns={columns}
           dataSource={data}
           rowKey={(record) => `${record.symbol}_${record.backtest_start_time}`}
-          loading={loading}
+          loading={{
+            spinning: loading,
+            indicator: <div style={{ color: darkTheme.accent }}>加载中...</div>,
+          }}
           pagination={false}
           tableLayout="auto"
           size="small"
           scroll={{ x: 'max-content' }}
+          style={{
+            background: darkTheme.cardBackground,
+          }}
+          onRow={(record) => ({
+            style: {
+              background: darkTheme.cardBackground,
+              color: darkTheme.textPrimary,
+            },
+          })}
         />
         
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
@@ -916,7 +1339,7 @@ const BacktestResults: React.FC = () => {
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={900}
-        bodyStyle={{ padding: '16px', background: '#f5f5f5' }}
+        bodyStyle={{ padding: '16px', background: darkTheme.cardBackground }}
       >
         {selectedResult && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1202,6 +1625,7 @@ const BacktestResults: React.FC = () => {
         )}
       </Modal>
     </div>
+    </>
   );
 };
 

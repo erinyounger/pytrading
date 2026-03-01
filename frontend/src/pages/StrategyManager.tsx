@@ -215,9 +215,10 @@ const StrategyManager: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div className="strategy-manager-container">
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
+          <div className="dark-card dark-form">
           <Card title="新建回测任务" extra={<SettingOutlined />}>
             <Form
               form={form}
@@ -285,15 +286,17 @@ const StrategyManager: React.FC = () => {
               </Form.Item>
             </Form>
           </Card>
+          </div>
         </Col>
 
         <Col xs={24} lg={12}>
+          <div className="dark-card dark-table">
           <Card title="运行中的任务">
             {runningTasks.length === 0 ? (
-              <Alert 
-                message="暂无运行中的任务" 
-                type="info" 
-                showIcon 
+              <Alert
+                message="暂无运行中的任务"
+                type="info"
+                showIcon
               />
             ) : (
               <Table
@@ -305,9 +308,11 @@ const StrategyManager: React.FC = () => {
               />
             )}
           </Card>
+          </div>
         </Col>
       </Row>
 
+      <div className="dark-card dark-table">
       <Card title="可用策略" style={{ marginTop: '16px' }}>
         <Table
           columns={strategyColumns}
@@ -317,9 +322,11 @@ const StrategyManager: React.FC = () => {
           pagination={false}
         />
       </Card>
+      </div>
 
       {/* 策略详情模态框 */}
       <Modal
+        className="dark-modal"
         title="策略详情"
         open={strategyDetailModal}
         onCancel={() => setStrategyDetailModal(false)}
@@ -364,6 +371,7 @@ const StrategyManager: React.FC = () => {
 
       {/* 任务详情模态框 */}
       <Modal
+        className="dark-modal"
         title="任务详情"
         open={taskDetailModal}
         onCancel={() => setTaskDetailModal(false)}

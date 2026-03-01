@@ -492,7 +492,7 @@ const Dashboard: React.FC = () => {
         }
         return (
           <div style={{ textAlign: 'center', fontSize: '13px' }}>
-            <span style={{ color: '#999' }}>#{rank}</span>
+            <span style={{ color: 'var(--dark-text-secondary)' }}>#{rank}</span>
             {isTopQuality && <div style={{ fontSize: '10px', marginTop: '2px' }}>⭐⭐⭐⭐⭐</div>}
           </div>
         );
@@ -506,7 +506,7 @@ const Dashboard: React.FC = () => {
       render: (_: any, record: EnrichedStock) => (
         <div style={{ maxWidth: 130 }}>
           <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{record.symbol}</div>
-          <div style={{ fontSize: '11px', color: '#999', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</div>
+          <div style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{record.name}</div>
         </div>
       ),
     },
@@ -717,10 +717,10 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="loading-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <div className="loading-container dashboard-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
         <div style={{ textAlign: 'center' }}>
         <Spin size="large" />
-          <div style={{ marginTop: '16px', color: '#666' }}>正在加载数据...</div>
+          <div style={{ marginTop: '16px', color: 'var(--dark-text-secondary)' }}>正在加载数据...</div>
         </div>
       </div>
     );
@@ -729,39 +729,41 @@ const Dashboard: React.FC = () => {
   // 空数据状态
   if (summary.total === 0) {
   return (
-      <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+      <div className="dashboard-container">
         <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ margin: 0, fontSize: '28px' }}>
+          <h1 className="page-title" style={{ margin: 0, fontSize: '28px' }}>
             <ThunderboltOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
             智能投资决策中心
           </h1>
         </div>
-        <Card>
-          <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <BarChartOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />
-            <h3 style={{ marginTop: '16px', color: '#999' }}>暂无回测数据</h3>
-            <p style={{ color: '#999' }}>
-              请先执行回测任务，系统将自动分析并生成智能推荐
-            </p>
-            <Button type="primary" style={{ marginTop: '16px' }} onClick={() => window.location.href = '#/backtest-manager'}>
-              去创建回测
-            </Button>
-          </div>
-        </Card>
+        <div className="dark-card">
+          <Card>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <BarChartOutlined style={{ fontSize: '64px', color: 'var(--dark-text-muted)' }} />
+              <h3 style={{ marginTop: '16px', color: 'var(--dark-text-secondary)' }}>暂无回测数据</h3>
+              <p style={{ color: 'var(--dark-text-secondary)' }}>
+                请先执行回测任务，系统将自动分析并生成智能推荐
+              </p>
+              <Button type="primary" style={{ marginTop: '16px' }} onClick={() => window.location.href = '#/backtest-manager'}>
+                去创建回测
+              </Button>
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '24px', background: '#f0f2f5', minHeight: '100vh' }}>
+    <div className="dashboard-container">
       {/* 页面标题 */}
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '28px' }}>
+          <h1 className="page-title" style={{ margin: 0, fontSize: '28px' }}>
             <ThunderboltOutlined style={{ marginRight: '8px', color: '#1890ff' }} />
             智能投资决策中心
           </h1>
-          <p style={{ margin: '8px 0 0 0', color: '#666' }}>
+          <p className="page-description" style={{ margin: '8px 0 0 0', color: 'var(--dark-text-secondary)' }}>
             基于历史回测数据的多因子智能评分系统，为您精选优质标的
             {lastUpdateTime && (
               <span style={{ marginLeft: '16px', fontSize: '12px' }}>
@@ -908,7 +910,7 @@ const Dashboard: React.FC = () => {
                 </Tag>
               ))}
               {warningStocks.length > 5 && (
-                <span style={{ color: '#999', fontSize: '12px', marginLeft: '8px' }}>
+                <span style={{ color: 'var(--dark-text-secondary)', fontSize: '12px', marginLeft: '8px' }}>
                   ... 还有 {warningStocks.length - 5} 只
                 </span>
               )}
@@ -923,7 +925,7 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* 简洁版决策指引 */}
-      <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fff', borderRadius: '4px', border: '1px solid #e8e8e8' }}>
+      <div style={{ marginBottom: '16px', padding: '12px 16px', background: 'var(--dark-card)', borderRadius: '4px', border: '1px solid var(--dark-border)' }}>
         <Row gutter={[24, 8]} align="middle">
           <Col flex="auto">
             <Space size={24} wrap>
@@ -983,7 +985,7 @@ const Dashboard: React.FC = () => {
           </Button>
           
           {showModelDesc && (
-            <div style={{ marginTop: '8px', padding: '12px', background: '#fafafa', borderRadius: '4px', border: '1px solid #d9d9d9' }}>
+            <div style={{ marginTop: '8px', padding: '12px', background: 'var(--dark-card-alt)', borderRadius: '4px', border: '1px solid var(--dark-border)' }}>
               <Row gutter={[16, 8]}>
                 <Col xs={24} md={8}>
                   <div style={{ fontSize: '12px', fontWeight: 'bold', marginBottom: '4px' }}>📊 评分权重</div>
@@ -1132,8 +1134,8 @@ const Dashboard: React.FC = () => {
             }}
           />
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fafafa', borderRadius: '4px' }}>
-            <InfoCircleOutlined style={{ fontSize: '48px', color: '#d9d9d9' }} />
+          <div style={{ textAlign: 'center', padding: '40px 20px', background: 'var(--dark-card-alt)', borderRadius: '4px' }}>
+            <InfoCircleOutlined style={{ fontSize: '48px', color: 'var(--dark-text-muted)' }} />
             <h4 style={{ marginTop: '16px', color: '#999' }}>
               {filterRecommendation || filterRisk ? '当前筛选条件下没有匹配的标的' : '暂无符合推荐条件的标的'}
             </h4>
@@ -1175,7 +1177,7 @@ const Dashboard: React.FC = () => {
         ]}
         width={800}
       >
-        <div style={{ marginBottom: '16px', padding: '12px', background: '#f0f2f5', borderRadius: '4px' }}>
+        <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--dark-card-alt)', borderRadius: '4px' }}>
           <Space direction="vertical" size={4}>
             <div style={{ fontSize: '12px', color: '#666' }}>
               <InfoCircleOutlined style={{ marginRight: '4px' }} />
@@ -1267,15 +1269,15 @@ const Dashboard: React.FC = () => {
         
         /* 表格悬停效果增强 */
         .ant-table-tbody > tr:hover > td {
-          background: #e6f7ff !important;
+          background: var(--dark-card-alt) !important;
         }
-        
+
         .row-trend-warning:hover > td {
-          background: #ffe7e7 !important;
+          background: var(--dark-card-alt) !important;
         }
-        
+
         .row-zero-axis-up:hover > td {
-          background: #ffe7f3 !important;
+          background: var(--dark-card-alt) !important;
         }
       `}</style>
     </div>
