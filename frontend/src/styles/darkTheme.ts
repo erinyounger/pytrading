@@ -99,11 +99,21 @@ export const globalDarkStyles = `
     box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
   }
 
+  /* 所有可能的输入框样式 */
+  input.ant-input, textarea.ant-input, .ant-input-number-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
   /* 选择器深色主题 */
   .ant-select-selector {
     background: ${darkTheme.cardBackgroundAlt} !important;
     border-color: ${darkTheme.border} !important;
     color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-select-focused .ant-select-selector {
+    border-color: ${darkTheme.accent} !important;
+    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
   }
   .ant-select-dropdown {
     background: ${darkTheme.cardBackground} !important;
@@ -180,13 +190,228 @@ export const globalDarkStyles = `
   .ant-input-search .ant-input {
     background: ${darkTheme.cardBackgroundAlt} !important;
     color: ${darkTheme.textPrimary} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-input-search .ant-input:hover {
+    border-color: ${darkTheme.accent} !important;
+  }
+  .ant-input-search .ant-input:focus {
+    border-color: ${darkTheme.accent} !important;
+    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
   }
   .ant-input-search .ant-input-search-button {
     background: ${darkTheme.cardBackground} !important;
     border-color: ${darkTheme.border} !important;
   }
+  .ant-input-search .ant-input-search-button:hover {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.accent} !important;
+  }
   .ant-input-search .ant-input-search-button .anticon {
     color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* 表格内搜索输入框 */
+  .ant-table-filter-dropdown .ant-input-search .ant-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* Select 组件内部搜索框 */
+  .ant-select-focused .ant-select-selection-search-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-select-selection-search-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* Input 组件（带搜索图标的） */
+  .ant-input[prefix] {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-input[prefix]:hover {
+    border-color: ${darkTheme.accent} !important;
+  }
+  .ant-input[prefix]:focus {
+    border-color: ${darkTheme.accent} !important;
+    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
+  }
+
+  /* Select 下拉搜索框 */
+  .ant-select-dropdown .ant-select-selector {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  .ant-select-dropdown-search {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+  }
+  .ant-select-dropdown-search .ant-select-search-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* 过滤器中的 Select 和 InputNumber */
+  .ant-filter-dropdown .ant-select-selector,
+  .ant-table-filter-dropdown .ant-select-selector {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+
+  /* InputNumber 深色主题 */
+  .ant-input-number {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-input-number:hover {
+    border-color: ${darkTheme.accent} !important;
+  }
+  .ant-input-number:focus, .ant-input-number-focused {
+    border-color: ${darkTheme.accent} !important;
+    box-shadow: 0 0 0 2px ${darkTheme.accent}20 !important;
+  }
+  .ant-input-number-input {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-input-number-handler-wrap {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-input-number-handler {
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-input-number-handler-up-inner,
+  .ant-input-number-handler-down-inner {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* Radio Button 深色主题 */
+  .ant-radio-wrapper {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-radio-button-wrapper {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-radio-button-wrapper:hover {
+    color: ${darkTheme.accent} !important;
+  }
+  .ant-radio-button-wrapper-checked {
+    background: ${darkTheme.accent} !important;
+    border-color: ${darkTheme.accent} !important;
+    color: #fff !important;
+  }
+
+  /* Form Item Label */
+  .ant-form-item-label > label {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* Select 占位符颜色 */
+  .ant-select-selection-placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+
+  /* 表格过滤器下拉框 */
+  .ant-table-filter-dropdown {
+    background: ${darkTheme.cardBackground} !important;
+    border: 1px solid ${darkTheme.border} !important;
+  }
+  .ant-table-filter-dropdown-btns {
+    border-top-color: ${darkTheme.border} !important;
+  }
+
+  /* Select placeholder 颜色 */
+  .ant-select-selection-placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+
+  /* 修复所有 Select 的 placeholder */
+  .ant-select:not(.ant-select-disabled) .ant-select-selection-placeholder,
+  .ant-select-selection-placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+
+  /* 修复 Input placeholder */
+  .ant-input::placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+
+  /* 修复 DatePicker placeholder */
+  .ant-picker-input input::placeholder {
+    color: ${darkTheme.textMuted} !important;
+  }
+
+  /* 表格内所有过滤元素 */
+  .ant-table-filter-column {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* Select 组件更强样式覆盖 */
+  .ant-select {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-select .ant-select-selector {
+    background-color: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textPrimary} !important;
+    height: 22px !important;
+    min-height: 22px !important;
+  }
+  .ant-select .ant-select-selection-item {
+    color: ${darkTheme.textPrimary} !important;
+    line-height: 22px !important;
+  }
+  .ant-select .ant-select-selection-placeholder {
+    color: ${darkTheme.textMuted} !important;
+    line-height: 22px !important;
+    -webkit-text-fill-color: ${darkTheme.textMuted} !important;
+  }
+
+  /* Select 内部占位符更强样式 */
+  div.ant-select-selector span.ant-select-selection-placeholder {
+    color: ${darkTheme.textMuted} !important;
+    -webkit-text-fill-color: ${darkTheme.textMuted} !important;
+  }
+  .ant-select-arrow {
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-select-selection-item::after {
+    display: none !important;
+  }
+  /* Select small size */
+  .ant-select-sm .ant-select-selector {
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 0 8px !important;
+  }
+  .ant-select-sm .ant-select-selection-search-input {
+    height: 22px !important;
+  }
+  /* Select 多选模式垂直居中 */
+  .ant-select-multiple .ant-select-selector {
+    min-height: 24px !important;
+    height: auto !important;
+    padding: 1px 4px !important;
+  }
+  .ant-select-multiple .ant-select-selection-item {
+    line-height: 20px !important;
+    height: 20px !important;
+    margin-top: 1px !important;
+    margin-bottom: 1px !important;
+  }
+  .ant-select-multiple .ant-select-selection-placeholder {
+    line-height: 22px !important;
+  }
+  .ant-select-selection-search-input {
+    height: 22px !important;
   }
 
   /* 表格滚动条深色主题 */
@@ -228,6 +453,14 @@ ant-table-scroll::-    background: ${darkTheme.cardBackgroundAlt} !important;
   .ant-table-cell-fix-left, .ant-table-cell-fix-right {
     background: ${darkTheme.cardBackground} !important;
   }
+  .ant-table-cell-fix-right-first,
+  .ant-table-cell-fix-left-first {
+    background: ${darkTheme.cardBackground} !important;
+  }
+  .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right,
+  .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left {
+    background: ${darkTheme.tableHover} !important;
+  }
 
   /* 表格横向滚动条 */
   .ant-table-h_scroll .ant-table {
@@ -259,5 +492,94 @@ ant-table-scroll::-    background: ${darkTheme.cardBackgroundAlt} !important;
   }
   *::-webkit-scrollbar-thumb:hover {
     background: ${darkTheme.textMuted} !important;
+  }
+
+  /* 日志查看器滚动条 */
+  .ant-card-body > div::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .ant-card-body > div::-webkit-scrollbar-track {
+    background: #2d2d2d !important;
+    border-radius: 5px;
+  }
+  .ant-card-body > div::-webkit-scrollbar-thumb {
+    background: #555 !important;
+    border-radius: 5px;
+  }
+  .ant-card-body > div::-webkit-scrollbar-thumb:hover {
+    background: #666 !important;
+  }
+
+  /* 卡片标题深色主题 */
+  .ant-card-head {
+    background: ${darkTheme.cardBackground} !important;
+    border-bottom: 1px solid ${darkTheme.border} !important;
+  }
+  .ant-card-head-title {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-card-body {
+    background: ${darkTheme.cardBackground} !important;
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* 统计卡片深色主题 */
+  .ant-statistic-title {
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-statistic-content {
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* 提示信息深色主题 */
+  .ant-alert-success {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-alert-success .ant-alert-message {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-alert-warning {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-alert-warning .ant-alert-message {
+    color: ${darkTheme.textPrimary} !important;
+  }
+  .ant-alert-info {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.border} !important;
+  }
+  .ant-alert-info .ant-alert-message {
+    color: ${darkTheme.textPrimary} !important;
+  }
+
+  /* 分割线深色主题 */
+  .ant-divider {
+    border-top-color: ${darkTheme.border} !important;
+  }
+  .ant-divider-inner-text {
+    color: ${darkTheme.textSecondary} !important;
+  }
+
+  /* Tabs深色主题 */
+  .ant-tabs-tab {
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-tabs-tab-active .ant-tabs-tab-btn {
+    color: ${darkTheme.accent} !important;
+  }
+  .ant-tabs-ink-bar {
+    background: ${darkTheme.accent} !important;
+  }
+  .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+    background: ${darkTheme.cardBackgroundAlt} !important;
+    border-color: ${darkTheme.border} !important;
+    color: ${darkTheme.textSecondary} !important;
+  }
+  .ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+    background: ${darkTheme.cardBackground} !important;
+    border-color: ${darkTheme.accent} !important;
   }
 `;

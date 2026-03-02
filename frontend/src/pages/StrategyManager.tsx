@@ -25,6 +25,7 @@ import {
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
 import { Strategy, Symbol, BacktestConfig, TaskStatus } from '../types';
+import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -216,6 +217,7 @@ const StrategyManager: React.FC = () => {
 
   return (
     <div className="strategy-manager-container">
+      <style>{globalDarkStyles}</style>
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
           <div className="dark-card dark-form">

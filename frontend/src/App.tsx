@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import BacktestResults from './pages/BacktestResults';
 import BacktestManager from './pages/BacktestManager';
 import Settings from './pages/Settings';
+import { darkTheme, globalDarkStyles } from './styles/darkTheme';
 import './index.css';
 
 const { Header, Sider, Content } = Layout;
@@ -49,51 +50,60 @@ const App: React.FC = () => {
 
   return (
     <Router>
+      <style>{globalDarkStyles}</style>
       <Layout style={{ minHeight: '100vh' }}>
-        <Sider 
-          collapsible 
-          collapsed={collapsed} 
+        <Sider
+          collapsible
+          collapsed={collapsed}
           onCollapse={setCollapsed}
-          theme="light"
+          theme="dark"
           style={{
+            background: darkTheme.cardBackground,
             boxShadow: '2px 0 8px rgba(0, 0, 0, 0.15)',
             zIndex: 1000,
           }}
         >
-          <div style={{ 
-            height: 64, 
-            padding: '16px', 
-            display: 'flex', 
+          <div style={{
+            height: 64,
+            padding: '16px',
+            display: 'flex',
             alignItems: 'center',
-            borderBottom: '1px solid #f0f0f0'
+            borderBottom: `1px solid ${darkTheme.border}`
           }}>
             {!collapsed && (
-              <Title level={4} style={{ margin: 0, color: '#001529' }}>
+              <Title level={4} style={{ margin: 0, color: darkTheme.textPrimary }}>
                 PyTrading
               </Title>
             )}
           </div>
           <Menu
+            theme="dark"
             mode="inline"
             defaultSelectedKeys={[window.location.pathname]}
             items={menuItems}
             onClick={handleMenuClick}
-            style={{ borderRight: 0 }}
+            style={{
+              background: darkTheme.cardBackground,
+              borderRight: 0,
+              color: darkTheme.textPrimary
+            }}
           />
         </Sider>
         <Layout>
-          <Header style={{ 
+          <Header style={{
+            background: darkTheme.cardBackground,
             padding: '0 24px',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            borderBottom: `1px solid ${darkTheme.border}`
           }}>
-            <Title level={3} style={{ margin: 0, color: 'white' }}>
+            <Title level={3} style={{ margin: 0, color: darkTheme.textPrimary }}>
               量化交易系统
             </Title>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <span style={{ color: 'white' }}>管理员</span>
-              <Avatar icon={<UserOutlined />} />
+              <span style={{ color: darkTheme.textSecondary }}>管理员</span>
+              <Avatar icon={<UserOutlined />} style={{ background: darkTheme.accent }} />
             </div>
           </Header>
           <Content>

@@ -826,7 +826,7 @@ const BacktestResults: React.FC = () => {
                 placeholder="选择趋势类型"
                 allowClear
                 style={{ width: '100%' }}
-                value={filters.trending_type}
+                value={filters.trending_type || undefined}
                 onChange={(value) => {
                   handleFilterChange('trending_type', value);
                 }}
@@ -873,7 +873,7 @@ const BacktestResults: React.FC = () => {
                   precision={2}
                   size="small"
                 />
-                <span style={{ color: '#999' }}>~</span>
+                <span style={{ color: darkTheme.textMuted }}>~</span>
                 <InputNumber
                   placeholder="最大收益%"
                   style={{ width: '100%' }}

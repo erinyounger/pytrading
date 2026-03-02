@@ -35,6 +35,7 @@ import {
 } from 'chart.js';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
+import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 
 ChartJS.register(
   CategoryScale,
@@ -178,7 +179,7 @@ const RealtimeMonitor: React.FC = () => {
       dataIndex: 'change_percent',
       key: 'change_percent',
       render: (change: number) => (
-        <span className={change >= 0 ? 'profit-positive' : 'profit-negative'}>
+        <span style={{ color: change >= 0 ? darkTheme.positive : darkTheme.negative }}>
           {change >= 0 ? '+' : ''}{change.toFixed(2)}%
         </span>
       ),
@@ -194,7 +195,7 @@ const RealtimeMonitor: React.FC = () => {
       dataIndex: 'position',
       key: 'position',
       render: (position: number) => (
-        <span style={{ color: position > 0 ? '#52c41a' : position < 0 ? '#ff4d4f' : '#666' }}>
+        <span style={{ color: position > 0 ? darkTheme.negative : position < 0 ? darkTheme.positive : darkTheme.textMuted }}>
           {position > 0 ? `+${position}` : position}
         </span>
       ),
@@ -204,7 +205,7 @@ const RealtimeMonitor: React.FC = () => {
       dataIndex: 'pnl',
       key: 'pnl',
       render: (pnl: number) => (
-        <span className={pnl >= 0 ? 'profit-positive' : 'profit-negative'}>
+        <span style={{ color: pnl >= 0 ? darkTheme.positive : darkTheme.negative }}>
           {pnl >= 0 ? '+' : ''}¥{pnl.toFixed(2)}
         </span>
       ),
@@ -271,7 +272,7 @@ const RealtimeMonitor: React.FC = () => {
           realtimeData.filter(item => item.status === 'paused').length,
           realtimeData.filter(item => item.status === 'stopped').length,
         ],
-        backgroundColor: ['#52c41a', '#faad14', '#ff4d4f'],
+        backgroundColor: [darkTheme.negative, '#faad14', darkTheme.positive],
         borderWidth: 0,
       },
     ],
@@ -284,8 +285,8 @@ const RealtimeMonitor: React.FC = () => {
       {
         label: '浮动盈亏',
         data: realtimeData.map(item => item.pnl),
-        borderColor: '#1890ff',
-        backgroundColor: 'rgba(24, 144, 255, 0.1)',
+        borderColor: darkTheme.accent,
+        backgroundColor: `${darkTheme.accent}20`,
         tension: 0.4,
       },
     ],
@@ -293,6 +294,7 @@ const RealtimeMonitor: React.FC = () => {
 
   return (
     <div className="realtime-monitor-container">
+      <style>{globalDarkStyles}</style>
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col span={24}>
           <Alert
@@ -300,9 +302,9 @@ const RealtimeMonitor: React.FC = () => {
               <Row justify="space-between" align="middle">
                 <Col>
                   <Space>
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                    <Text strong>系统状态: 正常运行</Text>
-                    <Text type="secondary">
+                    <CheckCircleOutlined style={{ color: darkTheme.negative }} />
+                    <Text strong style={{ color: darkTheme.textPrimary }}>系统状态: 正常运行</Text>
+                    <Text type="secondary" style={{ color: darkTheme.textSecondary }}>
                       最后更新: {systemStatus.last_update}
                     </Text>
                   </Space>
@@ -336,41 +338,41 @@ const RealtimeMonitor: React.FC = () => {
       {/* 系统概览 */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={6}>
-          <Card className="metric-card">
+          <Card className="metric-card" style={{ background: darkTheme.cardBackground }}>
             <Statistic
-              title="活跃策略"
+              title={<span style={{ color: darkTheme.textSecondary }}>活跃策略</span>}
               value={systemStatus.active_strategies}
               suffix={`/ ${realtimeData.length}`}
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: darkTheme.accent }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="metric-card">
+          <Card className="metric-card" style={{ background: darkTheme.cardBackground }}>
             <Statistic
-              title="总持仓"
+              title={<span style={{ color: darkTheme.textSecondary }}>总持仓</span>}
               value={systemStatus.total_positions}
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: darkTheme.negative }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="metric-card">
+          <Card className="metric-card" style={{ background: darkTheme.cardBackground }}>
             <Statistic
-              title="总盈亏"
+              title={<span style={{ color: darkTheme.textSecondary }}>总盈亏</span>}
               value={systemStatus.total_pnl}
               precision={2}
               prefix="¥"
-              valueStyle={{ 
-                color: systemStatus.total_pnl >= 0 ? '#52c41a' : '#ff4d4f' 
+              valueStyle={{
+                color: systemStatus.total_pnl >= 0 ? darkTheme.negative : darkTheme.positive
               }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={6}>
-          <Card className="metric-card">
+          <Card className="metric-card" style={{ background: darkTheme.cardBackground }}>
             <Statistic
-              title="交易模式"
+              title={<span style={{ color: darkTheme.textSecondary }}>交易模式</span>}
               value={systemStatus.trading_mode === 'live' ? '实盘' : '回测'}
               valueStyle={{ color: '#faad14' }}
             />
@@ -381,23 +383,23 @@ const RealtimeMonitor: React.FC = () => {
       {/* 图表区域 */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} lg={16}>
-          <Card title="策略盈亏走势" className="chart-container">
+          <Card title={<span style={{ color: darkTheme.textPrimary }}>策略盈亏走势</span>} className="chart-container" style={{ background: darkTheme.cardBackground }}>
             <Line data={pnlData} options={{
               responsive: true,
               plugins: {
-                legend: { position: 'top' as const },
+                legend: { position: 'top' as const, labels: { color: darkTheme.textPrimary } },
                 title: { display: false },
               },
-              scales: { y: { beginAtZero: true } },
+              scales: { y: { beginAtZero: true, ticks: { color: darkTheme.textSecondary }, grid: { color: darkTheme.border } }, x: { ticks: { color: darkTheme.textSecondary }, grid: { color: darkTheme.border } } },
             }} />
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="策略状态分布" className="chart-container">
+          <Card title={<span style={{ color: darkTheme.textPrimary }}>策略状态分布</span>} className="chart-container" style={{ background: darkTheme.cardBackground }}>
             <Doughnut data={statusData} options={{
               responsive: true,
               plugins: {
-                legend: { position: 'bottom' as const },
+                legend: { position: 'bottom' as const, labels: { color: darkTheme.textPrimary } },
               },
             }} />
           </Card>
@@ -405,7 +407,7 @@ const RealtimeMonitor: React.FC = () => {
       </Row>
 
       {/* 实时数据表格 */}
-      <Card title="实时监控数据">
+      <Card title={<span style={{ color: darkTheme.textPrimary }}>实时监控数据</span>} style={{ background: darkTheme.cardBackground }}>
         <Table
           columns={columns}
           dataSource={realtimeData}
@@ -414,35 +416,44 @@ const RealtimeMonitor: React.FC = () => {
           pagination={false}
           scroll={{ x: 'max-content' }}
           size="small"
+          style={{ background: darkTheme.cardBackground }}
+          onRow={() => ({
+            style: {
+              background: darkTheme.cardBackground,
+              color: darkTheme.textPrimary,
+            }
+          })}
         />
       </Card>
 
       {/* 持仓详情模态框 */}
       <Modal
-        title="持仓详情"
+        title={<span style={{ color: darkTheme.textPrimary }}>持仓详情</span>}
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
         width={600}
+        styles={{ content: { background: darkTheme.cardBackground } }}
       >
         {selectedPosition && (
           <div>
             <Row gutter={[16, 16]}>
               <Col span={24}>
-                <Card title="基本信息" size="small">
+                <Card title={<span style={{ color: darkTheme.textPrimary }}>基本信息</span>} size="small" style={{ background: darkTheme.cardBackgroundAlt }}>
                   <Row gutter={[16, 16]}>
                     <Col span={8}>
-                      <Statistic title="股票代码" value={selectedPosition.symbol} />
+                      <Statistic title={<span style={{ color: darkTheme.textSecondary }}>股票代码</span>} value={selectedPosition.symbol} valueStyle={{ color: darkTheme.textPrimary }} />
                     </Col>
                     <Col span={8}>
-                      <Statistic title="股票名称" value={selectedPosition.name} />
+                      <Statistic title={<span style={{ color: darkTheme.textSecondary }}>股票名称</span>} value={selectedPosition.name} valueStyle={{ color: darkTheme.textPrimary }} />
                     </Col>
                     <Col span={8}>
-                      <Statistic 
-                        title="当前价格" 
-                        value={selectedPosition.current_price} 
+                      <Statistic
+                        title={<span style={{ color: darkTheme.textSecondary }}>当前价格</span>}
+                        value={selectedPosition.current_price}
                         prefix="¥"
                         precision={2}
+                        valueStyle={{ color: darkTheme.textPrimary }}
                       />
                     </Col>
                   </Row>
@@ -450,36 +461,36 @@ const RealtimeMonitor: React.FC = () => {
               </Col>
 
               <Col span={24}>
-                <Card title="持仓信息" size="small">
+                <Card title={<span style={{ color: darkTheme.textPrimary }}>持仓信息</span>} size="small" style={{ background: darkTheme.cardBackgroundAlt }}>
                   <Row gutter={[16, 16]}>
                     <Col span={8}>
-                      <Statistic 
-                        title="持仓数量" 
+                      <Statistic
+                        title={<span style={{ color: darkTheme.textSecondary }}>持仓数量</span>}
                         value={selectedPosition.position}
-                        valueStyle={{ 
-                          color: selectedPosition.position > 0 ? '#52c41a' : '#ff4d4f' 
+                        valueStyle={{
+                          color: selectedPosition.position > 0 ? darkTheme.negative : darkTheme.positive
                         }}
                       />
                     </Col>
                     <Col span={8}>
-                      <Statistic 
-                        title="浮动盈亏" 
-                        value={selectedPosition.pnl} 
+                      <Statistic
+                        title={<span style={{ color: darkTheme.textSecondary }}>浮动盈亏</span>}
+                        value={selectedPosition.pnl}
                         prefix="¥"
                         precision={2}
-                        valueStyle={{ 
-                          color: selectedPosition.pnl >= 0 ? '#52c41a' : '#ff4d4f' 
+                        valueStyle={{
+                          color: selectedPosition.pnl >= 0 ? darkTheme.negative : darkTheme.positive
                         }}
                       />
                     </Col>
                     <Col span={8}>
-                      <Statistic 
-                        title="涨跌幅" 
-                        value={selectedPosition.change_percent} 
+                      <Statistic
+                        title={<span style={{ color: darkTheme.textSecondary }}>涨跌幅</span>}
+                        value={selectedPosition.change_percent}
                         suffix="%"
                         precision={2}
-                        valueStyle={{ 
-                          color: selectedPosition.change_percent >= 0 ? '#52c41a' : '#ff4d4f' 
+                        valueStyle={{
+                          color: selectedPosition.change_percent >= 0 ? darkTheme.negative : darkTheme.positive
                         }}
                       />
                     </Col>
@@ -488,17 +499,18 @@ const RealtimeMonitor: React.FC = () => {
               </Col>
 
               <Col span={24}>
-                <Card title="市场信息" size="small">
+                <Card title={<span style={{ color: darkTheme.textPrimary }}>市场信息</span>} size="small" style={{ background: darkTheme.cardBackgroundAlt }}>
                   <Row gutter={[16, 16]}>
                     <Col span={12}>
-                      <Statistic 
-                        title="成交量" 
-                        value={(selectedPosition.volume / 10000).toFixed(1)} 
+                      <Statistic
+                        title={<span style={{ color: darkTheme.textSecondary }}>成交量</span>}
+                        value={(selectedPosition.volume / 10000).toFixed(1)}
                         suffix="万手"
+                        valueStyle={{ color: darkTheme.textPrimary }}
                       />
                     </Col>
                     <Col span={12}>
-                      <Statistic title="更新时间" value={selectedPosition.last_update} />
+                      <Statistic title={<span style={{ color: darkTheme.textSecondary }}>更新时间</span>} value={selectedPosition.last_update} valueStyle={{ color: darkTheme.textPrimary }} />
                     </Col>
                   </Row>
                 </Card>

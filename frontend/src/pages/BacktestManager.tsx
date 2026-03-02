@@ -299,8 +299,8 @@ const BacktestManager: React.FC = () => {
     setTaskDetailModal(true);
   };
 
-  const fetchTaskResults = async (taskId: string) => {
-    if (taskResultsMap[taskId]) return;
+  const fetchTaskResults = async (taskId: string, forceRefresh: boolean = false) => {
+    if (!forceRefresh && taskResultsMap[taskId]) return;
     try {
       const response = await apiService.getTaskResults(taskId);
       setTaskResultsMap(prev => ({
@@ -315,10 +315,11 @@ const BacktestManager: React.FC = () => {
 
   const handleExpand = (expanded: boolean, record: BacktestTaskInfo) => {
     if (expanded) {
-      fetchTaskResults(record.task_id);
-      setExpandedRowKeys([...expandedRowKeys, record.id]);
+      // 展开时强制刷新数据
+      fetchTaskResults(record.task_id, true);
+      setExpandedRowKeys(prev => [...prev, record.id]);
     } else {
-      setExpandedRowKeys(expandedRowKeys.filter(key => key !== record.id));
+      setExpandedRowKeys(prev => prev.filter(key => key !== record.id));
     }
   };
 
@@ -677,7 +678,18 @@ const BacktestManager: React.FC = () => {
           {/* 操作栏 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '12px 16px', background: darkTheme.cardBackgroundAlt, borderRadius: 8 }}>
             <Space>
-              <Button icon={<ReloadOutlined />} onClick={() => fetchBacktestTasks()} loading={loading}>
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={async () => {
+                  await fetchBacktestTasks();
+                  // 同时刷新所有任务的结果数据（不管是否展开）
+                  const allTaskIds = backtestTasks.map(t => t.task_id);
+                  allTaskIds.forEach((taskId: string) => {
+                    fetchTaskResults(taskId, true);
+                  });
+                }}
+                loading={loading}
+              >
                 刷新
               </Button>
             </Space>

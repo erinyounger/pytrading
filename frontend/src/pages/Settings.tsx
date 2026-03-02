@@ -30,6 +30,7 @@ import {
 } from '@ant-design/icons';
 import { apiService } from '../services/api';
 import { SystemConfig } from '../types';
+import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 
 const { Option } = Select;
 const { Title } = Typography;
@@ -132,7 +133,8 @@ const Settings: React.FC = () => {
 
   return (
     <div className="settings-container">
-      <Title level={2} style={{ color: 'var(--dark-text)' }}>系统设置</Title>
+      <style>{globalDarkStyles}</style>
+      <Title level={2} style={{ color: darkTheme.textPrimary }}>系统设置</Title>
 
       <Tabs className="dark-tabs" defaultActiveKey="general" type="card">
         <Tabs.TabPane tab={
