@@ -209,7 +209,7 @@ const LogViewer: React.FC<LogViewerProps> = ({ taskId, symbol, title, height = 5
         />
       </Space>
       }
-      bodyStyle={{ padding: 0 }}
+      styles={{ body: { padding: 0 } }}
     >
       <div
         ref={logContainerRef}

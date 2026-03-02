@@ -412,12 +412,12 @@ const Dashboard: React.FC = () => {
   // 风险等级渲染
   const riskLevelTag = (risk: string) => {
     const config = {
-      low: { color: 'success' as const, icon: <SafetyOutlined />, text: '低风险', textColor: '#52c41a' },
-      medium: { color: 'warning' as const, icon: <BarChartOutlined />, text: '中风险', textColor: '#faad14' },
-      high: { color: 'error' as const, icon: <WarningOutlined />, text: '高风险', textColor: '#ff4d4f' },
+      low: { color: 'success' as const, icon: <SafetyOutlined />, text: '低风险', textColor: '#52c41a', backgroundColor: 'rgba(82, 196, 26, 0.1)' },
+      medium: { color: 'warning' as const, icon: <BarChartOutlined />, text: '中风险', textColor: '#faad14', backgroundColor: 'rgba(250, 173, 20, 0.1)' },
+      high: { color: 'error' as const, icon: <WarningOutlined />, text: '高风险', textColor: '#ff0000', backgroundColor: 'rgba(255, 0, 0, 0.15)' },
     };
     const c = config[risk as keyof typeof config] || config.medium;
-    return <Badge status={c.color} text={<span style={{ color: c.textColor }}><span style={{ marginRight: 4 }}>{c.icon}</span>{c.text}</span>} />;
+    return <Tag style={{ backgroundColor: c.backgroundColor, border: 'none', borderRadius: '4px', color: c.textColor, padding: '2px 8px' }}>{c.icon} {c.text}</Tag>;
   };
 
   // 趋势标签（带提醒）
@@ -563,7 +563,7 @@ const Dashboard: React.FC = () => {
               textDecoration: 'none',
             }}
           >
-            <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{record.symbol}</div>
+            <div style={{ fontWeight: 'bold', fontSize: '13px', fontFamily: '"SF Mono", Monaco, "Inconsolata", monospace' }}>{record.symbol}</div>
           </a>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
@@ -692,7 +692,7 @@ const Dashboard: React.FC = () => {
       width: 80,
       sorter: (a: EnrichedStock, b: EnrichedStock) => b.pnl_ratio - a.pnl_ratio,
       render: (value: number) => (
-        <span style={{ color: value >= 0.3 ? '#ff4d4f' : value >= 0.1 ? '#52c41a' : '#1890ff', fontWeight: 'bold', fontSize: '13px' }}>
+        <span style={{ color: value >= 0.3 ? '#ff4d4f' : value >= 0.1 ? '#52c41a' : '#1890ff', fontWeight: 'bold', fontSize: '13px', fontFamily: '"SF Mono", Monaco, "Inconsolata", monospace' }}>
           {(value * 100).toFixed(1)}%
         </span>
       ),
@@ -1414,7 +1414,7 @@ const Dashboard: React.FC = () => {
           </Button>
         ]}
         width={1000}
-        bodyStyle={{ padding: '16px' }}
+        styles={{ body: { padding: '16px' } }}
       >
         {klineLoading && !klineData.length ? (
           <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -1449,7 +1449,7 @@ const Dashboard: React.FC = () => {
           </Button>
         ]}
         width={600}
-        bodyStyle={{ padding: '16px' }}
+        styles={{ body: { padding: '16px' } }}
       >
         {stockInfoLoading ? (
           <div style={{ textAlign: 'center', padding: '50px' }}>
@@ -1485,37 +1485,59 @@ const Dashboard: React.FC = () => {
               <Col span={12}>
                 <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>总股本</div>
                 <div style={{ fontSize: '14px' }}>
-                  {stockInfo.total_share ? `${(stockInfo.total_share / 10000).toFixed(2)} 万股` : '-'}
+                  {stockInfo.total_shares || stockInfo.total_share ? `${(stockInfo.total_shares || stockInfo.total_share / 10000).toFixed(2)} 万股` : '-'}
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>流通股本</div>
                 <div style={{ fontSize: '14px' }}>
-                  {stockInfo.float_share ? `${(stockInfo.float_share / 10000).toFixed(2)} 万股` : '-'}
+                  {stockInfo.circulating_shares || stockInfo.float_share ? `${(stockInfo.circulating_shares || stockInfo.float_share / 10000).toFixed(2)} 万股` : '-'}
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>总市值</div>
                 <div style={{ fontSize: '14px' }}>
-                  {stockInfo.total_mv ? `${(stockInfo.total_mv / 100000000).toFixed(2)} 亿` : '-'}
+                  {stockInfo.total_market_cap || stockInfo.total_mv ? `${(stockInfo.total_market_cap || stockInfo.total_mv / 100000000).toFixed(2)} 亿` : '-'}
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>流通市值</div>
                 <div style={{ fontSize: '14px' }}>
-                  {stockInfo.float_mv ? `${(stockInfo.float_mv / 100000000).toFixed(2)} 亿` : '-'}
+                  {stockInfo.circulating_market_cap || stockInfo.float_mv ? `${(stockInfo.circulating_market_cap || stockInfo.float_mv / 100000000).toFixed(2)} 亿` : '-'}
                 </div>
               </Col>
               <Col span={12}>
                 <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>上市状态</div>
                 <div style={{ fontSize: '14px' }}>{stockInfo.listing_state || stockInfo.status || '-'}</div>
               </Col>
-              {stockInfo.province && (
-                <Col span={12}>
-                  <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>所在地区</div>
-                  <div style={{ fontSize: '14px' }}>{stockInfo.province}{stockInfo.city ? ` ${stockInfo.city}` : ''}</div>
-                </Col>
-              )}
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>昨收价</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.pre_close ? `¥${stockInfo.pre_close.toFixed(2)}` : '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>涨停价</div>
+                <div style={{ fontSize: '14px', color: '#ff4d4f' }}>{stockInfo.upper_limit ? `¥${stockInfo.upper_limit.toFixed(2)}` : '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>跌停价</div>
+                <div style={{ fontSize: '14px', color: '#52c41a' }}>{stockInfo.lower_limit ? `¥${stockInfo.lower_limit.toFixed(2)}` : '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>价格步长</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.price_tick ? `¥${stockInfo.price_tick}` : '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>证券级别</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.sec_level === 1 ? '主板' : stockInfo.sec_level === 2 ? '创业板' : stockInfo.sec_level === 3 ? '科创板' : '-'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>是否停牌</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.is_suspended === 0 ? '正常交易' : '停牌中'}</div>
+              </Col>
+              <Col span={12}>
+                <div style={{ color: 'var(--dark-text-secondary)', fontSize: '12px' }}>复权因子</div>
+                <div style={{ fontSize: '14px' }}>{stockInfo.adj_factor ? stockInfo.adj_factor.toFixed(4) : '-'}</div>
+              </Col>
             </Row>
           </div>
         ) : (

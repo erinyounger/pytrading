@@ -31,6 +31,8 @@ from pytrading.logger import logger
 from sqlalchemy import func
 from gm.api import set_token, get_constituents, history, get_instruments
 from pytrading.utils.talib_util import TA_MACD
+import akshare as ak
+from pytrading.utils.akshare_util import akshare_util
 import pandas as pd
 
 # 设置掘金量化token
@@ -1104,27 +1106,69 @@ async def get_stock_info(symbol: str):
 
         # 调用掘金API获取更多股票信息
         try:
+            # 使用回测token获取股票信息（live token没有数据查询权限）
+            original_token = config.token
+            config.token = config.backtest_trading_token
+            set_token(config.token)
             stock_info_list = get_instruments(symbols=symbol)
+            # 恢复原token
+            config.token = original_token
+            set_token(config.token)
             stock_info = stock_info_list[0] if stock_info_list and len(stock_info_list) > 0 else {}
         except Exception as e:
             logger.warning(f"掘金API获取失败: {symbol}, error: {str(e)}")
             stock_info = {}
 
-        # 构建返回数据
+
+        # 使用AkShare工具类获取详细信息
+        # 尝试使用AkShare获取详细信息，失败则使用掘金数据
+        try:
+            akshare_info = akshare_util.get_stock_individual_info(symbol)
+        except Exception as e:
+            logger.warning(f"AkShare调用失败，使用掘金数据: {str(e)}")
+            akshare_info = {}
+        
+        # 构建返回数据（优先使用AkShare数据，丰富掘金API字段）
+        # 计算市值（如果AkShare失败，使用昨收价*股本估算）
+        total_shares = akshare_info.get("总股本")
+        circulating_shares = akshare_info.get("流通股")
+        pre_close = stock_info.get('pre_close')
+        
+        if total_shares and pre_close:
+            estimated_total_mv = total_shares * pre_close * 100000000  # 股数 × 价格
+        else:
+            estimated_total_mv = akshare_info.get("总市值")
+            
+        if circulating_shares and pre_close:
+            estimated_circulating_mv = circulating_shares * pre_close * 100000000
+        else:
+            estimated_circulating_mv = akshare_info.get("流通市值")
+        
         result = {
             "symbol": symbol,
-            "name": db_name or stock_info.get('name'),
-            "industry": db_industry,
-            "exchange": stock_info.get('exchange'),
+            "name": akshare_info.get("股票简称") or db_name or stock_info.get('sec_name'),
+            "industry": akshare_info.get("行业") or db_industry,
+            "exchange": "SHSE" if symbol.startswith("SHSE") else "SZSE" if symbol.startswith("SZSE") else stock_info.get('exchange'),
+            "list_date": akshare_info.get("上市时间") or stock_info.get('listed_date'),
+            "total_shares": total_shares,
+            "circulating_shares": circulating_shares,
+            "total_market_cap": estimated_total_mv,
+            "circulating_market_cap": estimated_circulating_mv,
+            "latest_price": akshare_info.get("最新") or pre_close,
+            # 补充更多掘金API字段
             "sec_type": stock_info.get('sec_type'),
-            "list_date": stock_info.get('list_date'),
-            "delist_date": stock_info.get('delist_date'),
-            "prev_trading_date": stock_info.get('prev_trading_date'),
-            "market": stock_info.get('market'),
-            "currency": stock_info.get('currency'),
-            "tick_size": stock_info.get('tick_size'),
-            "limit_up": stock_info.get('limit_up'),
-            "limit_down": stock_info.get('limit_down'),
+            "sec_level": stock_info.get('sec_level'),
+            "sec_abbr": stock_info.get('sec_abbr'),
+            "pre_close": pre_close,
+            "upper_limit": stock_info.get('upper_limit'),
+            "lower_limit": stock_info.get('lower_limit'),
+            "price_tick": stock_info.get('price_tick'),
+            "margin_ratio": stock_info.get('margin_ratio'),
+            "adj_factor": stock_info.get('adj_factor'),
+            "is_suspended": stock_info.get('is_suspended'),
+            "board": stock_info.get('board'),
+            "trade_date": stock_info.get('trade_date'),
+            "delist_date": stock_info.get('delisted_date'),
             "is_hs": stock_info.get('is_hs'),
             "status": stock_info.get('status'),
         }

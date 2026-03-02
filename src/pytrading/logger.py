@@ -45,16 +45,20 @@ class DBLogHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord) -> None:
         try:
-            # 是否启用DB
-            if not _ctx_db_enabled.get():
-                # 若显式绑定了 task_id/symbol，也认为启用
-                if not self._fixed_task_id and not self._fixed_symbol:
-                    return
+            # 从 record 中尝试获取 task_id 和 symbol（通过 extra 传递）
+            task_id = getattr(record, 'task_id', None)
+            symbol = getattr(record, 'symbol', None)
 
-            task_id = self._fixed_task_id if self._fixed_task_id is not None else _ctx_task_id.get()
+            # 如果 record 中没有，尝试从 contextvars 获取
+            if not task_id:
+                task_id = self._fixed_task_id if self._fixed_task_id is not None else _ctx_task_id.get()
+            if not symbol:
+                symbol = self._fixed_symbol if self._fixed_symbol is not None else _ctx_symbol.get()
+
+            # 必须有 task_id 才能记录
             if not task_id:
                 return
-            symbol = self._fixed_symbol if self._fixed_symbol is not None else _ctx_symbol.get()
+
             message = record.getMessage()
             level = record.levelname
             if LogRepository is None or config is None:

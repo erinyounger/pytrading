@@ -6,9 +6,9 @@ export const darkTheme = {
   cardBackgroundAlt: '#15152a',
   border: '#2a2a4a',
   // 文字颜色
-  textPrimary: '#e8e8e8',
-  textSecondary: '#a0a0b8',
-  textMuted: '#707090',
+  textPrimary: '#f0f0f5',
+  textSecondary: '#b8b8c8',
+  textMuted: '#8888a0',
   // 强调色
   positive: '#ff4d4f',  // 证券红 - 上涨/盈利
   negative: '#52c41a',  // 证券绿 - 下跌/亏损

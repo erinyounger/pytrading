@@ -112,6 +112,10 @@ def on_bar(context, bars):
 def on_order_status(context, order):
     # 标的代码
     symbol = order['symbol']
+    # 获取 task_id
+    task_id = getattr(context, 'task_id', None)
+    # 使用 extra 参数传递 task_id 和 symbol（解决多线程问题）
+    log_extra = {'task_id': task_id, 'symbol': symbol} if task_id else {}
     # 委托价格
     price = order['price']
     # 委托数量
@@ -131,11 +135,17 @@ def on_order_status(context, order):
             side_effect = '卖出'
         order_type_word = '限价' if order_type == 1 else '市价'
         logger.info('{}:标的：{}，操作：以{}{}，委托价格：{}，委托数量：{}'.format(context.now, symbol, order_type_word, side_effect, price,
-                                                               volume))
+                                                               volume), extra=log_extra)
 
 
 def on_backtest_finished(context, indicator):
     """回测结束"""
+    # 获取 task_id 和 symbol
+    task_id = getattr(context, 'task_id', None)
+    symbol = getattr(context, 'symbol', None)
+    # 使用 extra 参数传递 task_id 和 symbol（解决多线程问题）
+    log_extra = {'task_id': task_id, 'symbol': symbol} if task_id else {}
+
     try:
         back_test_obj = BackTest()
         back_test_obj.symbol = context.symbol
@@ -177,7 +187,8 @@ def on_backtest_finished(context, indicator):
         亏损次数：{back_test_obj.lose_count}, \n \
         胜率：{back_test_obj.win_ratio}, \n \
         当前价格：{back_test_obj.current_price}, \n \
-        任务ID：{back_test_obj.task_id}"
+        任务ID：{back_test_obj.task_id}",
+        extra=log_extra
         )
 
         # 如果需要保存到数据库
@@ -337,7 +348,13 @@ def save_kline_data(symbol: str, days: int = 365):
 
 
 def on_error(context, code, info):
+    # 获取 task_id 和 symbol
+    task_id = getattr(context, 'task_id', None)
+    symbol = getattr(context, 'symbol', None)
+    # 使用 extra 参数传递 task_id 和 symbol（解决多线程问题）
+    log_extra = {'task_id': task_id, 'symbol': symbol} if task_id else {}
     print('code:{}, info:{}'.format(code, info))
+    logger.error(f'策略执行出错: code={code}, info={info}', extra=log_extra)
 
 
 def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, strategy_name, mode=MODE_BACKTEST, task_id=None):
@@ -400,6 +417,16 @@ def run_cli():
 
     # 清楚接收的参数，避免影响run接收参数
     sys.argv = []
+
+    # 转换mode参数：支持字符串和整数
+    mode_value = arg_options.mode
+    if isinstance(mode_value, str):
+        if mode_value.lower() in ('backtest', '2'):
+            mode_value = MODE_BACKTEST
+        elif mode_value.lower() in ('live', '1'):
+            mode_value = MODE_LIVE
+        else:
+            mode_value = MODE_BACKTEST
     logger.info("Mode: {}, StrategeID: {}, StrategyName: {}, Symbol: {}, StartTime: {}, EndTime: {}, SaveDB: {}, TaskID: {}".format(
         arg_options.mode, arg_options.strategy_id, arg_options.strategy_name, arg_options.symbol,
         arg_options.start_time, arg_options.end_time, config.save_db, arg_options.task_id))
@@ -408,7 +435,7 @@ def run_cli():
                  backtest_start_time=arg_options.start_time,
                  backtest_end_time=arg_options.end_time,
                  strategy_name=arg_options.strategy_name,
-                 mode=arg_options.mode,
+                 mode=mode_value,
                  task_id=arg_options.task_id)
 
 

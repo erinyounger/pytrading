@@ -188,6 +188,11 @@ class PyTrading:
                 logger.info(f"Start getting index constituents: {index_symbol}")
                 symbol_list = cls.get_index_symbols(index_symbol)
                 logger.info(f"Get index constituents completed: {index_symbol}, number={len(symbol_list)}")
+
+                # 如果获取成分股为空（可能是ETF），则直接使用ETF本身作为标的
+                if not symbol_list:
+                    logger.info(f"Index constituents empty, using ETF itself as trading target: {index_symbol}")
+                    symbol_list = [index_symbol]
             else:
                 symbol_list = task.symbols if isinstance(task.symbols, list) else [task.symbols]
             py_trading = cls(

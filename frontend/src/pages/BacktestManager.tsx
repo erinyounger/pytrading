@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Card,
   Button,
@@ -51,7 +51,7 @@ import LogViewer from '../components/LogViewer';
 
 dayjs.extend(duration);
 
-const { Option } = Select;
+const { Option, OptGroup } = Select;
 const { RangePicker } = DatePicker;
 const { Text } = Typography;
 
@@ -101,6 +101,7 @@ const BacktestManager: React.FC = () => {
   const [backTestMode, setBackTestMode] = useState<'single' | 'index'>('single');
   const [taskLogModal, setTaskLogModal] = useState(false);
   const [resultLogModal, setResultLogModal] = useState(false);
+  const currentSymbolRef = useRef<string>('');
   const [selectedSymbol, setSelectedSymbol] = useState<string>('');
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [taskResultsMap, setTaskResultsMap] = useState<Record<string, BacktestResult[]>>({});
@@ -578,40 +579,8 @@ const BacktestManager: React.FC = () => {
       key: 'action',
       align: 'center' as const,
       width: 100,
-      render: (_: any, result: BacktestResult) => (
-        <Space size={4}>
-          <Tooltip title="查看日志">
-            <Button
-              type="text"
-              size="small"
-              icon={<FileTextOutlined />}
-              onClick={() => {
-                setSelectedTask(record);
-                setSelectedSymbol(result.symbol);
-                setResultLogModal(true);
-              }}
-            />
-          </Tooltip>
-          <Popconfirm
-            title="删除结果"
-            description="确定删除？"
-            onConfirm={async () => {
-              try {
-                await handleDeleteResult(result.id, record.task_id);
-              } catch (error) {
-                message.error('删除失败');
-              }
-            }}
-            okText="确定"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title="删除">
-              <Button type="text" size="small" icon={<DeleteOutlined />} danger />
-            </Tooltip>
-          </Popconfirm>
-        </Space>
-      ),
+      // 这个列会在 expandedRowRender 中被动态覆盖
+      render: () => null,
     },
   ];
 
@@ -747,7 +716,33 @@ const BacktestManager: React.FC = () => {
                       />
                     </div>
                     <Table
-                      columns={resultColumns}
+                      columns={resultColumns.map(col => {
+                        if (col.key === 'action') {
+                          return {
+                            ...col,
+                            render: (_: any, result: BacktestResult) => (
+                              <Space size={4}>
+                                <Tooltip title="个股日志">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<FileTextOutlined />}
+                                    onClick={() => {
+                                      const symbol = result.symbol || '';
+                                      currentSymbolRef.current = symbol;
+                                      // 使用展开行的 task_id
+                                      setSelectedTask({ task_id: record.task_id } as any);
+                                      setSelectedSymbol(symbol);
+                                      setResultLogModal(true);
+                                    }}
+                                  />
+                                </Tooltip>
+                              </Space>
+                            )
+                          };
+                        }
+                        return col;
+                      })}
                       dataSource={filteredResults}
                       rowKey="id"
                       pagination={{ pageSize: 5, showSizeChanger: true }}
@@ -827,19 +822,49 @@ const BacktestManager: React.FC = () => {
 
           {backTestMode === 'single' ? (
             <Form.Item name="symbols" label="股票代码" rules={[{ required: true, message: '请选择股票' }]}>
-              <Select mode="multiple" placeholder="选择股票" showSearch allowClear>
-                {backtestPoolSymbols.map(s => (
-                  <Option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</Option>
-                ))}
+              <Select mode="multiple" placeholder="选择股票/ETF" showSearch allowClear>
+                <OptGroup label="宽基ETF">
+                  <Option value="SHSE.510050">510050 - 上证50ETF</Option>
+                  <Option value="SHSE.510300">510300 - 沪深300ETF</Option>
+                  <Option value="SHSE.510500">510500 - 中证500ETF</Option>
+                  <Option value="SHSE.512100">512100 - 中证1000ETF</Option>
+                  <Option value="SZSE.159915">159915 - 创业板ETF</Option>
+                  <Option value="SZSE.159919">159919 - 创业板50ETF</Option>
+                </OptGroup>
+                <OptGroup label="行业/主题ETF">
+                  <Option value="SHSE.588000">588000 - 科创50ETF</Option>
+                  <Option value="SHSE.513100">513100 - 恒生ETF</Option>
+                  <Option value="SHSE.513050">513050 - 中概互联网ETF</Option>
+                </OptGroup>
+                <OptGroup label="历史回测股票">
+                  {backtestPoolSymbols.map(s => (
+                    <Option key={s.symbol} value={s.symbol}>{s.symbol} - {s.name}</Option>
+                  ))}
+                </OptGroup>
               </Select>
             </Form.Item>
           ) : (
             <Form.Item name="index_symbol" label="指数代码" rules={[{ required: true, message: '请选择指数' }]}>
-              <Select placeholder="选择指数" showSearch allowClear>
-                <Option value="SHSE.000016">上证50</Option>
-                <Option value="SHSE.000300">沪深300</Option>
-                <Option value="SHSE.000852">中证1000</Option>
-                <Option value="SHSE.000905">中证500</Option>
+              <Select placeholder="选择指数/ETF" showSearch allowClear>
+                <OptGroup label="宽基ETF">
+                  <Option value="SHSE.510050">510050 - 上证50ETF</Option>
+                  <Option value="SHSE.510300">510300 - 沪深300ETF</Option>
+                  <Option value="SHSE.510500">510500 - 中证500ETF</Option>
+                  <Option value="SHSE.512100">512100 - 中证1000ETF</Option>
+                  <Option value="SZSE.159915">159915 - 创业板ETF</Option>
+                  <Option value="SZSE.159919">159919 - 创业板50ETF</Option>
+                </OptGroup>
+                <OptGroup label="行业/主题ETF">
+                  <Option value="SHSE.588000">588000 - 科创50ETF</Option>
+                  <Option value="SHSE.513100">513100 - 恒生ETF</Option>
+                  <Option value="SHSE.513050">513050 - 中概互联网ETF</Option>
+                </OptGroup>
+                <OptGroup label="股票指数">
+                  <Option value="SHSE.000016">上证50</Option>
+                  <Option value="SHSE.000300">沪深300</Option>
+                  <Option value="SHSE.000905">中证500</Option>
+                  <Option value="SHSE.000852">中证1000</Option>
+                </OptGroup>
               </Select>
             </Form.Item>
           )}
@@ -925,22 +950,26 @@ const BacktestManager: React.FC = () => {
         onCancel={() => setTaskLogModal(false)}
         footer={null}
         width={1000}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
         {selectedTask && <LogViewer taskId={selectedTask.task_id} height={500} />}
       </Modal>
 
       <Modal
         className="dark-modal"
-        title={`个股日志 - ${selectedSymbol}`}
+        title={`个股日志 - ${currentSymbolRef.current}`}
         open={resultLogModal}
-        onCancel={() => { setResultLogModal(false); setSelectedSymbol(''); }}
+        onCancel={() => { setResultLogModal(false); setSelectedSymbol(''); currentSymbolRef.current = ''; }}
         footer={null}
         width={1000}
-        bodyStyle={{ padding: 0 }}
+        styles={{ body: { padding: 0 } }}
       >
-        {selectedTask && selectedSymbol && (
-          <LogViewer taskId={selectedTask.task_id} symbol={selectedSymbol} height={500} />
+        {selectedTask && currentSymbolRef.current ? (
+          <LogViewer taskId={selectedTask.task_id} symbol={currentSymbolRef.current} height={500} />
+        ) : (
+          <div style={{ padding: 50, textAlign: 'center', color: '#888' }}>
+            加载中... selectedTask={!!selectedTask} symbol={currentSymbolRef.current}
+          </div>
         )}
       </Modal>
     </div>
