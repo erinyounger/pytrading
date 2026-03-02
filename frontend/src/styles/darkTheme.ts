@@ -151,6 +151,16 @@ export const globalDarkStyles = `
     border-color: ${darkTheme.accent} !important;
     color: ${darkTheme.accent} !important;
   }
+  .ant-btn-primary {
+    background: ${darkTheme.accent} !important;
+    border-color: ${darkTheme.accent} !important;
+    color: #fff !important;
+  }
+  .ant-btn-primary:hover {
+    background: ${darkTheme.accent} !important;
+    border-color: ${darkTheme.accent} !important;
+    opacity: 0.9;
+  }
 
   /* 工具提示深色主题 */
   .ant-tooltip-inner {

@@ -48,6 +48,7 @@ import duration from 'dayjs/plugin/duration';
 import { apiService } from '../services/api';
 import { Strategy, Symbol, BacktestConfig, BacktestResult } from '../types';
 import LogViewer from '../components/LogViewer';
+import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 
 dayjs.extend(duration);
 
@@ -337,7 +338,7 @@ const BacktestManager: React.FC = () => {
       ellipsis: true,
       render: (id: string) => (
         <Tooltip title={id}>
-          <Text copyable style={{ fontFamily: 'monospace', fontSize: 12 }}>{id}</Text>
+          <Text copyable style={{ fontFamily: 'monospace', fontSize: 12, color: darkTheme.textPrimary }}>{id}</Text>
         </Tooltip>
       ),
     },
@@ -348,10 +349,10 @@ const BacktestManager: React.FC = () => {
       align: 'center' as const,
       width: 80,
       render: (count: number, record: BacktestTaskInfo) => (
-        <Badge 
-          count={count} 
-          showZero 
-          style={{ backgroundColor: '#1677ff' }}
+        <Badge
+          count={count}
+          showZero
+          style={{ backgroundColor: darkTheme.accent }}
           onClick={() => handleExpand(!(expandedRowKeys || []).includes(record.id), record)}
         />
       ),
@@ -378,18 +379,19 @@ const BacktestManager: React.FC = () => {
       width: 140,
       render: (progress: number, record: BacktestTaskInfo) => (
         <div>
-          <Progress 
-            percent={progress} 
-            size="small" 
-            format={(percent) => `${percent}%`}
+          <Progress
+            percent={progress}
+            size="small"
+            strokeColor={darkTheme.accent}
+            format={(percent) => <span style={{ color: darkTheme.textPrimary }}>{percent}%</span>}
             status={
-              record.status === 'failed' ? 'exception' : 
-              record.status === 'completed' ? 'success' : 
+              record.status === 'failed' ? 'exception' :
+              record.status === 'completed' ? 'success' :
               record.status === 'running' ? 'active' : 'normal'
             }
           />
           {record.status === 'running' && record.symbol_count > 0 && (
-            <Text type="secondary" style={{ fontSize: 11 }}>
+            <Text type="secondary" style={{ fontSize: 11, color: darkTheme.textSecondary }}>
               {Math.round(progress * record.symbol_count / 100)}/{record.symbol_count}
             </Text>
           )}
@@ -524,7 +526,7 @@ const BacktestManager: React.FC = () => {
       dataIndex: 'symbol',
       key: 'symbol',
       width: 100,
-      render: (val: string) => <Text strong>{val}</Text>,
+      render: (val: string) => <Text strong style={{ color: darkTheme.textPrimary }}>{val}</Text>,
     },
     {
       title: '名称',
@@ -539,7 +541,7 @@ const BacktestManager: React.FC = () => {
       align: 'right' as const,
       width: 90,
       render: (price: number) => (
-        <Text style={{ fontVariantNumeric: 'tabular-nums' }}>
+        <Text style={{ fontVariantNumeric: 'tabular-nums', color: darkTheme.textPrimary }}>
           {price ? price.toFixed(2) : '-'}
         </Text>
       ),
@@ -552,7 +554,7 @@ const BacktestManager: React.FC = () => {
       width: 100,
       render: (ratio: number) => {
         const val = Number(ratio) || 0;
-        const color = val > 0.0001 ? '#f5222d' : val < -0.0001 ? '#52c41a' : '#8c8c8c';
+        const color = val > 0.0001 ? darkTheme.positive : val < -0.0001 ? darkTheme.negative : darkTheme.textMuted;
         const Icon = val > 0 ? CaretUpOutlined : val < 0 ? CaretDownOutlined : undefined;
         return (
           <Text style={{ color, fontVariantNumeric: 'tabular-nums', fontWeight: 500 }}>
@@ -570,7 +572,7 @@ const BacktestManager: React.FC = () => {
       width: 80,
       render: (ratio: number) => {
         const val = Number(ratio) || 0;
-        const color = val >= 0.6 ? '#1677ff' : val >= 0.4 ? '#faad14' : '#8c8c8c';
+        const color = val >= 0.6 ? darkTheme.accent : val >= 0.4 ? '#faad14' : darkTheme.textMuted;
         return <Text style={{ color, fontWeight: 500 }}>{(val * 100).toFixed(1)}%</Text>;
       },
     },
@@ -590,7 +592,7 @@ const BacktestManager: React.FC = () => {
       title: '策略名称',
       dataIndex: 'display_name',
       key: 'display_name',
-      render: (name: string) => <Text strong>{name}</Text>,
+      render: (name: string) => <Text strong style={{ color: darkTheme.textPrimary }}>{name}</Text>,
     },
     {
       title: '代码',
@@ -632,7 +634,7 @@ const BacktestManager: React.FC = () => {
         </span>
       ),
       children: (
-        <div style={{ background: 'var(--dark-card)', borderRadius: 8 }}>
+        <div style={{ background: darkTheme.cardBackground, borderRadius: 8 }}>
           {/* 统计卡片 */}
           <Row gutter={16} style={{ marginBottom: 16 }}>
             <Col span={6}>
@@ -642,38 +644,38 @@ const BacktestManager: React.FC = () => {
             </Col>
             <Col span={6}>
               <Card size="small">
-                <Statistic 
-                  title="运行中" 
-                  value={stats.running} 
-                  valueStyle={{ color: '#1677ff' }}
-                  prefix={<ThunderboltOutlined spin />} 
+                <Statistic
+                  title="运行中"
+                  value={stats.running}
+                  valueStyle={{ color: darkTheme.accent }}
+                  prefix={<ThunderboltOutlined spin />}
                 />
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small">
-                <Statistic 
-                  title="已完成" 
-                  value={stats.completed} 
-                  valueStyle={{ color: '#52c41a' }}
-                  prefix={<CheckCircleOutlined />} 
+                <Statistic
+                  title="已完成"
+                  value={stats.completed}
+                  valueStyle={{ color: darkTheme.negative }}
+                  prefix={<CheckCircleOutlined />}
                 />
               </Card>
             </Col>
             <Col span={6}>
               <Card size="small">
-                <Statistic 
-                  title="失败" 
-                  value={stats.failed} 
-                  valueStyle={{ color: '#ff4d4f' }}
-                  prefix={<CloseCircleOutlined />} 
+                <Statistic
+                  title="失败"
+                  value={stats.failed}
+                  valueStyle={{ color: darkTheme.positive }}
+                  prefix={<CloseCircleOutlined />}
                 />
               </Card>
             </Col>
           </Row>
 
           {/* 操作栏 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '12px 16px', background: 'var(--dark-card-alt)', borderRadius: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: '12px 16px', background: darkTheme.cardBackgroundAlt, borderRadius: 8 }}>
             <Space>
               <Button icon={<ReloadOutlined />} onClick={() => fetchBacktestTasks()} loading={loading}>
                 刷新
@@ -690,6 +692,15 @@ const BacktestManager: React.FC = () => {
             rowKey="id"
             loading={loading}
             size="middle"
+            style={{
+              background: darkTheme.cardBackground,
+            }}
+            onRow={() => ({
+              style: {
+                background: darkTheme.cardBackground,
+                color: darkTheme.textPrimary,
+              },
+            })}
             expandable={{
               expandedRowKeys,
               onExpand: handleExpand,
@@ -748,6 +759,15 @@ const BacktestManager: React.FC = () => {
                       pagination={{ pageSize: 5, showSizeChanger: true }}
                       size="small"
                       loading={!taskResultsMap[record.task_id]}
+                      style={{
+                        background: darkTheme.cardBackground,
+                      }}
+                      onRow={() => ({
+                        style: {
+                          background: darkTheme.cardBackground,
+                          color: darkTheme.textPrimary,
+                        },
+                      })}
                     />
                   </div>
                 );
@@ -790,6 +810,15 @@ const BacktestManager: React.FC = () => {
             rowKey="name"
             loading={loading}
             pagination={false}
+            style={{
+              background: darkTheme.cardBackground,
+            }}
+            onRow={() => ({
+              style: {
+                background: darkTheme.cardBackground,
+                color: darkTheme.textPrimary,
+              },
+            })}
           />
         </Card>
       ),
@@ -801,6 +830,7 @@ const BacktestManager: React.FC = () => {
 
   return (
     <div className="backtest-manager-container">
+      <style>{globalDarkStyles}</style>
       <Tabs className="dark-tabs" items={tabItems} type="card" size="large" />
 
       {/* 创建回测任务模态框 */}
@@ -933,7 +963,7 @@ const BacktestManager: React.FC = () => {
                 {STATUS_CONFIG[selectedTask.status]?.text}
               </Tag>
             </Descriptions.Item>
-            <Descriptions.Item label="进度"><Progress percent={selectedTask.progress} /></Descriptions.Item>
+            <Descriptions.Item label="进度"><Progress percent={selectedTask.progress} strokeColor={darkTheme.accent} /></Descriptions.Item>
             <Descriptions.Item label="创建时间">{selectedTask.created_at}</Descriptions.Item>
             {selectedTask.error_message && (
               <Descriptions.Item label="错误信息"><Text type="danger">{selectedTask.error_message}</Text></Descriptions.Item>
@@ -967,7 +997,7 @@ const BacktestManager: React.FC = () => {
         {selectedTask && currentSymbolRef.current ? (
           <LogViewer taskId={selectedTask.task_id} symbol={currentSymbolRef.current} height={500} />
         ) : (
-          <div style={{ padding: 50, textAlign: 'center', color: '#888' }}>
+          <div style={{ padding: 50, textAlign: 'center', color: darkTheme.textMuted }}>
             加载中... selectedTask={!!selectedTask} symbol={currentSymbolRef.current}
           </div>
         )}
