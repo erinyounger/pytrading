@@ -396,6 +396,20 @@ code {
   background: transparent !important;
 }
 
+/* 深色表格空数据 */
+.dark-table .ant-table-placeholder,
+.dark-table .ant-empty ant-empty-normal {
+  background: var(--dark-card) !important;
+}
+
+.dark-table .ant-table-placeholder .ant-table-cell {
+  background: var(--dark-card) !important;
+}
+
+.dark-table .ant-empty .ant-empty-description {
+  color: var(--dark-text-muted) !important;
+}
+
 /* 深色表格滚动条 */
 .dark-table .ant-table-body::-webkit-scrollbar,
 .dark-table .ant-table-scroll::-webkit-scrollbar,
@@ -502,13 +516,60 @@ code {
   color: var(--dark-text-muted) !important;
 }
 
+/* 深色 Input Group Addon */
+.dark-form .ant-input-group-addon {
+  background-color: var(--dark-card) !important;
+  border-color: var(--dark-border) !important;
+  color: var(--dark-text-secondary) !important;
+}
+
+.dark-form .ant-input-group-addon:first-child {
+  border-right: 0;
+}
+
+.dark-form .ant-input-group-wrapper {
+  background-color: var(--dark-card-alt) !important;
+}
+
+.dark-form .ant-input-group-wrapper .ant-input {
+  border-left: 0;
+}
+
 /* 深色 Alert */
+.dark-alert {
+  background: rgba(24, 144, 255, 0.15) !important;
+  border-color: rgba(24, 144, 255, 0.4) !important;
+}
+
 .dark-alert .ant-alert-message {
   color: var(--dark-text) !important;
 }
 
 .dark-alert .ant-alert-description {
-  color: var(--dark-text-secondary) !important;
+  color: var(--dark-text) !important;
+}
+
+.dark-alert .ant-alert-description ul,
+.dark-alert .ant-alert-description li {
+  color: var(--dark-text) !important;
+}
+
+.dark-alert.ant-alert-warning {
+  background: rgba(250, 173, 20, 0.15) !important;
+  border-color: rgba(250, 173, 20, 0.4) !important;
+}
+
+.dark-alert.ant-alert-warning .ant-alert-icon {
+  color: #faad14 !important;
+}
+
+.dark-alert.ant-alert-info {
+  background: rgba(24, 144, 255, 0.1) !important;
+  border-color: rgba(24, 144, 255, 0.3) !important;
+}
+
+.dark-alert.ant-alert-info .ant-alert-icon {
+  color: #1890ff !important;
 }
 
 /* 深色 Card */
@@ -565,6 +626,13 @@ code {
 .dark-input .ant-select-dropdown {
   background: var(--dark-card) !important;
   border: 1px solid var(--dark-border);
+}
+
+/* dark-form Select placeholder 增强 */
+.dark-form .ant-select-selection-placeholder,
+.dark-form .ant-select-selector .ant-select-selection-placeholder {
+  color: #9090a0 !important;
+  -webkit-text-fill-color: #9090a0 !important;
 }
 
 .dark-form .ant-select-item {
@@ -677,6 +745,24 @@ div.ant-select-selector span.ant-select-selection-placeholder {
 
 /* Select search input */
 .ant-select-selection-search-input {
+  height: 24px !important;
+  line-height: 24px !important;
+  background: transparent !important;
+}
+
+/* 单选模式搜索输入框 */
+.ant-select-single .ant-select-selection-search-input {
+  background: transparent !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* 所有单选 Select 的选择项和占位符 */
+.ant-select-single .ant-select-selection-item,
+.ant-select-single .ant-select-selection-placeholder {
+  z-index: 1 !important;
+  position: relative !important;
+  line-height: 22px !important;
   height: 22px !important;
 }
 
@@ -719,8 +805,9 @@ div.ant-select-selector span.ant-select-selection-placeholder {
 .ant-picker,
 .ant-input-number,
 .ant-select-selector {
-  height: 22px !important;
-  min-height: 22px !important;
+  height: 24px !important;
+  min-height: 24px !important;
+  line-height: 24px !important;
 }
 
 .ant-picker input {
@@ -785,7 +872,7 @@ div.ant-select-selector span.ant-select-selection-placeholder {
 }
 
 .ant-select-sm .ant-select-selection-search-input {
-  height: 22px !important;
+  height: 24px !important;
 }
 
 /* Select 箭头不旋转 */

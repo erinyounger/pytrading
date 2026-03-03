@@ -887,25 +887,15 @@ const BacktestManager: React.FC = () => {
             </Form.Item>
           ) : (
             <Form.Item name="index_symbol" label="指数代码" rules={[{ required: true, message: '请选择指数' }]}>
-              <Select placeholder="选择指数/ETF" showSearch allowClear>
-                <OptGroup label="宽基ETF">
-                  <Option value="SHSE.510050">510050 - 上证50ETF</Option>
-                  <Option value="SHSE.510300">510300 - 沪深300ETF</Option>
-                  <Option value="SHSE.510500">510500 - 中证500ETF</Option>
-                  <Option value="SHSE.512100">512100 - 中证1000ETF</Option>
-                  <Option value="SZSE.159915">159915 - 创业板ETF</Option>
-                  <Option value="SZSE.159919">159919 - 创业板50ETF</Option>
-                </OptGroup>
-                <OptGroup label="行业/主题ETF">
-                  <Option value="SHSE.588000">588000 - 科创50ETF</Option>
-                  <Option value="SHSE.513100">513100 - 恒生ETF</Option>
-                  <Option value="SHSE.513050">513050 - 中概互联网ETF</Option>
-                </OptGroup>
-                <OptGroup label="股票指数">
+              <Select mode="multiple" placeholder="选择指数" showSearch allowClear>
+                <OptGroup label="核心指数">
                   <Option value="SHSE.000016">上证50</Option>
                   <Option value="SHSE.000300">沪深300</Option>
                   <Option value="SHSE.000905">中证500</Option>
                   <Option value="SHSE.000852">中证1000</Option>
+                  <Option value="SHSE.000001">上证指数</Option>
+                  <Option value="SZSE.399001">深证成指</Option>
+                  <Option value="SZSE.399006">创业板指</Option>
                 </OptGroup>
               </Select>
             </Form.Item>

@@ -789,13 +789,15 @@ const BacktestResults: React.FC = () => {
             </Space>
           </div>
         }
-        bordered={false}
-        styles={{ body: { padding: '12px 16px', background: darkTheme.cardBackground, borderRadius: '0 0 8px 8px' } }}
-        headStyle={{
-          padding: '12px 16px',
-          borderBottom: `1px solid ${darkTheme.border}`,
-          background: darkTheme.cardBackground,
-          borderRadius: '8px 8px 0 0',
+        variant="borderless"
+        styles={{
+          body: { padding: '12px 16px', background: darkTheme.cardBackground, borderRadius: '0 0 8px 8px' },
+          header: {
+            padding: '12px 16px',
+            borderBottom: `1px solid ${darkTheme.border}`,
+            background: darkTheme.cardBackground,
+            borderRadius: '8px 8px 0 0',
+          }
         }}
         style={{ borderRadius: '8px', border: `1px solid ${darkTheme.border}` }}
       >
@@ -1137,7 +1139,7 @@ const BacktestResults: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* 头部信息卡片 */}
             <Card
-              bordered={false}
+              variant="borderless"
               styles={{ body: { padding: 16 } }}
               style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: 8 }}
             >
@@ -1179,7 +1181,7 @@ const BacktestResults: React.FC = () => {
             {/* 核心指标 */}
             <Row gutter={[12, 12]}>
               <Col span={12}>
-                <Card title="📊 收益指标" size="small" bordered={false} styles={{ body: { padding: 12 } }}>
+                <Card title="📊 收益指标" size="small" variant="borderless" styles={{ body: { padding: 12 } }}>
                   <Row gutter={[8, 12]}>
                     <Col span={12}>
                       <div style={{ color: '#888', fontSize: 12 }}>收益率</div>
@@ -1214,7 +1216,7 @@ const BacktestResults: React.FC = () => {
               </Col>
 
               <Col span={12}>
-                <Card title="📈 交易统计" size="small" bordered={false} styles={{ body: { padding: 12 } }}>
+                <Card title="📈 交易统计" size="small" variant="borderless" styles={{ body: { padding: 12 } }}>
                   <Row gutter={[8, 12]}>
                     <Col span={8}>
                       <div style={{ color: '#888', fontSize: 12 }}>开仓次数</div>
@@ -1252,7 +1254,7 @@ const BacktestResults: React.FC = () => {
             </Row>
 
             {/* 回测周期 */}
-            <Card title="📅 回测周期" size="small" bordered={false} styles={{ body: { padding: 12 } }}>
+            <Card title="📅 回测周期" size="small" variant="borderless" styles={{ body: { padding: 12 } }}>
               <Row gutter={24}>
                 <Col>
                   <div style={{ color: '#888', fontSize: 12 }}>开始时间</div>
@@ -1276,7 +1278,7 @@ const BacktestResults: React.FC = () => {
 
             {/* 附加信息 */}
             {(selectedResult.industry || selectedResult.market_cap) && (
-              <Card title="🏢 基本信息" size="small" bordered={false} styles={{ body: { padding: 12 } }}>
+              <Card title="🏢 基本信息" size="small" variant="borderless" styles={{ body: { padding: 12 } }}>
                 <Row gutter={24}>
                   {selectedResult.industry && (
                     <Col>

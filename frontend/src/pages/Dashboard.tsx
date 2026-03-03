@@ -12,38 +12,12 @@ import {
   EyeOutlined,
   ThunderboltOutlined,
   ReloadOutlined,
-  PieChartOutlined,
   InfoCircleOutlined
 } from '@ant-design/icons';
-import { Radar } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  RadialLinearScale,
-  Filler
-} from 'chart.js';
 import { apiService } from '../services/api';
 import { BacktestResult } from '../types';
 import StockChart from '../components/StockChart';
 import { globalDarkStyles } from '../styles/darkTheme';
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  RadialLinearScale,
-  Filler
-);
 
 // 标的评分和推荐类型
 interface EnrichedStock extends BacktestResult {
@@ -82,7 +56,6 @@ const Dashboard: React.FC = () => {
   const [chartName, setChartName] = useState('');
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
-  const [showRadarModal, setShowRadarModal] = useState(false);
   const scrollPosRef = useRef<number>(0);
 
   // 保持滚动位置
@@ -453,50 +426,6 @@ const Dashboard: React.FC = () => {
     return true;
   });
 
-  // 雷达图数据：Top5标的多维度对比
-  const radarData = {
-    labels: ['收益率', '胜率', '夏普比率', '低回撤', '综合评分'],
-    datasets: recommendedStocks.slice(0, 5).map((stock, index) => {
-      const colors = ['#ff4d4f', '#52c41a', '#1890ff', '#faad14', '#722ed1'];
-      return {
-        label: `${stock.symbol} ${stock.name}`,
-        data: [
-          Math.min(stock.pnl_ratio * 100 * 3.33, 100), // 收益率归一化到100
-          stock.win_ratio * 100, // 胜率
-          Math.min(stock.sharp_ratio * 33.33, 100), // 夏普归一化
-          Math.max(0, 100 - stock.max_drawdown * 100 * 5), // 回撤转为正向指标
-          stock.score, // 综合评分
-        ],
-        borderColor: colors[index],
-        backgroundColor: `${colors[index]}33`,
-        borderWidth: 2,
-      };
-    }),
-  };
-
-  const radarOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      r: {
-        beginAtZero: true,
-        max: 100,
-        ticks: {
-          stepSize: 20,
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-      },
-      title: {
-        display: true,
-        text: 'Top 5 推荐标的多维度对比',
-      },
-    },
-  };
-
   // 推荐标的表格列定义（紧凑版）
   const recommendedColumns = [
     {
@@ -860,13 +789,6 @@ const Dashboard: React.FC = () => {
           </p>
         </div>
         <Space>
-          <Button
-            icon={<PieChartOutlined />}
-            onClick={() => setShowRadarModal(true)}
-            disabled={recommendedStocks.length === 0}
-          >
-            多维对比
-          </Button>
           <Button
             type="primary"
             icon={<ReloadOutlined spin={refreshing} />}
@@ -1251,67 +1173,6 @@ const Dashboard: React.FC = () => {
           size="small"
         />
       </Card>
-
-      {/* 雷达图弹窗 */}
-      <Modal
-        title="Top 5 推荐标的多维度对比分析"
-        open={showRadarModal}
-        getContainer={false}
-        onCancel={() => setShowRadarModal(false)}
-        footer={[
-          <Button key="close" onClick={() => setShowRadarModal(false)}>
-            关闭
-          </Button>
-        ]}
-        width={800}
-      >
-        <div style={{ marginBottom: '16px', padding: '12px', background: 'var(--dark-card-alt)', borderRadius: '4px' }}>
-          <Space direction="vertical" size={4}>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              <InfoCircleOutlined style={{ marginRight: '4px' }} />
-              <strong>图表说明：</strong>五个维度均已归一化到0-100分，分数越高表现越好
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              • <strong>收益率</strong>: 历史回测期间收益表现
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              • <strong>胜率</strong>: 盈利交易占比
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              • <strong>夏普比率</strong>: 风险调整后收益
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              • <strong>低回撤</strong>: 最大回撤越小，此项得分越高
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--dark-text-muted)' }}>
-              • <strong>综合评分</strong>: 多因子加权综合得分
-            </div>
-          </Space>
-        </div>
-        <div style={{ height: '500px', position: 'relative' }}>
-          <Radar data={radarData} options={radarOptions} />
-        </div>
-        <Divider />
-        <div style={{ marginTop: '16px' }}>
-          <h4>Top 5 标的详情：</h4>
-          <Table
-            columns={[
-              { title: '排名', key: 'rank', width: 60, render: (_: any, __: any, index: number) => `#${index + 1}` },
-              { title: '代码', dataIndex: 'symbol', key: 'symbol', width: 100 },
-              { title: '名称', dataIndex: 'name', key: 'name', width: 120 },
-              { title: '评分', dataIndex: 'score', key: 'score', width: 80, render: (v: number) => `${v.toFixed(0)}分` },
-              { title: '收益率', dataIndex: 'pnl_ratio', key: 'pnl_ratio', width: 90, render: (v: number) => `${(v * 100).toFixed(2)}%` },
-              { title: '胜率', dataIndex: 'win_ratio', key: 'win_ratio', width: 80, render: (v: number) => `${(v * 100).toFixed(1)}%` },
-              { title: '夏普', dataIndex: 'sharp_ratio', key: 'sharp_ratio', width: 70, render: (v: number) => v.toFixed(2) },
-              { title: '回撤', dataIndex: 'max_drawdown', key: 'max_drawdown', width: 90, render: (v: number) => `${(v * 100).toFixed(2)}%` },
-            ]}
-            dataSource={recommendedStocks.slice(0, 5)}
-            rowKey={(r) => r.symbol}
-            pagination={false}
-            size="small"
-          />
-        </div>
-      </Modal>
 
       {/* 全局深色主题样式 */}
       <style>{globalDarkStyles}</style>
