@@ -136,6 +136,7 @@ class MySQLBackTestSaver(BackTestSaver):
             for row in query.all():
                 result_dict = {
                     'id': row.id,
+                    'task_id': row.task_id,
                     'symbol': row.symbol,
                     'name': row.name,
                     # 优先取strategy_name字段，如果没有则回退到none

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Draggable from 'react-draggable';
 import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert } from 'antd';
 import {
   TrophyOutlined,
@@ -12,11 +13,13 @@ import {
   EyeOutlined,
   ThunderboltOutlined,
   ReloadOutlined,
-  InfoCircleOutlined
+  InfoCircleOutlined,
+  FileTextOutlined
 } from '@ant-design/icons';
 import { apiService } from '../services/api';
 import { BacktestResult } from '../types';
 import StockChart from '../components/StockChart';
+import LogViewer from '../components/LogViewer';
 import { globalDarkStyles } from '../styles/darkTheme';
 
 // 标的评分和推荐类型
@@ -56,6 +59,9 @@ const Dashboard: React.FC = () => {
   const [chartName, setChartName] = useState('');
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
+  // 个股日志相关状态
+  const [stockLogModalVisible, setStockLogModalVisible] = useState(false);
+  const [stockLogTaskId, setStockLogTaskId] = useState<string>('');
   const scrollPosRef = useRef<number>(0);
 
   // 保持滚动位置
@@ -1246,6 +1252,22 @@ const Dashboard: React.FC = () => {
         }}
         footer={[
           <Button
+            key="log"
+            icon={<FileTextOutlined />}
+            onClick={() => {
+              // 获取最新的回测任务ID
+              const latestTask = recommendedStocks.find(s => s.symbol === chartSymbol);
+              if (latestTask && latestTask.task_id) {
+                setStockLogTaskId(latestTask.task_id);
+                setStockLogModalVisible(true);
+              } else {
+                message.warning('暂无该股票的回测任务');
+              }
+            }}
+          >
+            查看日志
+          </Button>,
+          <Button
             key="sync"
             type="primary"
             loading={klineLoading}
@@ -1287,6 +1309,33 @@ const Dashboard: React.FC = () => {
             symbol={chartSymbol}
             name={chartName}
           />
+        )}
+      </Modal>
+
+      {/* 个股日志 Modal - 可拖动 */}
+      <Modal
+        className="dark-modal"
+        title={`个股日志 - ${chartSymbol}`}
+        open={stockLogModalVisible}
+        onCancel={() => {
+          setStockLogModalVisible(false);
+          setStockLogTaskId('');
+        }}
+        footer={null}
+        width={1000}
+        modalRender={(node) => (
+          <Draggable handle=".ant-modal-header">
+            <div>{node}</div>
+          </Draggable>
+        )}
+        styles={{ body: { padding: 0 } }}
+      >
+        {stockLogTaskId ? (
+          <LogViewer taskId={stockLogTaskId} symbol={chartSymbol} height={500} />
+        ) : (
+          <div style={{ padding: 50, textAlign: 'center', color: '#999' }}>
+            暂无日志数据
+          </div>
         )}
       </Modal>
 

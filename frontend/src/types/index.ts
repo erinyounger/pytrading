@@ -1,5 +1,6 @@
 export interface BacktestResult {
   id?: number;
+  task_id?: string;
   symbol: string;
   name: string;
   strategy_name: string; // 添加策略名称字段
