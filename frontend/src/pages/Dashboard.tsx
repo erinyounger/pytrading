@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert, Checkbox } from 'antd';
+import { Row, Col, Card, Statistic, Table, Spin, message, Space, Tag, Badge, Tooltip, Progress, Divider, Button, Modal, Alert } from 'antd';
 import {
   TrophyOutlined,
   BarChartOutlined,
@@ -459,7 +459,9 @@ const Dashboard: React.FC = () => {
       ellipsis: true,
       render: (_: any, record: EnrichedStock) => (
         <div style={{ maxWidth: 130 }}>
-          <a
+          <span
+            role="button"
+            tabIndex={0}
             onClick={async () => {
               setChartSymbol(record.symbol);
               setChartName(record.name || '');
@@ -483,17 +485,15 @@ const Dashboard: React.FC = () => {
                 setKlineLoading(false);
               }
             }}
-            href="#"
-            onMouseDown={(e) => e.preventDefault()}
+            onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
             style={{
               cursor: 'pointer',
               color: 'var(--dark-accent)',
               fontWeight: 500,
-              textDecoration: 'none',
             }}
           >
             <div style={{ fontWeight: 'bold', fontSize: '13px', fontFamily: '"SF Mono", Monaco, "Inconsolata", monospace' }}>{record.symbol}</div>
-          </a>
+          </span>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ fontSize: '11px', color: 'var(--dark-text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
               {record.name}

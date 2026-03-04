@@ -103,7 +103,6 @@ const BacktestManager: React.FC = () => {
   const [taskLogModal, setTaskLogModal] = useState(false);
   const [resultLogModal, setResultLogModal] = useState(false);
   const currentSymbolRef = useRef<string>('');
-  const [selectedSymbol, setSelectedSymbol] = useState<string>('');
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
   const [taskResultsMap, setTaskResultsMap] = useState<Record<string, BacktestResult[]>>({});
   const [resultSearchMap, setResultSearchMap] = useState<Record<string, string>>({});
@@ -273,19 +272,6 @@ const BacktestManager: React.FC = () => {
       fetchBacktestTasks();
     } catch (error: any) {
       message.error(error?.response?.data?.detail || '删除任务失败');
-    }
-  };
-
-  const handleDeleteResult = async (resultId: number, taskId: string) => {
-    try {
-      await apiService.deleteResult(resultId);
-      message.success('回测结果已删除');
-      setTaskResultsMap(prev => ({
-        ...prev,
-        [taskId]: (prev[taskId] || []).filter(r => r.id !== resultId)
-      }));
-    } catch (error: any) {
-      message.error(error?.response?.data?.detail || '删除回测结果失败');
     }
   };
 
@@ -755,7 +741,6 @@ const BacktestManager: React.FC = () => {
                                       currentSymbolRef.current = symbol;
                                       // 使用展开行的 task_id
                                       setSelectedTask({ task_id: record.task_id } as any);
-                                      setSelectedSymbol(symbol);
                                       setResultLogModal(true);
                                     }}
                                   />
@@ -836,9 +821,6 @@ const BacktestManager: React.FC = () => {
       ),
     },
   ];
-
-  // 渲染时保持 record 引用
-  let record: BacktestTaskInfo;
 
   return (
     <div className="backtest-manager-container">
@@ -991,7 +973,7 @@ const BacktestManager: React.FC = () => {
         className="dark-modal"
         title={`个股日志 - ${currentSymbolRef.current}`}
         open={resultLogModal}
-        onCancel={() => { setResultLogModal(false); setSelectedSymbol(''); currentSymbolRef.current = ''; }}
+        onCancel={() => { setResultLogModal(false); currentSymbolRef.current = ''; }}
         footer={null}
         width={1000}
         styles={{ body: { padding: 0 } }}
