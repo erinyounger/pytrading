@@ -49,7 +49,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <style>{globalDarkStyles}</style>
       <Layout style={{ minHeight: '100vh' }}>
         <Sider

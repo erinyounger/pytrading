@@ -255,7 +255,7 @@ const Settings: React.FC = () => {
                   <Table
                     columns={symbolColumns}
                     dataSource={config.symbols}
-                    rowKey={(record, index) => `${record}_${index}`}
+                    rowKey={(record) => record}
                     pagination={{ pageSize: 10 }}
                     size="small"
                   />

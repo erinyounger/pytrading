@@ -185,14 +185,29 @@ class PyTrading:
             # 根据模式创建 PyTrading 实例
             index_symbol = parameters.get('index_symbol')
             if parameters.get('mode') == 'index' and index_symbol:
-                logger.info(f"Start getting index constituents: {index_symbol}")
-                symbol_list = cls.get_index_symbols(index_symbol)
-                logger.info(f"Get index constituents completed: {index_symbol}, number={len(symbol_list)}")
+                # 支持多选指数：将字符串或列表转换为列表
+                if isinstance(index_symbol, str):
+                    index_symbols = [index_symbol]
+                else:
+                    index_symbols = list(index_symbol)
 
-                # 如果获取成分股为空（可能是ETF），则直接使用ETF本身作为标的
-                if not symbol_list:
-                    logger.info(f"Index constituents empty, using ETF itself as trading target: {index_symbol}")
-                    symbol_list = [index_symbol]
+                # 遍历所有选中的指数，获取成分股
+                symbol_list = []
+                for idx in index_symbols:
+                    logger.info(f"Start getting index constituents: {idx}")
+                    idx_symbols = cls.get_index_symbols(idx)
+                    logger.info(f"Get index constituents completed: {idx}, number={len(idx_symbols)}")
+
+                    # 如果获取成分股为空（可能是ETF），则直接使用ETF本身作为标的
+                    if not idx_symbols:
+                        logger.info(f"Index constituents empty, using ETF itself as trading target: {idx}")
+                        idx_symbols = [idx]
+
+                    symbol_list.extend(idx_symbols)
+
+                # 去重
+                symbol_list = list(set(symbol_list))
+                logger.info(f"Total unique symbols from all indices: {len(symbol_list)}")
             else:
                 symbol_list = task.symbols if isinstance(task.symbols, list) else [task.symbols]
             py_trading = cls(
