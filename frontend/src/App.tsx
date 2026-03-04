@@ -19,7 +19,14 @@ const { Header, Sider, Content } = Layout;
 const { Title } = Typography;
 
 const App: React.FC = () => {
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(() => {
+    return localStorage.getItem('sidebar_collapsed') === 'true';
+  });
+
+  const handleCollapsed = (value: boolean) => {
+    setCollapsed(value);
+    localStorage.setItem('sidebar_collapsed', String(value));
+  };
 
   const menuItems = [
     {
@@ -55,7 +62,7 @@ const App: React.FC = () => {
         <Sider
           collapsible
           collapsed={collapsed}
-          onCollapse={setCollapsed}
+          onCollapse={handleCollapsed}
           theme="dark"
           style={{
             background: darkTheme.cardBackground,
