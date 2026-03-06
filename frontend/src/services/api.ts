@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse, LogQueryResponse } from '../types';
+import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse, LogQueryResponse, TradeRecord } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -197,6 +197,14 @@ export const apiService = {
     days: number;
   }> => {
     const response = await api.post('/api/kline/sync', { symbol, days });
+    return response.data;
+  },
+
+  // 交易记录相关
+  getTradeRecords: async (taskId: string, symbol: string): Promise<{ data: TradeRecord[] }> => {
+    const response = await api.get('/api/trade-records', {
+      params: { task_id: taskId, symbol }
+    });
     return response.data;
   },
 

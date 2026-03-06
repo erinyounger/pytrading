@@ -17,7 +17,7 @@ import {
   FileTextOutlined
 } from '@ant-design/icons';
 import { apiService } from '../services/api';
-import { BacktestResult } from '../types';
+import { BacktestResult, TradeRecord } from '../types';
 import StockChart from '../components/StockChart';
 import LogViewer from '../components/LogViewer';
 import { globalDarkStyles } from '../styles/darkTheme';
@@ -59,6 +59,7 @@ const Dashboard: React.FC = () => {
   const [chartName, setChartName] = useState('');
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
+  const [tradeRecords, setTradeRecords] = useState<TradeRecord[]>([]);
   // 个股日志相关状态
   const [stockLogModalVisible, setStockLogModalVisible] = useState(false);
   const [stockLogTaskId, setStockLogTaskId] = useState<string>('');
@@ -472,6 +473,7 @@ const Dashboard: React.FC = () => {
               setChartSymbol(record.symbol);
               setChartName(record.name || '');
               setChartModalVisible(true);
+              setTradeRecords([]);
 
               // 加载K线数据
               try {
@@ -482,6 +484,15 @@ const Dashboard: React.FC = () => {
                 } else {
                   message.warning('暂无K线数据，请先同步数据');
                   setKlineData([]);
+                }
+                // 加载交易记录
+                if (record.task_id) {
+                  try {
+                    const trResp = await apiService.getTradeRecords(record.task_id, record.symbol);
+                    setTradeRecords(trResp.data || []);
+                  } catch {
+                    setTradeRecords([]);
+                  }
                 }
               } catch (error) {
                 console.error('获取K线数据失败:', error);
@@ -1249,6 +1260,7 @@ const Dashboard: React.FC = () => {
         onCancel={() => {
           setChartModalVisible(false);
           setKlineData([]);
+          setTradeRecords([]);
         }}
         footer={[
           <Button
@@ -1292,6 +1304,7 @@ const Dashboard: React.FC = () => {
           <Button key="close" onClick={() => {
             setChartModalVisible(false);
             setKlineData([]);
+            setTradeRecords([]);
           }}>
             关闭
           </Button>
@@ -1308,6 +1321,7 @@ const Dashboard: React.FC = () => {
             data={klineData}
             symbol={chartSymbol}
             name={chartName}
+            tradeRecords={tradeRecords}
           />
         )}
       </Modal>

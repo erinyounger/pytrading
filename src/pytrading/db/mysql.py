@@ -160,6 +160,26 @@ class MySQLClient:
             return False
 
 
+class TradeRecord(Base):
+    """交易记录表 - 记录策略在回测中的买卖信号"""
+    __tablename__ = 'trade_records'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
+    task_id = Column(String(100), nullable=False, index=True, comment='回测任务ID')
+    symbol = Column(String(32), nullable=False, comment='股票代码')
+    action = Column(String(16), nullable=False, comment='交易动作: build/buy/sell/close')
+    target_percent = Column(Float, nullable=True, comment='操作后目标持仓比例')
+    price = Column(DECIMAL(10, 2), nullable=True, comment='当前价格')
+    volume = Column(Integer, nullable=True, comment='交易数量')
+    signal_type = Column(String(64), nullable=True, comment='信号类型描述')
+    bar_time = Column(DateTime, nullable=False, comment='K线时间')
+    created_at = Column(DateTime, default=datetime.now, comment='创建时间')
+
+    __table_args__ = (
+        UniqueConstraint('task_id', 'symbol', 'bar_time', 'action', name='uq_trade_record'),
+    )
+
+
 class BacktestLog(Base):
     """统一回测日志表(任务/个股)"""
     __tablename__ = 'backtest_logs'

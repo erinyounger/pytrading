@@ -98,3 +98,13 @@ export interface LogQueryResponse {
   items: BacktestLog[];
   last_id: number;
 }
+
+export interface TradeRecord {
+  action: 'build' | 'buy' | 'sell' | 'close';
+  label: string;
+  target_percent: number | null;
+  price: number | null;
+  volume: number | null;
+  signal_type: string;
+  bar_time: string;
+}

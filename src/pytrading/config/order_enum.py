@@ -12,11 +12,22 @@ class Order:
     order_type = None
     trade_n = 0
     side = None
+    # 信号元数据 - 用于K线图标注
+    signal_action = None   # build/buy/sell/close
+    signal_label = None    # 显示文本: "建", "买90%", "卖50%", "平"
+    signal_type = None     # 信号类型: second_golden_x_under_zero 等
 
     def __init__(self, order_type, trade_n, side):
         self.order_type = order_type
         self.trade_n = trade_n
         self.side = side
+
+    def with_signal(self, action, label, signal_type):
+        """附加信号元数据，返回self以支持链式调用"""
+        self.signal_action = action
+        self.signal_label = label
+        self.signal_type = signal_type
+        return self
 
 
 class OrderAction:

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, HistogramData, LineData, Time, CandlestickSeries, HistogramSeries, LineSeries } from 'lightweight-charts';
+import { createChart, createSeriesMarkers, ColorType, IChartApi, ISeriesApi, ISeriesMarkersPluginApi, CandlestickData, HistogramData, LineData, Time, CandlestickSeries, HistogramSeries, LineSeries, SeriesMarker } from 'lightweight-charts';
+import { TradeRecord } from '../types';
 
 interface KLineData {
   date: string;
@@ -21,12 +22,13 @@ interface StockChartProps {
   data: KLineData[];
   symbol: string;
   name?: string;
+  tradeRecords?: TradeRecord[];
 }
 
 const MAIN_CHART_HEIGHT = 250;
 const MACD_CHART_HEIGHT = 170;
 
-const StockChart: React.FC<StockChartProps> = ({ data, symbol, name }) => {
+const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecords }) => {
   const mainChartContainerRef = useRef<HTMLDivElement>(null);
   const macdChartContainerRef = useRef<HTMLDivElement>(null);
   const mainChartRef = useRef<IChartApi | null>(null);
@@ -39,6 +41,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name }) => {
   const ma10SeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const ma20SeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const ma60SeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
+  const markersPluginRef = useRef<ISeriesMarkersPluginApi<Time> | null>(null);
 
   // 存储计算均线后的数据
   const dataWithMARef = useRef<KLineData[]>([]);
@@ -418,11 +421,48 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name }) => {
     ma20SeriesRef.current.setData(ma20Data);
     ma60SeriesRef.current.setData(ma60Data);
 
+    // 设置买卖信号标记
+    if (tradeRecords && tradeRecords.length > 0 && candlestickSeriesRef.current) {
+      const markers: SeriesMarker<Time>[] = tradeRecords
+        .filter(r => r.bar_time)
+        .map(r => {
+          const isBuy = r.action === 'build' || r.action === 'buy';
+          const isClose = r.action === 'close';
+          let color: string;
+          if (isBuy) {
+            color = '#e74c3c'; // 红色 - 买入
+          } else if (isClose) {
+            color = '#1890ff'; // 蓝色 - 平仓
+          } else {
+            color = '#2ecc71'; // 绿色 - 卖出
+          }
+          return {
+            time: r.bar_time as Time,
+            position: isBuy ? 'belowBar' as const : 'aboveBar' as const,
+            color,
+            shape: isBuy ? 'arrowUp' as const : 'arrowDown' as const,
+            text: r.label,
+          };
+        })
+        .sort((a, b) => (a.time as string).localeCompare(b.time as string));
+
+      // 清除旧的标记插件
+      if (markersPluginRef.current) {
+        markersPluginRef.current.detach();
+      }
+      markersPluginRef.current = createSeriesMarkers(candlestickSeriesRef.current, markers);
+    } else {
+      // 无交易记录时清除标记
+      if (markersPluginRef.current) {
+        markersPluginRef.current.setMarkers([]);
+      }
+    }
+
     // 调整时间范围以适应数据（只对主图操作，MACD图会自动联动）
     if (mainChartRef.current) {
       mainChartRef.current.timeScale().fitContent();
     }
-  }, [data]);
+  }, [data, tradeRecords]);
 
   if (!data.length) {
     return (

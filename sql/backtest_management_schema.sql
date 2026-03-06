@@ -128,6 +128,24 @@ CREATE TABLE IF NOT EXISTS backtest_logs (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='回测日志表';
 
+-- 7. 交易记录表 (trade_records) - 记录策略在回测中的买卖信号
+CREATE TABLE IF NOT EXISTS trade_records (
+    id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
+    task_id VARCHAR(100) NOT NULL COMMENT '回测任务ID',
+    symbol VARCHAR(32) NOT NULL COMMENT '股票代码',
+    action VARCHAR(16) NOT NULL COMMENT '交易动作: build/buy/sell/close',
+    target_percent FLOAT DEFAULT NULL COMMENT '操作后目标持仓比例',
+    price DECIMAL(10,2) DEFAULT NULL COMMENT '当前价格',
+    volume INT DEFAULT NULL COMMENT '交易数量',
+    signal_type VARCHAR(64) DEFAULT NULL COMMENT '信号类型描述',
+    bar_time DATETIME NOT NULL COMMENT 'K线时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+
+    UNIQUE KEY uq_trade_record (task_id, symbol, bar_time, action),
+    INDEX idx_task_id (task_id),
+    INDEX idx_task_symbol (task_id, symbol)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='交易记录表';
+
 -- 插入默认数据
 INSERT IGNORE INTO strategies (name, display_name, description, strategy_type, parameters) VALUES
 ('BOLL', '布林带策略', '基于布林带指标的趋势跟踪策略', 'trend_following', '[{"name": "period", "type": "int", "default": 20, "description": "均线周期"}, {"name": "std_dev", "type": "float", "default": 2.0, "description": "标准差倍数"}]'),

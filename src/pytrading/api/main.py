@@ -983,6 +983,48 @@ def sync_kline_data(symbol: str, days: int = 365):
         return False
 
 
+@app.get("/api/trade-records")
+async def get_trade_records(task_id: str, symbol: Optional[str] = None):
+    """获取回测交易信号记录"""
+    try:
+        from pytrading.service.trade_record_service import TradeRecordService
+        from pytrading.db.mysql import TradeRecord as TradeRecordModel
+
+        records = TradeRecordService.get_trade_records(task_id, symbol)
+
+        # 构建标签
+        def make_label(r):
+            if r.action == 'build':
+                return '建'
+            elif r.action == 'buy':
+                pct = int(r.target_percent * 100) if r.target_percent else 0
+                return f'买{pct}%'
+            elif r.action == 'sell':
+                pct = int(r.target_percent * 100) if r.target_percent else 0
+                return f'卖{pct}%'
+            elif r.action == 'close':
+                return '平'
+            return r.action
+
+        return {
+            "data": [
+                {
+                    "action": r.action,
+                    "label": make_label(r),
+                    "target_percent": float(r.target_percent) if r.target_percent else None,
+                    "price": float(r.price) if r.price else None,
+                    "volume": r.volume,
+                    "signal_type": r.signal_type,
+                    "bar_time": r.bar_time.strftime('%Y-%m-%d') if r.bar_time else None,
+                }
+                for r in records
+            ]
+        }
+    except Exception as e:
+        logger.error(f"获取交易记录失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/kline/{symbol}")
 async def get_kline_data(symbol: str):
     """获取K线数据"""

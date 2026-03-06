@@ -32,7 +32,7 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { apiService } from '../services/api';
-import { BacktestResult, PaginatedApiResponse } from '../types';
+import { BacktestResult, PaginatedApiResponse, TradeRecord } from '../types';
 import StockChart from '../components/StockChart';
 import LogViewer from '../components/LogViewer';
 import Draggable from 'react-draggable';
@@ -70,6 +70,7 @@ const BacktestResults: React.FC = () => {
   const [chartName, setChartName] = useState('');
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
+  const [tradeRecords, setTradeRecords] = useState<TradeRecord[]>([]);
   // 个股日志相关状态
   const [stockLogModalVisible, setStockLogModalVisible] = useState(false);
   const [stockLogTaskId, setStockLogTaskId] = useState<string>('');
@@ -308,12 +309,22 @@ const BacktestResults: React.FC = () => {
               setChartSymbol(value);
               setChartName(record.name || '');
               setChartModalVisible(true);
+              setTradeRecords([]);
 
               // 加载K线数据
               try {
                 setKlineLoading(true);
                 const response = await apiService.getKlineData(value);
                 setKlineData(response.data || []);
+                // 加载交易记录
+                if (record.task_id) {
+                  try {
+                    const trResp = await apiService.getTradeRecords(record.task_id, value);
+                    setTradeRecords(trResp.data || []);
+                  } catch {
+                    setTradeRecords([]);
+                  }
+                }
               } catch (error) {
                 console.error('获取K线数据失败:', error);
                 setKlineData([]);
@@ -1383,6 +1394,7 @@ const BacktestResults: React.FC = () => {
         onCancel={() => {
           setChartModalVisible(false);
           setKlineData([]);
+          setTradeRecords([]);
         }}
         footer={[
           <Button
@@ -1425,6 +1437,7 @@ const BacktestResults: React.FC = () => {
           <Button key="close" onClick={() => {
             setChartModalVisible(false);
             setKlineData([]);
+            setTradeRecords([]);
           }}>
             关闭
           </Button>
@@ -1441,6 +1454,7 @@ const BacktestResults: React.FC = () => {
             data={klineData}
             symbol={chartSymbol}
             name={chartName}
+            tradeRecords={tradeRecords}
           />
         )}
       </Modal>

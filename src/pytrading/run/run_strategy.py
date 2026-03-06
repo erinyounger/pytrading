@@ -30,6 +30,7 @@ from pytrading.config.strategy_enum import StrategyType
 from pytrading.utils.myquant import get_current_price
 from pytrading.db.mysql import BacktestStatus
 from pytrading.utils.talib_util import ATR
+from pytrading.service.trade_record_service import TradeRecordService
 
 order_controller = OrderController()
 
@@ -107,6 +108,22 @@ def on_bar(context, bars):
     # 3.买单
     if order:
         order_controller.run_order(order)
+        # 记录交易信号到数据库
+        if hasattr(order, 'signal_action') and order.signal_action:
+            try:
+                current_price = bars[0].close if bars else None
+                TradeRecordService.save_trade_record(
+                    task_id=getattr(context, 'task_id', None),
+                    symbol=context.symbol,
+                    action=order.signal_action,
+                    target_percent=order.trade_n if order.signal_action in ('buy', 'sell') else None,
+                    price=current_price,
+                    volume=order.trade_n if order.signal_action == 'build' else None,
+                    signal_type=order.signal_type,
+                    bar_time=context.now,
+                )
+            except Exception as e:
+                logger.warning(f"记录交易信号失败: {e}")
 
 
 def on_order_status(context, order):

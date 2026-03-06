@@ -163,10 +163,10 @@ class MacdStrategy(StrategyBase):
             atr_stop_loss = self.calculate_atr_stop_loss(self.cost_price, atr_value)
             logger.warning("[{}] 触发ATR动态止损: 当前价格{:.2f} <= ATR止损位{:.2f} "
                        "(成本价{:.2f} - ATR{:.2f} × {}), 亏损{:.2f}%".format(
-                bar_date_time, current_price, atr_stop_loss, self.cost_price, 
+                bar_date_time, current_price, atr_stop_loss, self.cost_price,
                 atr_value, self.atr_multiplier, loss_percent))
             self.set_clear()
-            return OrderAction.order_close_all()
+            return OrderAction.order_close_all().with_signal('close', '平', 'atr_stop_loss')
         
         # 利用15分钟价格与前几天close价格计算MACD
         dif, dea, macd = talib.MACD(close_price, fastperiod=self.short, slowperiod=self.long, signalperiod=9)
@@ -384,14 +384,15 @@ class MacdStrategy(StrategyBase):
             percent_volume = self.add_volume(1.0)
             logger.info("[{}] Under ZeroAxis GoldenX, Buy Target To: {}".format(
                 macd_point.get_datetime(), percent_volume))
-            return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+            return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                'buy', '买{:.0f}%'.format(percent_volume * 100), 'up_cross_zero_axis')
 
         if self.first_golden_x and self.is_dead_x(macd=macd):
             self.trending_type = TrendingType.DeadXDecliningDown
             self.first_dead_x = self.create_golden_x(diff[-1], dea[-1], macd[-1])
             logger.info("[{}] DeadX, Sel Out 100%.".format(macd_point.get_datetime()))
             self.set_clear()
-            return OrderAction.order_close_all()
+            return OrderAction.order_close_all().with_signal('close', '平', 'dead_x')
 
     def macd_strategy_1030(self, macd_point: MACDPoint):
         """MACD趋势交易策略: 优化算法，增加资金管理和止盈清仓策略"""
@@ -432,7 +433,8 @@ class MacdStrategy(StrategyBase):
                 self.trending_type = TrendingType.RisingUp
                 self.second_golden_x = golden_x  # 暂不考虑second为None多次上串的场景
                 logger.info("[{}] Second GoldenX Under Zero Axis, Buy count: 100".format(macd_point.get_datetime()))
-                return OrderAction.order_volume(OrderSide_Buy, trade_n=100)
+                return OrderAction.order_volume(OrderSide_Buy, trade_n=100).with_signal(
+                    'build', '建', 'second_golden_x_under_zero')
 
         # 买入场景2：零轴线下有最近一个是金叉，且刚好向上穿过零轴线，买入90%仓位
         if not self.zero_axis_point \
@@ -448,7 +450,8 @@ class MacdStrategy(StrategyBase):
             logger.info("[{}] Up Cross Zero Axis Line, Buy Target To: {}".format(
                 macd_point.get_datetime(), percent_volume))
             # 调整仓位至80%
-            return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+            return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                'buy', '买{:.0f}%'.format(percent_volume * 100), 'up_cross_zero_axis')
 
         # 买入场景3：零轴线上方，且连续上涨N天
         if self.is_above_zero_axis(diff=diff):
@@ -458,13 +461,15 @@ class MacdStrategy(StrategyBase):
                 logger.info("[{}] Rising Up 3 days, Add 15% Buy Target To: {}".format(
                     macd_point.get_datetime(), percent_volume))
                 self.trending_type = TrendingType.ZeroAxisRisingUp
-                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                    'buy', '买{:.0f}%'.format(percent_volume * 100), 'rising_3day')
             if self.is_golden_x(macd=macd):
                 # 零轴线上方出现金叉上升趋势，增加仓位30%
                 percent_volume = self.add_volume(0.3)
                 logger.info("[{}] Above Zero Upper GoldenX, Add 30% Buy Target To: {}".format(
                     macd_point.get_datetime(), percent_volume))
-                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                    'buy', '买{:.0f}%'.format(percent_volume * 100), 'above_zero_golden_x')
         # ---------------- 二、卖出场景 ------------------
         if self.is_above_zero_axis(diff):
             if not self.first_dead_x and self.is_dead_x(macd=macd):
@@ -474,14 +479,15 @@ class MacdStrategy(StrategyBase):
                 percent_volume = self.add_volume(-0.5)
                 logger.info("[{}] First DeadX Above Zero Axis, Sell 50% Target To: {}".format(
                     macd_point.get_datetime(), percent_volume))
-                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                    'sell', '卖{:.0f}%'.format(percent_volume * 100), 'first_dead_x')
             if not self.second_dead_x and self.first_dead_x and self.is_dead_x(macd=macd) \
                     and self.percent_volume > 0:
                 # 卖出场景2：零轴线上方出现第二个死叉，清仓卖出
                 self.second_dead_x = self.create_dead_axis(diff[-1], dea[-1], macd[-1])
                 logger.info("[{}] Second DeadX Above Zero Axis, Sell 100%".format(macd_point.get_datetime()))
                 self.set_clear()
-                return OrderAction.order_close_all()
+                return OrderAction.order_close_all().with_signal('close', '平', 'second_dead_x')
             # 快线下降超过0.1，每下降一次
             if self.is_diff_declining_nday(diff, 2, step=0.1) \
                     and not self.first_dead_x \
@@ -491,7 +497,8 @@ class MacdStrategy(StrategyBase):
                 self.trending_type = TrendingType.ContinueDecliningDown
                 logger.info("[{}] Start Declining in 2 Days, Sell 15% Target To: {}".format(
                     macd_point.get_datetime(), percent_volume))
-                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume)
+                return OrderAction.order_target_percent(OrderSide_Buy, trade_n=percent_volume).with_signal(
+                    'sell', '卖{:.0f}%'.format(percent_volume * 100), 'declining_2day')
 
         if (self.first_dead_x and self.is_dead_x(macd)) \
                 or self.is_down_cross_zero_axis(diff) \
@@ -499,13 +506,13 @@ class MacdStrategy(StrategyBase):
             # 卖出场景5：0轴线上第二个死叉，或往下零轴线，清仓
             logger.info("[{}] Second DeadX or Down Cross Zero Axis, Sell Out 100%.".format(macd_point.get_datetime()))
             self.set_clear()
-            return OrderAction.order_close_all()
+            return OrderAction.order_close_all().with_signal('close', '平', 'down_cross_zero_axis')
         if self.first_dead_x and self.is_down_cross_zero_axis(diff) \
                 and self.percent_volume > 0:
             # 卖出场景5：上方死叉后直接0轴线，清仓
             logger.info("[{}] DeadX and Zero Axis, Sell Out 100%".format(macd_point.get_datetime()))
             self.set_clear()
-            return OrderAction.order_close_all()
+            return OrderAction.order_close_all().with_signal('close', '平', 'dead_x_zero_axis')
 
     def run_bak(self, macd_point: MACDPoint):
         """执行策略"""
@@ -662,5 +669,5 @@ class MacdStrategy(StrategyBase):
         if drawdown >= self.max_drawdown_ratio:
             logger.warning(f"[固定回撤止损] 触发固定回撤止损，当前价{current_price}，最高价{self.max_price}，回撤比例{drawdown:.2%}")
             self.set_clear()
-            return OrderAction.order_close_all()
+            return OrderAction.order_close_all().with_signal('close', '平', 'fixed_drawdown_stop')
         return None
