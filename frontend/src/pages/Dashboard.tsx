@@ -53,6 +53,8 @@ const Dashboard: React.FC = () => {
   const [filterRisk, setFilterRisk] = useState<string | null>(null);
   const [filterTrend, setFilterTrend] = useState<string | null>(null);
   const [availableTrends, setAvailableTrends] = useState<string[]>([]);
+  // 趋势翻转预警标的（独立于推荐列表）
+  const [cautionStocks, setCautionStocks] = useState<EnrichedStock[]>([]);
   // K线图表相关状态
   const [chartModalVisible, setChartModalVisible] = useState(false);
   const [chartSymbol, setChartSymbol] = useState('');
@@ -144,29 +146,30 @@ const Dashboard: React.FC = () => {
     }
 
     // 操作建议（严格按照五星标准）
+    // 判断顺序：先排除风险，再判断推荐等级
     let recommendation: 'strong_buy' | 'buy' | 'watch' | 'caution' = 'watch';
-    
-    // ⭐⭐⭐⭐⭐ 五星标的（强烈推荐）：
-    // 必须同时满足：收益>30% + 胜率>60% + MACD上穿零轴或快线穿慢线 + 非高风险
-    if (r.pnl_ratio > 0.30 && 
-        r.win_ratio > 0.60 && 
-        ['ZeroAxisUp', 'RisingUp'].includes(r.trending_type) && 
-        risk_level !== 'high' &&
-        r.max_drawdown <= 0.25) {  // 回撤不超过25%
-      recommendation = 'strong_buy';
-    } 
-    // ⭐⭐⭐ 推荐买入：收益>20% + 胜率>55% + 趋势未翻转
-    else if (r.pnl_ratio > 0.20 && 
-             r.win_ratio > 0.55 && 
-             !['DeadXDown', 'FallingDown'].includes(r.trending_type) &&
-             r.max_drawdown <= 0.30) {
-      recommendation = 'buy';
-    } 
-    // ⚠️ 谨慎：趋势翻转 或 高风险 或 得分过低
-    else if (['DeadXDown', 'FallingDown'].includes(r.trending_type) || 
-             risk_level === 'high' || 
-             totalScore < 35) {
+
+    // ⚠️ 谨慎（优先判断）：趋势翻转 或 高风险 或 得分过低
+    // 无论收益和胜率多高，趋势下行或高风险都不应给出买入建议
+    if (['DeadXDown', 'FallingDown'].includes(r.trending_type) ||
+        risk_level === 'high' ||
+        totalScore < 35) {
       recommendation = 'caution';
+    }
+    // ⭐⭐⭐⭐⭐ 五星标的（强烈推荐）：
+    // 必须同时满足：收益>30% + 胜率>60% + MACD上穿零轴或快线穿慢线 + 非高风险 + 回撤<=25%
+    else if (r.pnl_ratio > 0.30 &&
+        r.win_ratio > 0.60 &&
+        ['ZeroAxisUp', 'RisingUp'].includes(r.trending_type) &&
+        r.max_drawdown <= 0.25) {
+      recommendation = 'strong_buy';
+    }
+    // ⭐⭐⭐ 推荐买入：收益>20% + 胜率>55% + 趋势未翻转 + 回撤<=25%
+    else if (r.pnl_ratio > 0.20 &&
+             r.win_ratio > 0.55 &&
+             !['DeadXDown', 'FallingDown'].includes(r.trending_type) &&
+             r.max_drawdown <= 0.25) {
+      recommendation = 'buy';
     }
 
     // 建议仓位（基于风险和推荐等级的精细化仓位管理）
@@ -175,22 +178,22 @@ const Dashboard: React.FC = () => {
     if (recommendation === 'strong_buy') {
       // 五星标的：根据MACD信号强度分配仓位
       if (r.trending_type === 'ZeroAxisUp' && r.pnl_ratio > 0.30 && r.win_ratio > 0.60) {
-        // 上穿零轴 + 优秀指标：3-5%仓位
+        // 上穿零轴 + 优秀指标：低风险10%，中风险7%
         position_suggestion = risk_level === 'low' ? 10 : 7;
       } else if (r.trending_type === 'RisingUp') {
-        // 快线穿慢线：5-7%
+        // 快线穿慢线：低风险7%，中风险5%
         position_suggestion = risk_level === 'low' ? 7 : 5;
       } else {
         position_suggestion = 5;
       }
     } else if (recommendation === 'buy') {
-      // 推荐买入：3-5%
+      // 推荐买入：低风险5%，中风险3%
       position_suggestion = risk_level === 'low' ? 5 : 3;
     } else if (recommendation === 'watch') {
-      // 观察：1-2%小仓位试探
+      // 观察：2%小仓位试探
       position_suggestion = 2;
     }
-    // 谨慎不建议配置仓位
+    // 谨慎(caution)不建议配置仓位，保持0%
 
     return { 
       score: Math.max(0, Math.min(100, totalScore)), 
@@ -220,6 +223,7 @@ const Dashboard: React.FC = () => {
         setSummary({ total: 0, profitableRate: 0, avgPnlRatio: 0, avgSharpRatio: 0, avgWinRatio: 0 });
         setStrategyBoard([]);
         setRecommendedStocks([]);
+        setCautionStocks([]);
         return;
       }
 
@@ -291,10 +295,21 @@ const Dashboard: React.FC = () => {
         return isLargeCap;
       });
 
-      const enrichedStocks: EnrichedStock[] = candidates.map(r => {
+      const allEnriched: EnrichedStock[] = candidates.map(r => {
         const { score, risk_level, recommendation, position_suggestion } = calculateStockScore(r);
         return { ...r, score, risk_level, recommendation, position_suggestion };
-      }).sort((a, b) => b.score - a.score).slice(0, 50); // 取Top50
+      });
+
+      // 趋势翻转预警标的（独立展示，不混入推荐列表）
+      setCautionStocks(allEnriched.filter(s =>
+        ['DeadXDown', 'FallingDown'].includes(s.trending_type)
+      ));
+
+      // 推荐列表：仅包含 strong_buy / buy / watch
+      const enrichedStocks = allEnriched
+        .filter(s => s.recommendation !== 'caution')
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 50);
 
       setRecommendedStocks(enrichedStocks);
       
@@ -737,16 +752,14 @@ const Dashboard: React.FC = () => {
       buy: recommendedStocks.filter(s => s.trending_type === 'RisingUp' && s.recommendation === 'buy').length,
     },
     turnDown: {
-      total: recommendedStocks.filter(s => ['DeadXDown', 'FallingDown'].includes(s.trending_type)).length,
-      strongBuy: recommendedStocks.filter(s => ['DeadXDown', 'FallingDown'].includes(s.trending_type) && s.recommendation === 'strong_buy').length,
-      buy: recommendedStocks.filter(s => ['DeadXDown', 'FallingDown'].includes(s.trending_type) && s.recommendation === 'buy').length,
+      total: cautionStocks.length,
+      strongBuy: 0, // caution 标的不会有 strong_buy 推荐
+      buy: 0,       // caution 标的不会有 buy 推荐
     },
   };
 
-  // 筛选出需要警告的股票（趋势翻转）
-  const warningStocks = recommendedStocks.filter(s => 
-    ['DeadXDown', 'FallingDown'].includes(s.trending_type)
-  );
+  // 趋势翻转预警标的（来自独立的 cautionStocks 列表）
+  const warningStocks = cautionStocks;
 
   if (loading) {
     return (
