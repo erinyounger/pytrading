@@ -62,6 +62,8 @@ const Dashboard: React.FC = () => {
   const [klineData, setKlineData] = useState<any[]>([]);
   const [klineLoading, setKlineLoading] = useState(false);
   const [tradeRecords, setTradeRecords] = useState<TradeRecord[]>([]);
+  const [chartBacktestStart, setChartBacktestStart] = useState<string | undefined>();
+  const [chartBacktestEnd, setChartBacktestEnd] = useState<string | undefined>();
   // 个股日志相关状态
   const [stockLogModalVisible, setStockLogModalVisible] = useState(false);
   const [stockLogTaskId, setStockLogTaskId] = useState<string>('');
@@ -490,10 +492,16 @@ const Dashboard: React.FC = () => {
               setChartModalVisible(true);
               setTradeRecords([]);
 
+              // 设置回测日期范围
+              const btStart = record.backtest_start_time?.split(' ')[0];
+              const btEnd = record.backtest_end_time?.split(' ')[0];
+              setChartBacktestStart(btStart);
+              setChartBacktestEnd(btEnd);
+
               // 加载K线数据
               try {
                 setKlineLoading(true);
-                const response = await apiService.getKlineData(record.symbol);
+                const response = await apiService.getKlineData(record.symbol, btStart, btEnd);
                 if (response.data && response.data.length > 0) {
                   setKlineData(response.data);
                 } else {
@@ -1274,6 +1282,8 @@ const Dashboard: React.FC = () => {
           setChartModalVisible(false);
           setKlineData([]);
           setTradeRecords([]);
+          setChartBacktestStart(undefined);
+          setChartBacktestEnd(undefined);
         }}
         footer={[
           <Button
@@ -1300,10 +1310,10 @@ const Dashboard: React.FC = () => {
               if (!chartSymbol) return;
               try {
                 setKlineLoading(true);
-                await apiService.syncKlineData(chartSymbol);
+                await apiService.syncKlineData(chartSymbol, 365, chartBacktestStart, chartBacktestEnd);
                 message.success('K线数据同步成功');
                 // 重新获取数据
-                const response = await apiService.getKlineData(chartSymbol);
+                const response = await apiService.getKlineData(chartSymbol, chartBacktestStart, chartBacktestEnd);
                 setKlineData(response.data || []);
               } catch (error) {
                 message.error('K线数据同步失败');
@@ -1318,6 +1328,8 @@ const Dashboard: React.FC = () => {
             setChartModalVisible(false);
             setKlineData([]);
             setTradeRecords([]);
+            setChartBacktestStart(undefined);
+            setChartBacktestEnd(undefined);
           }}>
             关闭
           </Button>

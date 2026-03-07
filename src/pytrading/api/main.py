@@ -886,26 +886,33 @@ async def update_config(config: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def sync_kline_data(symbol: str, days: int = 365):
+def sync_kline_data(symbol: str, days: int = 365, start_date: str = None, end_date: str = None):
     """
     同步K线数据到数据库
     Args:
         symbol: 股票代码
-        days: 获取天数，默认为365天
+        days: 获取天数，默认为365天（仅在未指定 start_date/end_date 时使用）
+        start_date: 可选，回测开始日期 (YYYY-MM-DD)
+        end_date: 可选，回测结束日期 (YYYY-MM-DD)
     """
     from datetime import datetime, timedelta
 
     try:
         # 计算日期范围
-        end_date = datetime.now().strftime('%Y-%m-%d')
-        start_date = (datetime.now() - timedelta(days=days + 60)).strftime('%Y-%m-%d')  # 多取60天以确保有足够数据计算MACD
+        if start_date and end_date:
+            # 使用指定日期范围，多取60天确保MACD预热
+            fetch_start = (datetime.strptime(start_date, '%Y-%m-%d') - timedelta(days=60)).strftime('%Y-%m-%d')
+            fetch_end = end_date
+        else:
+            fetch_end = datetime.now().strftime('%Y-%m-%d')
+            fetch_start = (datetime.now() - timedelta(days=days + 60)).strftime('%Y-%m-%d')  # 多取60天以确保有足够数据计算MACD
 
         # 获取历史K线数据
         bars = history(
             symbol=symbol,
             frequency='1d',
-            start_time=start_date,
-            end_time=end_date,
+            start_time=fetch_start,
+            end_time=fetch_end,
             fields='symbol,open,high,low,close,volume,eob',
             df=True
         )
@@ -923,11 +930,23 @@ def sync_kline_data(symbol: str, days: int = 365):
         session = db_client.get_session()
 
         try:
-            # 保留最近的 days 天数据
-            bars = bars.tail(days).reset_index(drop=True)
-            diff = diff[-days:]
-            dea = dea[-days:]
-            macd_hist = macd_hist[-days:]
+            # 裁剪到目标范围
+            if start_date and end_date:
+                # 按日期范围过滤：保留 start_date ~ end_date 的数据
+                # eob 是 tz-aware datetime64，用 pd.Timestamp 对齐类型
+                target_start = pd.Timestamp(start_date).tz_localize(bars['eob'].dt.tz) if bars['eob'].dt.tz else pd.Timestamp(start_date)
+                mask = bars['eob'] >= target_start
+                trim_idx = mask.idxmax() if mask.any() else 0
+                bars = bars.loc[trim_idx:].reset_index(drop=True)
+                diff = diff[trim_idx:]
+                dea = dea[trim_idx:]
+                macd_hist = macd_hist[trim_idx:]
+            else:
+                # 保留最近的 days 天数据
+                bars = bars.tail(days).reset_index(drop=True)
+                diff = diff[-days:]
+                dea = dea[-days:]
+                macd_hist = macd_hist[-days:]
 
             saved_count = 0
             for i in range(len(bars)):
@@ -1026,7 +1045,7 @@ async def get_trade_records(task_id: str, symbol: Optional[str] = None):
 
 
 @app.get("/api/kline/{symbol}")
-async def get_kline_data(symbol: str):
+async def get_kline_data(symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
     """获取K线数据"""
     try:
         db_client = get_db_client()
@@ -1034,9 +1053,19 @@ async def get_kline_data(symbol: str):
 
         try:
             # 查询K线数据，按日期升序排列
-            klines = session.query(StockKline).filter_by(
+            query = session.query(StockKline).filter_by(
                 symbol=symbol
-            ).order_by(StockKline.date.asc()).all()
+            )
+
+            # 日期范围过滤
+            if start_date:
+                from datetime import datetime as dt
+                query = query.filter(StockKline.date >= dt.strptime(start_date, '%Y-%m-%d').date())
+            if end_date:
+                from datetime import datetime as dt
+                query = query.filter(StockKline.date <= dt.strptime(end_date, '%Y-%m-%d').date())
+
+            klines = query.order_by(StockKline.date.asc()).all()
 
             if not klines:
                 # 如果没有数据，返回提示信息
@@ -1079,12 +1108,14 @@ async def sync_kline(sync_request: dict):
     try:
         symbol = sync_request.get("symbol")
         days = sync_request.get("days", 365)  # 默认365天
+        start_date = sync_request.get("start_date")
+        end_date = sync_request.get("end_date")
 
         if not symbol:
             raise HTTPException(status_code=400, detail="缺少symbol参数")
 
         # 调用同步函数
-        success = sync_kline_data(symbol, days)
+        success = sync_kline_data(symbol, days, start_date=start_date, end_date=end_date)
 
         if success:
             return {

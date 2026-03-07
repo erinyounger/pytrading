@@ -429,8 +429,10 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
           const isBuy = r.action === 'build' || r.action === 'buy';
           const isClose = r.action === 'close';
           let color: string;
-          if (isBuy) {
-            color = '#e74c3c'; // 红色 - 买入
+          if (r.action === 'build') {
+            color = '#ff9800'; // 橙色 - 建仓
+          } else if (r.action === 'buy') {
+            color = '#e74c3c'; // 红色 - 加仓
           } else if (isClose) {
             color = '#1890ff'; // 蓝色 - 平仓
           } else {

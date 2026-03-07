@@ -170,7 +170,7 @@ export const apiService = {
 
   // K线数据相关
   // 获取K线数据
-  getKlineData: async (symbol: string): Promise<{
+  getKlineData: async (symbol: string, startDate?: string, endDate?: string): Promise<{
     symbol: string;
     data: Array<{
       date: string;
@@ -185,18 +185,24 @@ export const apiService = {
     }>;
     message?: string;
   }> => {
-    const response = await api.get(`/api/kline/${symbol}`);
+    const params: Record<string, string> = {};
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+    const response = await api.get(`/api/kline/${symbol}`, { params });
     return response.data;
   },
 
   // 同步K线数据
-  syncKlineData: async (symbol: string, days: number = 365): Promise<{
+  syncKlineData: async (symbol: string, days: number = 365, startDate?: string, endDate?: string): Promise<{
     status: string;
     message: string;
     symbol: string;
     days: number;
   }> => {
-    const response = await api.post('/api/kline/sync', { symbol, days });
+    const body: Record<string, any> = { symbol, days };
+    if (startDate) body.start_date = startDate;
+    if (endDate) body.end_date = endDate;
+    const response = await api.post('/api/kline/sync', body);
     return response.data;
   },
 
