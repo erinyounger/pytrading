@@ -7,7 +7,7 @@ USE pytrading;
 CREATE TABLE IF NOT EXISTS strategies (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '策略ID',
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '策略代码',
-    display_name VARCHAR(100) NOT NULL COMMENT '策略显示名称',
+    display_name VARCHAR(255) NOT NULL COMMENT '策略显示名称',
     description TEXT COMMENT '策略描述',
     strategy_type VARCHAR(50) NOT NULL COMMENT '策略类型',
     parameters JSON COMMENT '策略参数配置',
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS strategies (
 CREATE TABLE IF NOT EXISTS symbols (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '股票ID',
     symbol VARCHAR(20) NOT NULL UNIQUE COMMENT '股票代码',
-    name VARCHAR(100) NOT NULL COMMENT '股票名称',
+    name VARCHAR(255) NOT NULL COMMENT '股票名称',
     market VARCHAR(10) DEFAULT 'A' COMMENT '市场类型',
     industry VARCHAR(50) COMMENT '所属行业',
     is_active BOOLEAN DEFAULT TRUE COMMENT '是否启用',
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS symbols (
 -- 3. 回测任务表 (backtest_tasks)
 CREATE TABLE IF NOT EXISTS backtest_tasks (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '任务ID',
-    task_id VARCHAR(100) NOT NULL UNIQUE COMMENT '任务唯一标识',
+    task_id VARCHAR(255) NOT NULL UNIQUE COMMENT '任务唯一标识',
     strategy_id INT NOT NULL COMMENT '策略ID',
     symbols JSON NOT NULL COMMENT '股票代码列表或指数代码',
     start_time DATETIME NOT NULL COMMENT '回测开始时间',
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS backtest_tasks (
 -- 4. 回测结果表 (backtest_results) - 兼容现有结构
 CREATE TABLE IF NOT EXISTS backtest_results (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-    task_id VARCHAR(100) COMMENT '任务ID',
+    task_id VARCHAR(255) COMMENT '任务ID',
     strategy_id INT COMMENT '策略ID',
     symbol VARCHAR(20) NOT NULL COMMENT '股票代码',
     name VARCHAR(50) COMMENT '股票名称',
@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS backtest_results (
 -- 5. 系统配置表 (system_config)
 CREATE TABLE IF NOT EXISTS system_config (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '配置ID',
-    config_key VARCHAR(100) NOT NULL UNIQUE COMMENT '配置键',
+    config_key VARCHAR(255) NOT NULL UNIQUE COMMENT '配置键',
     config_value TEXT COMMENT '配置值',
     config_type VARCHAR(20) DEFAULT 'string' COMMENT '配置类型',
     description VARCHAR(200) COMMENT '配置描述',
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS system_config (
 -- 6. 回测日志表 (backtest_logs)
 CREATE TABLE IF NOT EXISTS backtest_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '自增ID',
-    task_id VARCHAR(100) NOT NULL COMMENT '任务ID',
+    task_id VARCHAR(255) NOT NULL COMMENT '任务ID',
     symbol VARCHAR(20) NULL COMMENT '股票代码(为空表示任务级日志)',
     level ENUM('DEBUG','INFO','WARN','ERROR') NOT NULL DEFAULT 'INFO' COMMENT '日志级别',
     message TEXT NOT NULL COMMENT '日志内容',
@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS backtest_logs (
 -- 7. 交易记录表 (trade_records) - 记录策略在回测中的买卖信号
 CREATE TABLE IF NOT EXISTS trade_records (
     id INT AUTO_INCREMENT PRIMARY KEY COMMENT '主键ID',
-    task_id VARCHAR(100) NOT NULL COMMENT '回测任务ID',
+    task_id VARCHAR(255) NOT NULL COMMENT '回测任务ID',
     symbol VARCHAR(32) NOT NULL COMMENT '股票代码',
     action VARCHAR(16) NOT NULL COMMENT '交易动作: build/buy/sell/close',
     target_percent FLOAT DEFAULT NULL COMMENT '操作后目标持仓比例',
@@ -208,7 +208,7 @@ DESCRIBE backtest_logs;
 
 -- 兼容性说明：
 -- 1. backtest_results表保留了所有现有字段，新增了task_id、strategy_id、total_trades、win_trades、current_price、status
--- 2. task_id字段长度从VARCHAR(50)扩展到VARCHAR(100)以支持更长的任务ID
+-- 2. task_id字段长度从VARCHAR(50)扩展到VARCHAR(255)以支持更长的任务ID
 -- 3. status字段使用ENUM('init', 'running', 'finished')类型，默认值为'init'
 -- 4. 外键约束被注释掉，避免数据不一致时的问题
 -- 5. 视图v_backtest_summary兼容现有API，包含所有原有字段

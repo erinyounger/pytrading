@@ -5,11 +5,11 @@
 @Author  ：Claude
 @Date    ：2025-08-16
 """
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from typing import List, Optional, Dict, Any
-from fastapi import Query
 from pydantic import BaseModel
 import uvicorn
 import os
@@ -40,10 +40,54 @@ import pandas as pd
 # 设置掘金量化token
 set_token(config.token)
 
+from contextlib import asynccontextmanager
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    global task_scheduler_running, task_scheduler_thread
+
+    # ====== 启动事件 ======
+    logger.info("FastAPI应用启动")
+
+    # 创建数据库表（如果不存在）
+    try:
+        from pytrading.db.mysql import MySQLClient
+        client = MySQLClient(
+            host=config.mysql_host,
+            port=config.mysql_port,
+            username=config.mysql_username,
+            password=config.mysql_password,
+            db_name=config.mysql_database,
+        )
+        client.create_tables()
+        logger.info("数据库表创建完成")
+    except Exception as e:
+        logger.warning(f"创建数据库表失败（表可能已存在）: {e}")
+
+    # 启动任务调度器
+    task_scheduler_running = True
+    task_scheduler_thread = threading.Thread(target=task_scheduler)
+    task_scheduler_thread.daemon = True
+    task_scheduler_thread.start()
+    logger.info("回测任务调度器已启动")
+
+    yield  # 应用运行中
+
+    # ====== 关闭事件 ======
+    logger.info("FastAPI应用关闭")
+
+    # 停止任务调度器
+    task_scheduler_running = False
+    logger.info("回测任务调度器已停止")
+
+
 app = FastAPI(
     title="PyTrading API",
     description="量化交易系统Web API",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # 配置CORS
@@ -83,15 +127,15 @@ def _check_scheduled_backtest(db_client):
     now = datetime.now()
     today_str = now.strftime('%Y-%m-%d')
 
-    logger.info(f"定时回测检查: now={now}, today={today_str}, last_date={_last_scheduled_date}")
-
     # 仅工作日（周一至周五）
     if now.weekday() >= 5:
-        logger.info("定时回测跳过: 周末")
+        return
+
+    # 仅在工作时间检查（9:00-18:00），避免非工作时间频繁检查
+    if now.hour < 9 or now.hour >= 18:
         return
 
     if _last_scheduled_date == today_str:
-        logger.info("定时回测跳过: 今天已触发")
         return
 
     try:
@@ -101,27 +145,22 @@ def _check_scheduled_backtest(db_client):
                 config_key="watchlist_auto_backtest_enabled"
             ).first()
             if not enabled_row or enabled_row.config_value != "true":
-                logger.info("定时回测跳过: 未开启")
                 return
 
             time_row = session.query(SystemConfig).filter_by(
                 config_key="watchlist_auto_backtest_time"
             ).first()
             target_time = time_row.config_value if time_row else "17:00"
-            logger.info(f"定时回测: target_time={target_time}")
 
             # 解析目标时间
             hour, minute = map(int, target_time.split(':'))
             target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-            logger.info(f"定时回测: now={now}, target={target}, check={now >= target}")
 
             if now >= target:
                 from pytrading.service.watchlist_service import WatchlistService
                 result = WatchlistService.create_backtest_tasks(source="scheduled")
                 _last_scheduled_date = today_str
                 logger.info(f"定时回测已触发: task_ids={result['task_ids']}, skipped={result['skipped_strategies']}")
-            else:
-                logger.info("定时回测跳过: 未到触发时间")
         finally:
             session.close()
     except Exception as e:
@@ -135,8 +174,8 @@ def task_scheduler():
     global task_scheduler_running
     logger.info("回测任务调度器启动")
 
-    # 快速检查间隔：5秒（原来是30秒）
-    fast_check_interval = 5
+    # 快速检查间隔：60秒（降低频率避免日志刷屏）
+    fast_check_interval = 60
     check_count = 0
 
     while task_scheduler_running:
@@ -189,45 +228,6 @@ def task_scheduler():
 
     logger.info("回测任务调度器停止")
 
-@app.on_event("startup")
-async def startup_event():
-    """应用启动事件"""
-    global task_scheduler_running, task_scheduler_thread
-
-    logger.info("FastAPI应用启动")
-
-    # 创建数据库表（如果不存在）
-    try:
-        from pytrading.db.mysql import MySQLClient
-        client = MySQLClient(
-            host=config.mysql_host,
-            port=config.mysql_port,
-            username=config.mysql_username,
-            password=config.mysql_password,
-            db_name=config.mysql_database,
-        )
-        client.create_tables()
-        logger.info("数据库表创建完成")
-    except Exception as e:
-        logger.warning(f"创建数据库表失败（表可能已存在）: {e}")
-
-    # 启动任务调度器
-    task_scheduler_running = True
-    task_scheduler_thread = threading.Thread(target=task_scheduler)
-    task_scheduler_thread.daemon = True
-    task_scheduler_thread.start()
-    logger.info("回测任务调度器已启动")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """应用关闭事件"""
-    global task_scheduler_running
-    
-    logger.info("FastAPI应用关闭")
-    
-    # 停止任务调度器
-    task_scheduler_running = False
-    logger.info("回测任务调度器已停止")
 
 @app.get("/")
 async def root():
@@ -523,9 +523,8 @@ async def start_backtest(backtest_config: dict):
                 if 'symbols' not in backtest_config or not backtest_config['symbols']:
                     raise HTTPException(status_code=400, detail="单股票模式需要提供symbols参数")
                 symbols = backtest_config['symbols'] if isinstance(backtest_config['symbols'], list) else [backtest_config['symbols']]
-                task_name = f"{'_'.join(symbols[:3])}"
-                if len(symbols) > 3:
-                    task_name += f"_等{len(symbols)}只"
+                # 只取第一个股票作为 task_name，避免过长
+                task_name = symbols[0] if symbols else "single"
             else:
                 # 指数成分股模式 - 只保存指数代码,不立即获取成分股
                 if 'index_symbol' not in backtest_config:
@@ -535,8 +534,12 @@ async def start_backtest(backtest_config: dict):
                 
                 # 只保存指数代码,实际执行时再获取成分股
                 symbols = [index_symbol]  # 暂存指数代码
-                task_name = index_symbol
-                
+                # task_name 只取第一个指数，避免 task_id 过长
+                if isinstance(index_symbol, list):
+                    task_name = index_symbol[0] if index_symbol else "index"
+                else:
+                    task_name = index_symbol
+
                 logger.info(f"创建指数回测任务 - 指数: {index_symbol}")
             
             # 生成任务ID

@@ -28,7 +28,7 @@ class Strategy(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='策略ID')
     name = Column(String(50), nullable=False, unique=True, comment='策略代码')
-    display_name = Column(String(100), nullable=False, comment='策略显示名称')
+    display_name = Column(String(255), nullable=False, comment='策略显示名称')
     description = Column(Text, comment='策略描述')
     strategy_type = Column(String(50), nullable=False, comment='策略类型')
     parameters = Column(JSON, comment='策略参数配置')
@@ -43,7 +43,7 @@ class StockSymbol(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='股票ID')
     symbol = Column(String(20), nullable=False, unique=True, comment='股票代码')
-    name = Column(String(100), nullable=False, comment='股票名称')
+    name = Column(String(255), nullable=False, comment='股票名称')
     market = Column(String(10), default='A', comment='市场类型')
     industry = Column(String(50), comment='所属行业')
     is_active = Column(Boolean, default=True, comment='是否启用')
@@ -56,7 +56,7 @@ class BacktestTask(Base):
     __tablename__ = 'backtest_tasks'
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='任务ID')
-    task_id = Column(String(100), nullable=False, unique=True, comment='任务唯一标识')
+    task_id = Column(String(255), nullable=False, unique=True, comment='任务唯一标识')
     strategy_id = Column(Integer, nullable=False, comment='策略ID')
     symbols = Column(JSON, nullable=False, comment='股票代码列表或指数代码')
     start_time = Column(DateTime, nullable=False, comment='回测开始时间')
@@ -76,7 +76,7 @@ class BackTestResult(Base):
     __tablename__ = 'backtest_results'
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
-    task_id = Column(String(100), comment='任务ID')
+    task_id = Column(String(255), comment='任务ID')
     strategy_id = Column(Integer, comment='策略ID')
     symbol = Column(String(20), nullable=False, comment='股票代码')
     name = Column(String(50), comment='股票名称')
@@ -116,7 +116,7 @@ class SystemConfig(Base):
     __tablename__ = 'system_config'
     
     id = Column(Integer, primary_key=True, autoincrement=True, comment='配置ID')
-    config_key = Column(String(100), nullable=False, unique=True, comment='配置键')
+    config_key = Column(String(255), nullable=False, unique=True, comment='配置键')
     config_value = Column(Text, comment='配置值')
     config_type = Column(String(20), default='string', comment='配置类型')
     description = Column(String(200), comment='配置描述')
@@ -165,7 +165,7 @@ class TradeRecord(Base):
     __tablename__ = 'trade_records'
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
-    task_id = Column(String(100), nullable=False, index=True, comment='回测任务ID')
+    task_id = Column(String(255), nullable=False, index=True, comment='回测任务ID')
     symbol = Column(String(32), nullable=False, comment='股票代码')
     action = Column(String(16), nullable=False, comment='交易动作: build/buy/sell/close')
     target_percent = Column(Float, nullable=True, comment='操作后目标持仓比例')
@@ -185,7 +185,7 @@ class BacktestLog(Base):
     __tablename__ = 'backtest_logs'
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment='自增ID')
-    task_id = Column(String(100), nullable=False, comment='任务ID')
+    task_id = Column(String(255), nullable=False, comment='任务ID')
     symbol = Column(String(20), nullable=True, comment='股票代码(为空表示任务级日志)')
     level = Column(SQLEnum('DEBUG', 'INFO', 'WARN', 'ERROR', name='log_level_enum'), default='INFO', nullable=False, comment='日志级别')
     message = Column(Text, nullable=False, comment='日志内容')
@@ -224,13 +224,13 @@ class WatchlistItem(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment='主键')
     symbol = Column(String(20), nullable=False, comment='股票代码')
-    name = Column(String(100), comment='股票名称')
+    name = Column(String(255), comment='股票名称')
     strategy_id = Column(Integer, nullable=False, comment='关联策略ID')
     watch_type = Column(String(20), nullable=False, default='无状态', comment='关注类型')
     previous_watch_type = Column(String(20), comment='上一次关注类型')
     type_changed = Column(Boolean, nullable=False, default=False, comment='关注类型是否发生变化')
     type_changed_at = Column(DateTime, comment='关注类型变化时间')
-    last_backtest_task_id = Column(String(100), comment='最近回测任务ID')
+    last_backtest_task_id = Column(String(255), comment='最近回测任务ID')
     created_at = Column(DateTime, default=datetime.now, comment='关注时间')
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
 
