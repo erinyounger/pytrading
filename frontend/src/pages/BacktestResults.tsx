@@ -282,34 +282,27 @@ const BacktestResults: React.FC = () => {
     setDetailModalVisible(true);
   };
 
-  const exportData = () => {
-    // 注意：当前导出功能仅导出当前页数据，完整导出需要后端支持
-    const headers = ['股票代码', '股票名称', '策略名称', '趋势类型', '收益率', '夏普比率', '最大回撤', '胜率', '开始时间', '结束时间'];
-    const csvContent = [
-      headers.join(','),
-      ...data.map(item => [
-        item.symbol,
-        item.name,
-        item.strategy_name || '',  // 如果策略名称为null，导出时显示为空
-        item.trending_type,
-        (item.pnl_ratio * 100).toFixed(2) + '%',
-        item.sharp_ratio.toFixed(2),
-        (item.max_drawdown * 100).toFixed(2) + '%',
-        (item.win_ratio * 100).toFixed(2) + '%',
-        item.backtest_start_time,
-        item.backtest_end_time
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `backtest_results_${dayjs().format('YYYYMMDD')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const exportData = async () => {
+    try {
+      // 调用后端API导出全部数据，使用当前筛选条件
+      await apiService.exportBacktestResults({
+        symbol: filters.symbol || undefined,
+        trending_type: filters.trending_type || undefined,
+        industry: filters.industry || undefined,
+        start_date: filters.dateRange?.[0]?.format('YYYY-MM-DD'),
+        end_date: filters.dateRange?.[1]?.format('YYYY-MM-DD'),
+        min_pnl_ratio: filters.pnlRange?.[0],
+        max_pnl_ratio: filters.pnlRange?.[1],
+        min_win_ratio: filters.winRatioRange?.[0],
+        max_win_ratio: filters.winRatioRange?.[1],
+        min_market_cap: filters.marketCapRange?.[0],
+        max_market_cap: filters.marketCapRange?.[1],
+      });
+      message.success('导出成功');
+    } catch (error) {
+      console.error('导出失败:', error);
+      message.error('导出失败，请重试');
+    }
   };
 
   const columns: ColumnsType<BacktestResult> = [

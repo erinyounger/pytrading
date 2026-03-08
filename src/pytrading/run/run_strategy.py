@@ -392,8 +392,8 @@ def multiple_run(strategy_id, symbol, backtest_start_time, backtest_end_time, st
         backtest_end_time=backtest_end_time,
         backtest_adjust=ADJUST_PREV,
         backtest_initial_cash=200000000000,
-        backtest_commission_ratio=0.0001,
-        backtest_slippage_ratio=0.0001,
+        backtest_commission_ratio=0.0003,  # 万三佣金
+        backtest_slippage_ratio=0.001,     # 千一滑点
         # serv_addr="192.168.3.139:7001"
         )
     # 清理上下文

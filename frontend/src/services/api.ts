@@ -168,6 +168,46 @@ export const apiService = {
     };
   },
 
+  // 导出回测结果
+  exportBacktestResults: async (filters?: {
+    symbol?: string;
+    start_date?: string;
+    end_date?: string;
+    trending_type?: string;
+    industry?: string;
+    min_pnl_ratio?: number;
+    max_pnl_ratio?: number;
+    min_win_ratio?: number;
+    max_win_ratio?: number;
+    min_market_cap?: number;
+    max_market_cap?: number;
+  }): Promise<void> => {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, String(value));
+        }
+      });
+    }
+
+    const response = await api.get('/api/backtest-results/export', {
+      params,
+      responseType: 'blob'
+    });
+
+    // 创建下载链接
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `backtest_results_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  },
+
   // K线数据相关
   // 获取K线数据
   getKlineData: async (symbol: string, startDate?: string, endDate?: string): Promise<{

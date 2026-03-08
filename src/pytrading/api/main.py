@@ -346,6 +346,92 @@ async def get_system_status():
         logger.error(f"获取系统状态时发生未知错误 - {str(e)}")
         raise HTTPException(status_code=500, detail=f"服务器内部错误: {str(e)}")
 
+@app.get("/api/backtest-results/export")
+async def export_backtest_results(
+    symbol: Optional[str] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    trending_type: Optional[str] = None,
+    industry: Optional[str] = None,
+    min_pnl_ratio: Optional[float] = None,
+    max_pnl_ratio: Optional[float] = None,
+    min_win_ratio: Optional[float] = None,
+    max_win_ratio: Optional[float] = None,
+    min_market_cap: Optional[float] = None,
+    max_market_cap: Optional[float] = None,
+):
+    """导出回测结果为CSV"""
+    try:
+        saver = get_backtest_saver()
+
+        if not saver:
+            logger.error("数据库连接失败 - BackTest saver 初始化失败")
+            raise HTTPException(status_code=500, detail="数据库连接失败，无法导出回测结果")
+
+        # 获取所有数据（不限制数量）
+        result_data = saver.get_all_results(
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
+            trending_type=trending_type,
+            industry=industry,
+            min_pnl_ratio=min_pnl_ratio,
+            max_pnl_ratio=max_pnl_ratio,
+            min_win_ratio=min_win_ratio,
+            max_win_ratio=max_win_ratio,
+            min_market_cap=min_market_cap,
+            max_market_cap=max_market_cap,
+            limit=100000,  # 获取足够多的数据
+            page=1,
+            per_page=100000
+        )
+
+        backtest_results = result_data.get('data', [])
+
+        if not backtest_results:
+            raise HTTPException(status_code=404, detail="没有可导出的回测结果")
+
+        # 构建CSV内容
+        headers = ['股票代码', '股票名称', '策略名称', '趋势类型', '收益率', '夏普比率', '最大回撤', '胜率', '开仓次数', '平仓次数', '开始时间', '结束时间']
+        csv_lines = [','.join(headers)]
+
+        for item in backtest_results:
+            # 处理可能为None的值，转换为字符串
+            def safe_str(val):
+                return '' if val is None else str(val)
+
+            row = [
+                safe_str(item.get('symbol')),
+                safe_str(item.get('name')),
+                safe_str(item.get('strategy_name')),
+                safe_str(item.get('trending_type')),
+                f"{(float(item.get('pnl_ratio') or 0)) * 100:.2f}%",
+                f"{float(item.get('sharp_ratio') or 0):.2f}",
+                f"{float(item.get('max_drawdown') or 0) * 100:.2f}%",
+                f"{float(item.get('win_ratio') or 0) * 100:.2f}%",
+                str(item.get('open_count') or 0),
+                str(item.get('close_count') or 0),
+                safe_str(item.get('backtest_start_time')),
+                safe_str(item.get('backtest_end_time'))
+            ]
+            csv_lines.append(','.join(row))
+
+        csv_content = '\n'.join(csv_lines)
+
+        # 返回CSV文件，使用UTF-8-BOM编码解决Excel打开乱码问题
+        from fastapi.responses import Response
+        return Response(
+            content='\ufeff' + csv_content,  # UTF-8 BOM
+            media_type='text/csv;charset=utf-8',
+            headers={'Content-Disposition': f'attachment; filename=backtest_results_{datetime.now().strftime("%Y%m%d")}.csv'}
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"导出回测结果时发生错误 - {str(e)}")
+        raise HTTPException(status_code=500, detail=f"导出失败: {str(e)}")
+
 def get_db_client():
     """获取数据库客户端"""
     return MySQLClient(
