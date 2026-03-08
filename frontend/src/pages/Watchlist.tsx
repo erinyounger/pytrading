@@ -157,9 +157,19 @@ const Watchlist: React.FC = () => {
 
   // 一键回测
   const handleBacktest = async () => {
+    // 防止重复点击
+    if (backtestLoading) return;
+
+    setBacktestLoading(true);
+    // 添加超时保护：10秒后自动恢复 loading 状态
+    const timeoutId = setTimeout(() => {
+      setBacktestLoading(false);
+      message.warning('回测请求超时，请稍后重试');
+    }, 10000);
+
     try {
-      setBacktestLoading(true);
       const result = await apiService.startWatchlistBacktest();
+      clearTimeout(timeoutId);
       if (result.task_ids.length > 0) {
         message.success(result.message);
       } else if (result.skipped_strategies.length > 0) {
@@ -168,6 +178,7 @@ const Watchlist: React.FC = () => {
         message.info(result.message);
       }
     } catch (error) {
+      clearTimeout(timeoutId);
       message.error('一键回测失败');
       console.error('一键回测失败:', error);
     } finally {
