@@ -269,18 +269,25 @@ class PyTrading:
                 from pytrading.db.mysql import WatchlistItem
                 from pytrading.service.watchlist_service import WatchlistService
 
+                logger.info(f"Searching watchlist items for symbols: {symbol_list}, strategy_id: {task.strategy_id}")
+
                 watched_items = session.query(WatchlistItem).filter(
                     WatchlistItem.symbol.in_(symbol_list),
                     WatchlistItem.strategy_id == task.strategy_id,
                 ).all()
 
+                logger.info(f"Found {len(watched_items)} watchlist items")
+
                 if watched_items:
                     logger.info(f"Updating watchlist metrics for {len(watched_items)} items")
                     for item in watched_items:
+                        logger.info(f"Updating item: id={item.id}, symbol={item.symbol}, strategy_id={item.strategy_id}")
                         WatchlistService.update_metrics(item.id, task_id)
                     logger.info(f"Watchlist metrics update completed for task: {task_id}")
+                else:
+                    logger.warning(f"No watchlist items found for symbols: {symbol_list}, strategy_id: {task.strategy_id}")
             except Exception as watch_err:
-                logger.warning(f"Failed to update watchlist metrics: {watch_err}")
+                logger.error(f"Failed to update watchlist metrics: {watch_err}", exc_info=True)
 
         except Exception as e:
             logger.error(f"Backtest Task execution failed: Task ID: {task_id}, Error: {str(e)}")

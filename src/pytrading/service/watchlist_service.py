@@ -168,6 +168,7 @@ class WatchlistService:
                     "max_drawdown": float(backtest.max_drawdown) if backtest and backtest.max_drawdown else None,
                     "win_ratio": float(backtest.win_ratio) if backtest and backtest.win_ratio else None,
                     "current_price": float(backtest.current_price) if backtest and backtest.current_price else None,
+                    "last_backtest_task_id": item.last_backtest_task_id,
                     "last_backtest_time": backtest.backtest_end_time if backtest else None,
                     "backtest_start_time": backtest.backtest_start_time if backtest else None,
                     "backtest_end_time": backtest.backtest_end_time if backtest else None,
@@ -253,11 +254,16 @@ class WatchlistService:
         """
         session = cls._get_session()
         try:
+            logger.info(f"update_metrics called: item_id={item_id}, task_id={task_id}")
+
             item = session.query(WatchlistItem).filter(
                 WatchlistItem.id == item_id
             ).first()
             if not item:
+                logger.warning(f"Watchlist item not found: item_id={item_id}")
                 return None
+
+            logger.info(f"Found watchlist item: symbol={item.symbol}, strategy_id={item.strategy_id}")
 
             # 获取最新的回测结果
             result = session.query(BackTestResult).filter(
@@ -265,7 +271,10 @@ class WatchlistService:
                 BackTestResult.symbol == item.symbol,
             ).order_by(BackTestResult.backtest_end_time.desc()).first()
 
+            logger.info(f"BacktestResult query: task_id={task_id}, symbol={item.symbol}, result={'found' if result else 'NOT FOUND'}")
+
             if not result:
+                logger.warning(f"No BackTestResult found for task_id={task_id}, symbol={item.symbol}")
                 return item
 
             # 只更新任务关联，不再冗余保存指标

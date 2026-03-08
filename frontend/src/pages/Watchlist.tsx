@@ -100,8 +100,8 @@ const Watchlist: React.FC = () => {
     setTradeRecords([]);
 
     // 设置回测日期范围
-    const btStart = record.backtest_start_time?.split(' ')[0];
-    const btEnd = record.backtest_end_time?.split(' ')[0];
+    const btStart = record.backtest_start_time?.split('T')[0];
+    const btEnd = record.backtest_end_time?.split('T')[0];
     setChartBacktestStart(btStart);
     setChartBacktestEnd(btEnd);
 
@@ -109,20 +109,18 @@ const Watchlist: React.FC = () => {
     try {
       setKlineLoading(true);
       const response = await apiService.getKlineData(record.symbol, btStart, btEnd);
-      setKlineData(response.data || []);
+      const klineData = response.data || [];
+      setKlineData(klineData);
 
-      // 获取交易记录
-      // 需要从 BackTestResult 获取 task_id
-      const result = await apiService.getBacktestResults({
-        symbol: record.symbol,
-        per_page: 1,
-      });
-      if (result.data.length > 0 && result.data[0].task_id) {
-        const taskId = result.data[0].task_id;
-        setChartTaskId(taskId);
+      // 获取交易记录 - 使用 watchlist item 的 last_backtest_task_id
+      if (record.last_backtest_task_id) {
+        setChartTaskId(record.last_backtest_task_id);
         try {
-          const trResp = await apiService.getTradeRecords(taskId, record.symbol);
-          setTradeRecords(trResp.data || []);
+          const trResp = await apiService.getTradeRecords(record.last_backtest_task_id, record.symbol);
+          // 过滤交易记录，只保留在K线数据日期范围内的
+          const klineDates = new Set(klineData.map((k: any) => k.date));
+          const filteredRecords = (trResp.data || []).filter((r: any) => r.bar_time && klineDates.has(r.bar_time));
+          setTradeRecords(filteredRecords);
         } catch {
           setTradeRecords([]);
         }

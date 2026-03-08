@@ -1169,10 +1169,14 @@ async def get_kline_data(symbol: str, start_date: Optional[str] = None, end_date
                 symbol=symbol
             )
 
-            # 日期范围过滤
+            # MACD预热需要额外60天数据
+            macd_warmup_days = 60
+
+            # 日期范围过滤（包含预热期）
             if start_date:
-                from datetime import datetime as dt
-                query = query.filter(StockKline.date >= dt.strptime(start_date, '%Y-%m-%d').date())
+                from datetime import datetime as dt, timedelta
+                start_dt = dt.strptime(start_date, '%Y-%m-%d') - timedelta(days=macd_warmup_days)
+                query = query.filter(StockKline.date >= start_dt.date())
             if end_date:
                 from datetime import datetime as dt
                 query = query.filter(StockKline.date <= dt.strptime(end_date, '%Y-%m-%d').date())
@@ -1471,6 +1475,7 @@ async def get_watchlist(
                 "max_drawdown": entry["max_drawdown"],
                 "win_ratio": entry["win_ratio"],
                 "current_price": entry["current_price"],
+                "last_backtest_task_id": entry["last_backtest_task_id"],
                 "last_backtest_time": entry["last_backtest_time"].isoformat() if entry["last_backtest_time"] else None,
                 "backtest_start_time": entry["backtest_start_time"].isoformat() if entry["backtest_start_time"] else None,
                 "backtest_end_time": entry["backtest_end_time"].isoformat() if entry["backtest_end_time"] else None,

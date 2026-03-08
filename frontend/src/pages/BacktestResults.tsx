@@ -340,12 +340,16 @@ const BacktestResults: React.FC = () => {
               try {
                 setKlineLoading(true);
                 const response = await apiService.getKlineData(value, btStart, btEnd);
-                setKlineData(response.data || []);
+                const klineData = response.data || [];
+                setKlineData(klineData);
                 // 加载交易记录
                 if (record.task_id) {
                   try {
                     const trResp = await apiService.getTradeRecords(record.task_id, value);
-                    setTradeRecords(trResp.data || []);
+                    // 过滤交易记录，只保留在K线数据日期范围内的
+                    const klineDates = new Set(klineData.map((k: any) => k.date));
+                    const filteredRecords = (trResp.data || []).filter((r: any) => r.bar_time && klineDates.has(r.bar_time));
+                    setTradeRecords(filteredRecords);
                   } catch {
                     setTradeRecords([]);
                   }

@@ -127,6 +127,7 @@ export interface WatchlistItem {
   max_drawdown?: number;
   win_ratio?: number;
   current_price?: number;
+  last_backtest_task_id?: string;
   last_backtest_time?: string;
   backtest_start_time?: string;
   backtest_end_time?: string;
