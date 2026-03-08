@@ -144,12 +144,14 @@ def task_scheduler():
 
             # 查询pending状态的任务
             pending_tasks = session.query(BacktestTask).filter_by(status='pending').all()
+            if pending_tasks:
+                logger.info(f"发现 {len(pending_tasks)} 个待执行的回测任务")
 
             if pending_tasks:
                 logger.info(f"发现 {len(pending_tasks)} 个待执行的回测任务")
 
                 for task in pending_tasks:
-                    logger.info(f"准备执行任务: {task.task_id}")
+                    logger.info(f"准备执行任务: {task.task_id}, status: {task.status}")
                     # 在新线程中执行任务,避免阻塞调度器
                     thread = threading.Thread(target=execute_backtest_task, args=(task.task_id,))
                     thread.daemon = True
@@ -170,7 +172,7 @@ def task_scheduler():
                     check_count = 0
 
         except Exception as e:
-            logger.error(f"任务调度器执行出错: {str(e)}")
+            logger.error(f"任务调度器执行出错: {str(e)}", exc_info=True)
 
         # 动态睡眠间隔：如果有pending任务，检查更频繁
         sleep_time = fast_check_interval
@@ -1552,7 +1554,7 @@ async def start_watchlist_backtest():
             "message": "，".join(parts),
         }
     except Exception as e:
-        logger.error(f"一键回测失败: {str(e)}")
+        logger.error(f"一键回测失败: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"一键回测失败: {str(e)}")
 
 

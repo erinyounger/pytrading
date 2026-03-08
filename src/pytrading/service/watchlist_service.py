@@ -254,16 +254,11 @@ class WatchlistService:
         """
         session = cls._get_session()
         try:
-            logger.info(f"update_metrics called: item_id={item_id}, task_id={task_id}")
-
             item = session.query(WatchlistItem).filter(
                 WatchlistItem.id == item_id
             ).first()
             if not item:
-                logger.warning(f"Watchlist item not found: item_id={item_id}")
                 return None
-
-            logger.info(f"Found watchlist item: symbol={item.symbol}, strategy_id={item.strategy_id}")
 
             # 获取最新的回测结果
             result = session.query(BackTestResult).filter(
@@ -271,10 +266,7 @@ class WatchlistService:
                 BackTestResult.symbol == item.symbol,
             ).order_by(BackTestResult.backtest_end_time.desc()).first()
 
-            logger.info(f"BacktestResult query: task_id={task_id}, symbol={item.symbol}, result={'found' if result else 'NOT FOUND'}")
-
             if not result:
-                logger.warning(f"No BackTestResult found for task_id={task_id}, symbol={item.symbol}")
                 return item
 
             # 只更新任务关联，不再冗余保存指标
@@ -398,14 +390,14 @@ class WatchlistService:
                 ).first()
                 strategy_name = strategy.name if strategy else f"s{strategy_id}"
 
-                # 去重检查：同 strategy_id 已有 pending/running 任务则跳过
-                existing = session.query(BacktestTask).filter(
+                # 去重检查：只有 running 任务才跳过（pending可以创建新任务）
+                existing_running = session.query(BacktestTask).filter(
                     BacktestTask.strategy_id == strategy_id,
-                    BacktestTask.status.in_(['pending', 'running']),
+                    BacktestTask.status == 'running',
                 ).first()
-                if existing:
+                if existing_running:
                     skipped_strategies.append(strategy_name)
-                    logger.info(f"跳过策略 {strategy_name}: 已有 {existing.status} 任务 {existing.task_id}")
+                    logger.info(f"跳过策略 {strategy_name}: 已有 running 任务")
                     continue
 
                 # 每组取最早的 start_time
