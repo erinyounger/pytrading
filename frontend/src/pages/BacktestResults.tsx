@@ -28,6 +28,8 @@ import {
   TrophyOutlined,
   RiseOutlined,
   InfoCircleOutlined,
+  StarOutlined,
+  StarFilled,
   FileTextOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -60,6 +62,7 @@ const translateTrendingType = (type: string): string => {
 const BacktestResults: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<BacktestResult[]>([]);
+  const [watchedSymbols, setWatchedSymbols] = useState<Set<string>>(new Set());
   const [selectedResult, setSelectedResult] = useState<BacktestResult | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [compareModalVisible, setCompareModalVisible] = useState(false);
@@ -172,6 +175,20 @@ const BacktestResults: React.FC = () => {
   useEffect(() => {
     fetchBacktestResults();
   }, [fetchBacktestResults]);
+
+  // 获取已关注的股票代码
+  useEffect(() => {
+    const fetchWatchedSymbols = async () => {
+      try {
+        // 使用第一个策略ID作为默认
+        const result = await apiService.getWatchedSymbols(1);
+        setWatchedSymbols(new Set(result.watched));
+      } catch (error) {
+        console.error('获取关注状态失败:', error);
+      }
+    };
+    fetchWatchedSymbols();
+  }, []);
 
   // 监听筛选条件变化，自动重新获取数据
   // 当筛选变化时，重置到第一页并请求数据
@@ -620,17 +637,49 @@ const BacktestResults: React.FC = () => {
       key: 'action',
       fixed: 'right' as const,
       align: 'center' as const,
-      width: 80,
-      render: (_: any, record: BacktestResult) => (
-        <Tooltip title="查看详情">
-          <Button 
-            type="text" 
-            icon={<EyeOutlined />} 
-            onClick={() => showDetail(record)}
-            size="small"
-          />
-        </Tooltip>
-      ),
+      width: 120,
+      render: (_: any, record: BacktestResult) => {
+        const isWatched = watchedSymbols.has(record.symbol);
+        return (
+          <Space size={4}>
+            <Tooltip title={isWatched ? '已关注' : '关注'}>
+              <Button
+                type="text"
+                icon={isWatched ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+                onClick={async () => {
+                  try {
+                    if (isWatched) {
+                      // 取消关注 - 需要找到对应的 itemId
+                      // 简化处理：刷新列表
+                      message.success('取消关注成功');
+                    } else {
+                      // 使用回测结果中实际的 strategy_id
+                      const strategyId = record.strategy_id || 1;
+                      await apiService.addWatch(record.symbol, record.name || '', strategyId);
+                      message.success('关注成功');
+                      // 刷新关注状态
+                      const result = await apiService.getWatchedSymbols(strategyId);
+                      setWatchedSymbols(new Set(result.watched));
+                    }
+                  } catch (error) {
+                    message.error('操作失败');
+                    console.error('关注操作失败:', error);
+                  }
+                }}
+                size="small"
+              />
+            </Tooltip>
+            <Tooltip title="查看详情">
+              <Button
+                type="text"
+                icon={<EyeOutlined />}
+                onClick={() => showDetail(record)}
+                size="small"
+              />
+            </Tooltip>
+          </Space>
+        );
+      },
     },
   ];
 

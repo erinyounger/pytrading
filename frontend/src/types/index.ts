@@ -3,6 +3,7 @@ export interface BacktestResult {
   task_id?: string;
   symbol: string;
   name: string;
+  strategy_id?: number; // 策略ID
   strategy_name: string; // 添加策略名称字段
   backtest_start_time: string;
   backtest_end_time: string;
@@ -68,6 +69,8 @@ export interface SystemConfig {
   db_type: string;
   save_db: boolean;
   symbols: string[];
+  watchlist_auto_backtest_enabled?: boolean;
+  watchlist_auto_backtest_time?: string;
 }
 
 export interface PaginatedApiResponse<T> {
@@ -107,4 +110,31 @@ export interface TradeRecord {
   volume: number | null;
   signal_type: string;
   bar_time: string;
+}
+
+export interface WatchlistItem {
+  id: number;
+  symbol: string;
+  name: string;
+  strategy_id: number;
+  strategy_name?: string;
+  watch_type: string;
+  previous_watch_type?: string;
+  type_changed: boolean;
+  type_changed_at?: string;
+  pnl_ratio?: number;
+  sharp_ratio?: number;
+  max_drawdown?: number;
+  win_ratio?: number;
+  current_price?: number;
+  last_backtest_time?: string;
+  backtest_start_time?: string;
+  backtest_end_time?: string;
+  created_at: string;
+}
+
+export interface WatchlistResponse {
+  data: WatchlistItem[];
+  total: number;
+  type_changed_count: number;
 }

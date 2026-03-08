@@ -49,6 +49,10 @@ class LogRepository:
         from pytrading.db.mysql import BacktestLog
         session = self.Session()
         try:
+            # 映射日志级别到枚举值
+            level_mapping = {'WARNING': 'WARN', 'WARN': 'WARN', 'INFO': 'INFO', 'DEBUG': 'DEBUG', 'ERROR': 'ERROR'}
+            level = level_mapping.get(level.upper(), 'INFO')
+
             log = BacktestLog(task_id=task_id, symbol=symbol, level=level, message=message)
             session.add(log)
             session.commit()

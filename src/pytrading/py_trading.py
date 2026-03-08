@@ -264,6 +264,24 @@ class PyTrading:
             session.commit()
             logger.info(f"Backtest Task execution completed: Task ID: {task_id}, Task Status: completed")
 
+            # 更新关注列表中对应股票的指标
+            try:
+                from pytrading.db.mysql import WatchlistItem
+                from pytrading.service.watchlist_service import WatchlistService
+
+                watched_items = session.query(WatchlistItem).filter(
+                    WatchlistItem.symbol.in_(symbol_list),
+                    WatchlistItem.strategy_id == task.strategy_id,
+                ).all()
+
+                if watched_items:
+                    logger.info(f"Updating watchlist metrics for {len(watched_items)} items")
+                    for item in watched_items:
+                        WatchlistService.update_metrics(item.id, task_id)
+                    logger.info(f"Watchlist metrics update completed for task: {task_id}")
+            except Exception as watch_err:
+                logger.warning(f"Failed to update watchlist metrics: {watch_err}")
+
         except Exception as e:
             logger.error(f"Backtest Task execution failed: Task ID: {task_id}, Error: {str(e)}")
             logger.error(traceback.format_exc())

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse, LogQueryResponse, TradeRecord } from '../types';
+import { BacktestResult, Strategy, Symbol, BacktestConfig, TaskStatus, SystemConfig, ApiResponse, PaginatedApiResponse, LogQueryResponse, TradeRecord, WatchlistResponse } from '../types';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -239,6 +239,51 @@ export const apiService = {
     };
   }> => {
     const response = await api.get(`/api/stock-info/${symbol}`);
+    return response.data;
+  },
+
+  // 关注列表相关
+  addWatch: async (symbol: string, name: string, strategyId: number): Promise<any> => {
+    const response = await api.post('/api/watchlist', {
+      symbol,
+      name,
+      strategy_id: strategyId,
+    });
+    return response.data;
+  },
+
+  removeWatch: async (itemId: number): Promise<any> => {
+    const response = await api.delete(`/api/watchlist/${itemId}`);
+    return response.data;
+  },
+
+  getWatchlist: async (params?: {
+    sort_by?: string;
+    sort_order?: string;
+    watch_type?: string;
+  }): Promise<WatchlistResponse> => {
+    const response = await api.get('/api/watchlist', { params });
+    return response.data;
+  },
+
+  getWatchedSymbols: async (strategyId: number): Promise<{ watched: string[] }> => {
+    const response = await api.get('/api/watchlist/watched-symbols', {
+      params: { strategy_id: strategyId },
+    });
+    return response.data;
+  },
+
+  markWatchAsRead: async (itemId: number): Promise<any> => {
+    const response = await api.put(`/api/watchlist/${itemId}/read`);
+    return response.data;
+  },
+
+  startWatchlistBacktest: async (): Promise<{
+    task_ids: string[];
+    message: string;
+    skipped_strategies: string[];
+  }> => {
+    const response = await api.post('/api/watchlist/backtest');
     return response.data;
   },
 };

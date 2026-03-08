@@ -5,6 +5,7 @@ import {
   TrophyOutlined,
   BarChartOutlined,
   StarOutlined,
+  StarFilled,
   RiseOutlined,
   FallOutlined,
   SafetyOutlined,
@@ -86,6 +87,8 @@ const Dashboard: React.FC = () => {
   const [stockInfoModalVisible, setStockInfoModalVisible] = useState(false);
   const [stockInfo, setStockInfo] = useState<any>(null);
   const [stockInfoLoading, setStockInfoLoading] = useState(false);
+  // 关注列表相关状态
+  const [watchedSymbols, setWatchedSymbols] = useState<Set<string>>(new Set());
 
   // 智能评分算法：基于多因子模型（优化版）
   const calculateStockScore = (r: BacktestResult): { 
@@ -342,6 +345,19 @@ const Dashboard: React.FC = () => {
     }, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchData, handleRefresh]);
+
+  // 获取已关注的股票代码
+  useEffect(() => {
+    const fetchWatchedSymbols = async () => {
+      try {
+        const result = await apiService.getWatchedSymbols(1);
+        setWatchedSymbols(new Set(result.watched));
+      } catch (error) {
+        console.error('获取关注状态失败:', error);
+      }
+    };
+    fetchWatchedSymbols();
+  }, []);
 
   // 导出推荐列表为CSV
   const handleExport = () => {
@@ -718,6 +734,40 @@ const Dashboard: React.FC = () => {
           {v || '-'}
         </span>
       ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 60,
+      fixed: 'right' as const,
+      render: (_: any, record: EnrichedStock) => {
+        const isWatched = watchedSymbols.has(record.symbol);
+        return (
+          <Tooltip title={isWatched ? '已关注' : '关注'}>
+            <Button
+              type="text"
+              icon={isWatched ? <StarFilled style={{ color: '#faad14' }} /> : <StarOutlined />}
+              onClick={async (e) => {
+                e.stopPropagation();
+                try {
+                  if (isWatched) {
+                    message.success('取消关注成功');
+                  } else {
+                    await apiService.addWatch(record.symbol, record.name || '', 1);
+                    message.success('关注成功');
+                    const result = await apiService.getWatchedSymbols(1);
+                    setWatchedSymbols(new Set(result.watched));
+                  }
+                } catch (error) {
+                  message.error('操作失败');
+                  console.error('关注操作失败:', error);
+                }
+              }}
+              size="small"
+            />
+          </Tooltip>
+        );
+      },
     },
   ];
 

@@ -6,7 +6,7 @@
 @Email  : yflying7@gmail.com
 @Date    ：2022/11/20 21:36 
 """
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, UniqueConstraint, text, Boolean, JSON, Enum as SQLEnum, ForeignKey, DECIMAL, Text, BigInteger, Date
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, UniqueConstraint, text, Boolean, JSON, Enum as SQLEnum, ForeignKey, DECIMAL, Text, BigInteger, Date, Index
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
@@ -212,6 +212,33 @@ class StockKline(Base):
 
     __table_args__ = (
         UniqueConstraint('symbol', 'date', name='uq_symbol_date'),
+    )
+
+
+class WatchlistItem(Base):
+    """股票关注列表条目
+
+    代表用户关注的一支股票在特定策略下的跟踪记录
+    """
+    __tablename__ = 'watchlist_items'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='主键')
+    symbol = Column(String(20), nullable=False, comment='股票代码')
+    name = Column(String(100), comment='股票名称')
+    strategy_id = Column(Integer, nullable=False, comment='关联策略ID')
+    watch_type = Column(String(20), nullable=False, default='无状态', comment='关注类型')
+    previous_watch_type = Column(String(20), comment='上一次关注类型')
+    type_changed = Column(Boolean, nullable=False, default=False, comment='关注类型是否发生变化')
+    type_changed_at = Column(DateTime, comment='关注类型变化时间')
+    last_backtest_task_id = Column(String(100), comment='最近回测任务ID')
+    created_at = Column(DateTime, default=datetime.now, comment='关注时间')
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+    __table_args__ = (
+        UniqueConstraint('symbol', 'strategy_id', name='uk_symbol_strategy'),
+        Index('idx_watch_type', 'watch_type'),
+        Index('idx_type_changed', 'type_changed'),
+        Index('idx_strategy_id', 'strategy_id'),
     )
 
 

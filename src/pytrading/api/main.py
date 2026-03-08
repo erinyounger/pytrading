@@ -8,7 +8,9 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+from fastapi import Query
+from pydantic import BaseModel
 import uvicorn
 import os
 import sys
@@ -60,6 +62,7 @@ if os.path.exists("static"):
 # 全局变量:任务调度器
 task_scheduler_running = False
 task_scheduler_thread = None
+_last_scheduled_date = None  # 防止同一天重复触发定时回测
 
 def execute_backtest_task(task_id: str):
     """
@@ -73,6 +76,48 @@ def execute_backtest_task(task_id: str):
         logger.info(f"后台回测任务执行完成: {task_id}")
     except Exception as e:
         logger.error(f"后台回测任务执行失败: {task_id}, 错误: {str(e)}")
+
+def _check_scheduled_backtest(db_client):
+    """检查是否需要触发定时回测"""
+    global _last_scheduled_date
+    now = datetime.now()
+
+    # 仅工作日（周一至周五）
+    if now.weekday() >= 5:
+        return
+
+    today_str = now.strftime('%Y-%m-%d')
+    if _last_scheduled_date == today_str:
+        return  # 今天已触发过
+
+    try:
+        session = db_client.get_session()
+        try:
+            enabled_row = session.query(SystemConfig).filter_by(
+                config_key="watchlist_auto_backtest_enabled"
+            ).first()
+            if not enabled_row or enabled_row.config_value != "true":
+                return
+
+            time_row = session.query(SystemConfig).filter_by(
+                config_key="watchlist_auto_backtest_time"
+            ).first()
+            target_time = time_row.config_value if time_row else "17:00"
+
+            # 解析目标时间
+            hour, minute = map(int, target_time.split(':'))
+            target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+            if now >= target:
+                from pytrading.service.watchlist_service import WatchlistService
+                result = WatchlistService.create_backtest_tasks(source="scheduled")
+                _last_scheduled_date = today_str
+                logger.info(f"定时回测已触发: task_ids={result['task_ids']}, skipped={result['skipped_strategies']}")
+        finally:
+            session.close()
+    except Exception as e:
+        logger.error(f"定时回测检查失败: {e}")
+
 
 def task_scheduler():
     """
@@ -112,6 +157,9 @@ def task_scheduler():
 
             session.close()
 
+            # ===== 定时回测检查 =====
+            _check_scheduled_backtest(db_client)
+
             # 动态调整检查频率
             # 如果有pending任务，加快检查频率
             if pending_tasks:
@@ -134,9 +182,24 @@ def task_scheduler():
 async def startup_event():
     """应用启动事件"""
     global task_scheduler_running, task_scheduler_thread
-    
+
     logger.info("FastAPI应用启动")
-    
+
+    # 创建数据库表（如果不存在）
+    try:
+        from pytrading.db.mysql import MySQLClient
+        client = MySQLClient(
+            host=config.mysql_host,
+            port=config.mysql_port,
+            username=config.mysql_username,
+            password=config.mysql_password,
+            db_name=config.mysql_database,
+        )
+        client.create_tables()
+        logger.info("数据库表创建完成")
+    except Exception as e:
+        logger.warning(f"创建数据库表失败（表可能已存在）: {e}")
+
     # 启动任务调度器
     task_scheduler_running = True
     task_scheduler_thread = threading.Thread(target=task_scheduler)
@@ -864,19 +927,68 @@ async def delete_backtest_result(result_id: int):
 @app.get("/api/config")
 async def get_config():
     """获取系统配置"""
-    return {
+    base_config = {
         "trading_mode": os.getenv("TRADING_MODE", "backtest"),
         "db_type": os.getenv("DB_TYPE", "mysql"),
         "save_db": os.getenv("SAVE_DB", "true").lower() == "true",
         "symbols": os.getenv("SYMBOLS", "").split(",") if os.getenv("SYMBOLS") else []
     }
 
+    # 从 SystemConfig 表读取定时回测配置
+    try:
+        db_client = get_db_client()
+        session = db_client.get_session()
+        try:
+            for key in ["watchlist_auto_backtest_enabled", "watchlist_auto_backtest_time"]:
+                row = session.query(SystemConfig).filter_by(config_key=key).first()
+                if row:
+                    if key == "watchlist_auto_backtest_enabled":
+                        base_config[key] = row.config_value == "true"
+                    else:
+                        base_config[key] = row.config_value
+                else:
+                    if key == "watchlist_auto_backtest_enabled":
+                        base_config[key] = False
+                    else:
+                        base_config[key] = "17:00"
+        finally:
+            session.close()
+    except Exception as e:
+        logger.warning(f"读取定时回测配置失败: {e}")
+        base_config["watchlist_auto_backtest_enabled"] = False
+        base_config["watchlist_auto_backtest_time"] = "17:00"
+
+    return base_config
+
 @app.post("/api/config")
 async def update_config(config: dict):
     """更新系统配置"""
     try:
-        # 这里应该实现配置更新逻辑
-        # 暂时返回成功响应
+        db_client = get_db_client()
+        session = db_client.get_session()
+        try:
+            watchlist_keys = {"watchlist_auto_backtest_enabled", "watchlist_auto_backtest_time"}
+            for key in watchlist_keys:
+                if key in config:
+                    value = config[key]
+                    if key == "watchlist_auto_backtest_enabled":
+                        value = "true" if value else "false"
+
+                    row = session.query(SystemConfig).filter_by(config_key=key).first()
+                    if row:
+                        row.config_value = str(value)
+                    else:
+                        row = SystemConfig(
+                            config_key=key,
+                            config_value=str(value),
+                            config_type="string",
+                            description="关注列表定时回测配置",
+                        )
+                        session.add(row)
+            session.commit()
+        finally:
+            session.close()
+
         return {
             "status": "success",
             "message": "配置已更新",
@@ -1254,6 +1366,190 @@ async def get_stock_info(symbol: str):
     except Exception as e:
         logger.error(f"获取股票信息失败: {symbol}, error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取股票信息失败: {str(e)}")
+
+
+# ==================== 关注列表 API ====================
+
+class WatchlistRequest(BaseModel):
+    """关注请求模型"""
+    symbol: str
+    name: Optional[str] = None
+    strategy_id: int
+
+
+@app.post("/api/watchlist", response_model=Dict[str, Any])
+async def add_watchlist_item(request: WatchlistRequest):
+    """添加股票到关注列表"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        item = WatchlistService.add_watch(
+            symbol=request.symbol,
+            name=request.name or "",
+            strategy_id=request.strategy_id,
+        )
+
+        # 检查是否已存在
+        existing_count = WatchlistService.get_watchlist()["total"]
+        is_existing = existing_count > 0  # 简化判断
+
+        return {
+            "id": item.id,
+            "symbol": item.symbol,
+            "name": item.name,
+            "strategy_id": item.strategy_id,
+            "watch_type": item.watch_type,
+            "created_at": item.created_at.isoformat() if item.created_at else None,
+            "message": "该股票已在关注列表中" if is_existing else None,
+        }
+    except Exception as e:
+        logger.error(f"添加关注失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"添加关注失败: {str(e)}")
+
+
+@app.delete("/api/watchlist/{item_id}")
+async def remove_watchlist_item(item_id: int):
+    """取消关注"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        success = WatchlistService.remove_watch(item_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="关注条目不存在")
+
+        return {"message": "已取消关注", "symbol": None}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"取消关注失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"取消关注失败: {str(e)}")
+
+
+@app.get("/api/watchlist")
+async def get_watchlist(
+    sort_by: str = Query("created_at", description="排序字段"),
+    sort_order: str = Query("desc", description="排序方向"),
+    watch_type: Optional[str] = Query(None, description="筛选关注类型"),
+):
+    """获取关注列表"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        result = WatchlistService.get_watchlist(
+            sort_by=sort_by,
+            sort_order=sort_order,
+            watch_type=watch_type,
+        )
+
+        # 转换为响应格式
+        data = []
+        for entry in result["data"]:
+            item = entry["item"]
+            # 获取策略名称
+            strategy_name = None
+            from pytrading.db.mysql import Strategy
+            session = WatchlistService._get_session()
+            try:
+                strategy = session.query(Strategy).filter(Strategy.id == item.strategy_id).first()
+                if strategy:
+                    strategy_name = strategy.name
+            finally:
+                session.close()
+
+            data.append({
+                "id": item.id,
+                "symbol": item.symbol,
+                "name": item.name,
+                "strategy_id": item.strategy_id,
+                "strategy_name": strategy_name,
+                "watch_type": item.watch_type,
+                "previous_watch_type": item.previous_watch_type,
+                "type_changed": item.type_changed,
+                "type_changed_at": item.type_changed_at.isoformat() if item.type_changed_at else None,
+                "pnl_ratio": entry["pnl_ratio"],
+                "sharp_ratio": entry["sharp_ratio"],
+                "max_drawdown": entry["max_drawdown"],
+                "win_ratio": entry["win_ratio"],
+                "current_price": entry["current_price"],
+                "last_backtest_time": entry["last_backtest_time"].isoformat() if entry["last_backtest_time"] else None,
+                "backtest_start_time": entry["backtest_start_time"].isoformat() if entry["backtest_start_time"] else None,
+                "backtest_end_time": entry["backtest_end_time"].isoformat() if entry["backtest_end_time"] else None,
+                "created_at": item.created_at.isoformat() if item.created_at else None,
+            })
+
+        return {
+            "data": data,
+            "total": result["total"],
+            "type_changed_count": result["type_changed_count"],
+        }
+    except Exception as e:
+        logger.error(f"获取关注列表失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取关注列表失败: {str(e)}")
+
+
+@app.get("/api/watchlist/watched-symbols")
+async def get_watched_symbols(strategy_id: int = Query(..., description="策略ID")):
+    """批量查询已关注的股票代码"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        watched = WatchlistService.get_watchlist_by_symbols(strategy_id)
+        return {"watched": watched}
+    except Exception as e:
+        logger.error(f"批量查询失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"批量查询失败: {str(e)}")
+
+
+
+@app.put("/api/watchlist/{item_id}/read")
+async def mark_watchlist_item_read(item_id: int):
+    """标记关注类型变化已读"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        item = WatchlistService.mark_as_read(item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="关注条目不存在")
+
+        return {
+            "id": item.id,
+            "type_changed": item.type_changed,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"标记已读失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"标记已读失败: {str(e)}")
+
+
+@app.post("/api/watchlist/backtest")
+async def start_watchlist_backtest():
+    """一键回测关注列表中的股票"""
+    try:
+        from pytrading.service.watchlist_service import WatchlistService
+
+        result = WatchlistService.create_backtest_tasks(source="manual")
+        task_ids = result["task_ids"]
+        skipped = result["skipped_strategies"]
+
+        if not task_ids and not skipped:
+            return {"task_ids": [], "skipped_strategies": [], "message": "关注列表为空，无需回测"}
+
+        parts = []
+        if task_ids:
+            parts.append(f"已创建 {len(task_ids)} 个回测任务")
+        if skipped:
+            parts.append(f"跳过 {len(skipped)} 个策略（已有进行中的任务）")
+
+        return {
+            "task_ids": task_ids,
+            "skipped_strategies": skipped,
+            "message": "，".join(parts),
+        }
+    except Exception as e:
+        logger.error(f"一键回测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"一键回测失败: {str(e)}")
+
 
 if __name__ == "__main__":
     # 开发模式运行

@@ -7,10 +7,12 @@ import {
   SettingOutlined,
   ExperimentOutlined,
   UserOutlined,
+  StarOutlined,
 } from '@ant-design/icons';
 import Dashboard from './pages/Dashboard';
 import BacktestResults from './pages/BacktestResults';
 import BacktestManager from './pages/BacktestManager';
+import Watchlist from './pages/Watchlist';
 import Settings from './pages/Settings';
 import { darkTheme, globalDarkStyles } from './styles/darkTheme';
 import './index.css';
@@ -38,6 +40,11 @@ const App: React.FC = () => {
       key: '/backtest',
       icon: <BarChartOutlined />,
       label: '回测结果',
+    },
+    {
+      key: '/watchlist',
+      icon: <StarOutlined />,
+      label: '关注列表',
     },
     {
       key: '/backtest-manager',
@@ -117,6 +124,7 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/backtest" element={<BacktestResults />} />
+              <Route path="/watchlist" element={<Watchlist />} />
               <Route path="/backtest-manager" element={<BacktestManager />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>

@@ -133,12 +133,28 @@ class MySQLBackTestSaver(BackTestSaver):
             query = query.offset(offset).limit(per_page)
             
             results = []
+
+            # 预先加载所有策略映射 (strategy_name -> strategy_id)
+            strategy_map = {}
+            try:
+                from pytrading.db.mysql import Strategy
+                strategy_rows = session.query(Strategy.id, Strategy.name).all()
+                strategy_map = {row.name: row.id for row in strategy_rows}
+            except Exception:
+                pass  # 忽略查询错误
+
             for row in query.all():
+                # 如果 strategy_id 为空，尝试从 strategy_name 查找
+                strategy_id = row.strategy_id
+                if strategy_id is None and row.strategy_name:
+                    strategy_id = strategy_map.get(row.strategy_name)
+
                 result_dict = {
                     'id': row.id,
                     'task_id': row.task_id,
                     'symbol': row.symbol,
                     'name': row.name,
+                    'strategy_id': strategy_id,  # 策略ID
                     # 优先取strategy_name字段，如果没有则回退到none
                     'strategy_name': row.strategy_name if hasattr(row, 'strategy_name') else None,
                     'backtest_start_time': row.backtest_start_time.strftime('%Y-%m-%d %H:%M:%S') if row.backtest_start_time else None,
