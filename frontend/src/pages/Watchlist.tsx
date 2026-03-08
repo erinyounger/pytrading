@@ -192,6 +192,7 @@ const Watchlist: React.FC = () => {
 
   // 定时回测时间变化
   const handleTimeChange = async (time: any) => {
+    // 使用 HH:mm 格式确保只保存小时和分钟，不受时区影响
     const timeStr = time ? time.format('HH:mm') : '17:00';
     try {
       await apiService.updateConfig({
@@ -435,7 +436,7 @@ const Watchlist: React.FC = () => {
             <TimePicker
               size="small"
               format="HH:mm"
-              value={dayjs(autoBacktestTime, 'HH:mm')}
+              value={dayjs(`2000-01-01 ${autoBacktestTime}`)}
               onChange={handleTimeChange}
               disabled={!autoBacktestEnabled}
               style={{ width: 90 }}

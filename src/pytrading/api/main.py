@@ -81,14 +81,18 @@ def _check_scheduled_backtest(db_client):
     """检查是否需要触发定时回测"""
     global _last_scheduled_date
     now = datetime.now()
+    today_str = now.strftime('%Y-%m-%d')
+
+    logger.info(f"定时回测检查: now={now}, today={today_str}, last_date={_last_scheduled_date}")
 
     # 仅工作日（周一至周五）
     if now.weekday() >= 5:
+        logger.info("定时回测跳过: 周末")
         return
 
-    today_str = now.strftime('%Y-%m-%d')
     if _last_scheduled_date == today_str:
-        return  # 今天已触发过
+        logger.info("定时回测跳过: 今天已触发")
+        return
 
     try:
         session = db_client.get_session()
@@ -97,26 +101,31 @@ def _check_scheduled_backtest(db_client):
                 config_key="watchlist_auto_backtest_enabled"
             ).first()
             if not enabled_row or enabled_row.config_value != "true":
+                logger.info("定时回测跳过: 未开启")
                 return
 
             time_row = session.query(SystemConfig).filter_by(
                 config_key="watchlist_auto_backtest_time"
             ).first()
             target_time = time_row.config_value if time_row else "17:00"
+            logger.info(f"定时回测: target_time={target_time}")
 
             # 解析目标时间
             hour, minute = map(int, target_time.split(':'))
             target = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+            logger.info(f"定时回测: now={now}, target={target}, check={now >= target}")
 
             if now >= target:
                 from pytrading.service.watchlist_service import WatchlistService
                 result = WatchlistService.create_backtest_tasks(source="scheduled")
                 _last_scheduled_date = today_str
                 logger.info(f"定时回测已触发: task_ids={result['task_ids']}, skipped={result['skipped_strategies']}")
+            else:
+                logger.info("定时回测跳过: 未到触发时间")
         finally:
             session.close()
     except Exception as e:
-        logger.error(f"定时回测检查失败: {e}")
+        logger.error(f"定时回测检查失败: {e}", exc_info=True)
 
 
 def task_scheduler():
