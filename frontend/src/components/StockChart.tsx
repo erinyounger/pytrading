@@ -25,15 +25,19 @@ interface StockChartProps {
   tradeRecords?: TradeRecord[];
 }
 
-const MAIN_CHART_HEIGHT = 250;
+const MAIN_CHART_HEIGHT = 200;
+const VOLUME_CHART_HEIGHT = 100;
 const MACD_CHART_HEIGHT = 170;
 
 const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecords }) => {
   const mainChartContainerRef = useRef<HTMLDivElement>(null);
+  const volumeChartContainerRef = useRef<HTMLDivElement>(null);
   const macdChartContainerRef = useRef<HTMLDivElement>(null);
   const mainChartRef = useRef<IChartApi | null>(null);
+  const volumeChartRef = useRef<IChartApi | null>(null);
   const macdChartRef = useRef<IChartApi | null>(null);
   const candlestickSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const histogramSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   const lineDiffSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
   const lineDeaSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
@@ -64,7 +68,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
   };
 
   useEffect(() => {
-    if (!mainChartContainerRef.current || !macdChartContainerRef.current) return;
+    if (!mainChartContainerRef.current || !volumeChartContainerRef.current || !macdChartContainerRef.current) return;
 
     // 创建主图 - K线和均线
     const mainChart = createChart(mainChartContainerRef.current, {
@@ -105,6 +109,46 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
     });
 
     mainChartRef.current = mainChart;
+
+    // 创建成交量图
+    const volumeChart = createChart(volumeChartContainerRef.current, {
+      layout: {
+        background: { type: ColorType.Solid, color: '#ffffff' },
+        textColor: '#666',
+        fontSize: 11,
+      },
+      grid: {
+        vertLines: { color: '#eee' },
+        horzLines: { color: '#eee' },
+      },
+      width: volumeChartContainerRef.current.clientWidth,
+      height: VOLUME_CHART_HEIGHT,
+      timeScale: {
+        timeVisible: true,
+        secondsVisible: false,
+        borderColor: '#ddd',
+      },
+      rightPriceScale: {
+        borderColor: '#ddd',
+      },
+      crosshair: {
+        mode: 1,
+        vertLine: {
+          width: 1,
+          color: '#758696',
+          style: 2,
+          labelBackgroundColor: '#758696',
+        },
+        horzLine: {
+          width: 1,
+          color: '#758696',
+          style: 2,
+          labelBackgroundColor: '#758696',
+        },
+      },
+    });
+
+    volumeChartRef.current = volumeChart;
 
     // 创建MACD图
     const macdChart = createChart(macdChartContainerRef.current, {
@@ -192,6 +236,15 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
     });
     ma60SeriesRef.current = ma60Series;
 
+    // 添加成交量直方图系列到成交量图
+    const volumeSeries = volumeChart.addSeries(HistogramSeries, {
+      priceFormat: {
+        type: 'volume',
+      },
+      priceScaleId: '',
+    });
+    volumeSeriesRef.current = volumeSeries;
+
     // 添加MACD柱状图系列到MACD图
     const histogramSeries = macdChart.addSeries(HistogramSeries, {
       priceFormat: {
@@ -222,39 +275,65 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
     });
     lineDeaSeriesRef.current = lineDeaSeries;
 
-    // 双图表联动逻辑
+    // 三图表联动逻辑
     let isSyncing = false;
 
-    // 主图滚动时同步MACD图
-    const mainRangeHandler = (range: any) => {
-      if (isSyncing || !range || !macdChartRef.current) return;
+    // 同步所有图表的可见范围
+    const syncCharts = (range: any, sourceChart: IChartApi) => {
+      if (!range) return;
       try {
-        isSyncing = true;
-        macdChartRef.current.timeScale().setVisibleRange(range);
+        if (sourceChart !== mainChart && mainChartRef.current) {
+          mainChartRef.current.timeScale().setVisibleRange(range);
+        }
+        if (sourceChart !== volumeChart && volumeChartRef.current) {
+          volumeChartRef.current.timeScale().setVisibleRange(range);
+        }
+        if (sourceChart !== macdChart && macdChartRef.current) {
+          macdChartRef.current.timeScale().setVisibleRange(range);
+        }
       } catch (e) {
         // 忽略同步错误
+      }
+    };
+
+    // 主图滚动时同步成交量图和MACD图
+    const mainRangeHandler = (range: any) => {
+      if (isSyncing || !range) return;
+      try {
+        isSyncing = true;
+        syncCharts(range, mainChart);
       } finally {
         isSyncing = false;
       }
     };
 
-    // MACD图滚动时同步主图
-    const macdRangeHandler = (range: any) => {
-      if (isSyncing || !range || !mainChartRef.current) return;
+    // 成交量图滚动时同步主图和MACD图
+    const volumeRangeHandler = (range: any) => {
+      if (isSyncing || !range) return;
       try {
         isSyncing = true;
-        mainChartRef.current.timeScale().setVisibleRange(range);
-      } catch (e) {
-        // 忽略同步错误
+        syncCharts(range, volumeChart);
+      } finally {
+        isSyncing = false;
+      }
+    };
+
+    // MACD图滚动时同步主图和成交量图
+    const macdRangeHandler = (range: any) => {
+      if (isSyncing || !range) return;
+      try {
+        isSyncing = true;
+        syncCharts(range, macdChart);
       } finally {
         isSyncing = false;
       }
     };
 
     mainChart.timeScale().subscribeVisibleTimeRangeChange(mainRangeHandler);
+    volumeChart.timeScale().subscribeVisibleTimeRangeChange(volumeRangeHandler);
     macdChart.timeScale().subscribeVisibleTimeRangeChange(macdRangeHandler);
 
-    // 十字光标同步 - 让两个图表的时间轴同步
+    // 十字光标同步 - 让三个图表的时间轴同步
     let isCrosshairSyncing = false;
     const crosshairHandler = (param: any) => {
       // 获取当前光标位置的值
@@ -282,17 +361,28 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
       const time = param.time;
       try {
         isCrosshairSyncing = true;
-        // 同步另一个图表的十字光标位置
-        if (param.chart === mainChart && macdChartRef.current) {
-          macdChartRef.current.timeScale().setVisibleRange({
-            from: time as any,
-            to: time as any,
-          } as any);
-        } else if (param.chart === macdChart && mainChartRef.current) {
-          mainChartRef.current.timeScale().setVisibleRange({
-            from: time as any,
-            to: time as any,
-          } as any);
+        // 同步其他图表的十字光标位置
+        if (param.chart === mainChart) {
+          if (volumeChartRef.current) {
+            volumeChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
+          if (macdChartRef.current) {
+            macdChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
+        } else if (param.chart === volumeChart) {
+          if (mainChartRef.current) {
+            mainChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
+          if (macdChartRef.current) {
+            macdChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
+        } else if (param.chart === macdChart) {
+          if (mainChartRef.current) {
+            mainChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
+          if (volumeChartRef.current) {
+            volumeChartRef.current.timeScale().setVisibleRange({ from: time as any, to: time as any } as any);
+          }
         }
       } catch (e) {
         // 忽略同步错误
@@ -302,6 +392,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
     };
 
     mainChart.subscribeCrosshairMove(crosshairHandler);
+    volumeChart.subscribeCrosshairMove(crosshairHandler);
     macdChart.subscribeCrosshairMove(crosshairHandler);
 
     // 处理窗口大小变化
@@ -309,6 +400,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
       if (mainChartContainerRef.current && mainChartRef.current) {
         mainChartRef.current.applyOptions({
           width: mainChartContainerRef.current.clientWidth,
+        });
+      }
+      if (volumeChartContainerRef.current && volumeChartRef.current) {
+        volumeChartRef.current.applyOptions({
+          width: volumeChartContainerRef.current.clientWidth,
         });
       }
       if (macdChartContainerRef.current && macdChartRef.current) {
@@ -323,17 +419,21 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
     return () => {
       window.removeEventListener('resize', handleResize);
       mainChart.timeScale().unsubscribeVisibleTimeRangeChange(mainRangeHandler);
+      volumeChart.timeScale().unsubscribeVisibleTimeRangeChange(volumeRangeHandler);
       macdChart.timeScale().unsubscribeVisibleTimeRangeChange(macdRangeHandler);
       mainChart.unsubscribeCrosshairMove(crosshairHandler);
+      volumeChart.unsubscribeCrosshairMove(crosshairHandler);
       macdChart.unsubscribeCrosshairMove(crosshairHandler);
       mainChart.remove();
+      volumeChart.remove();
       macdChart.remove();
     };
   }, []);
 
   // 更新数据
   useEffect(() => {
-    if (!candlestickSeriesRef.current || !histogramSeriesRef.current ||
+    if (!candlestickSeriesRef.current || !volumeSeriesRef.current ||
+        !histogramSeriesRef.current ||
         !lineDiffSeriesRef.current || !lineDeaSeriesRef.current ||
         !ma5SeriesRef.current || !ma10SeriesRef.current ||
         !ma20SeriesRef.current || !ma60SeriesRef.current || !data.length) return;
@@ -355,6 +455,13 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
       high: item.high,
       low: item.low,
       close: item.close,
+    }));
+
+    // 成交量数据 - 上涨日红色，下跌日绿色
+    const volumeData: HistogramData<Time>[] = dataWithMA.map(item => ({
+      time: item.date as Time,
+      value: item.volume,
+      color: item.close >= item.open ? '#e74c3c' : '#2ecc71',
     }));
 
     // MACD柱状图数据
@@ -413,6 +520,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
       }));
 
     candlestickSeriesRef.current.setData(candleData);
+    volumeSeriesRef.current.setData(volumeData);
     histogramSeriesRef.current.setData(macdData);
     lineDiffSeriesRef.current.setData(diffData);
     lineDeaSeriesRef.current.setData(deaData);
@@ -472,7 +580,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        height: MAIN_CHART_HEIGHT + MACD_CHART_HEIGHT,
+        height: MAIN_CHART_HEIGHT + VOLUME_CHART_HEIGHT + MACD_CHART_HEIGHT,
         color: '#999',
         background: '#f9f9f9',
         borderRadius: 4
@@ -500,6 +608,10 @@ const StockChart: React.FC<StockChartProps> = ({ data, symbol, name, tradeRecord
         <div
           ref={mainChartContainerRef}
           style={{ width: '100%', height: MAIN_CHART_HEIGHT }}
+        />
+        <div
+          ref={volumeChartContainerRef}
+          style={{ width: '100%', height: VOLUME_CHART_HEIGHT }}
         />
         <div
           ref={macdChartContainerRef}
