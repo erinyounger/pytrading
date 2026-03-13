@@ -60,10 +60,15 @@ def get_market_data(symbol):
 
         # 获取市值（使用最新数据）
         try:
-            # 尝试获取市值数据
-            mkt_data = stk_get_daily_mktvalue_pt(symbols=symbol, fields='symbol,total_mv', df=True)
-            market_cap = float(mkt_data['total_mv'].iloc[0]) / 10000 if mkt_data is not None and not mkt_data.empty else None
-        except:
+            # 获取市值数据，不传日期返回最新
+            mkt_data = stk_get_daily_mktvalue_pt(symbols=symbol, fields='symbol,tot_mv', df=True)
+            if mkt_data is not None and not mkt_data.empty:
+                # tot_mv 单位是分，转为亿元
+                market_cap = float(mkt_data['tot_mv'].iloc[0]) / 100000000
+            else:
+                market_cap = None
+        except Exception as e:
+            logger.warning(f"获取市值失败: {symbol}, error: {e}")
             market_cap = None
 
         return volume_avg_7d, atr_value, market_cap

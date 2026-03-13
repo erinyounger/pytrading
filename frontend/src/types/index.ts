@@ -24,7 +24,6 @@ export interface BacktestResult {
   stop_loss_price?: number; // 止损价位（计算得出）
   industry?: string; // 所属行业
   market_cap?: number; // 市值（亿元）
-  max_drawdown_duration?: number; // 最大回撤持续天数
   created_at?: string;
 }
 

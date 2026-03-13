@@ -104,7 +104,6 @@ const BacktestResults: React.FC = () => {
     pnlRange: null as any, // 收益率范围
     winRatioRange: null as any, // 胜率范围
     marketCapRange: null as any, // 市值范围（亿元）
-    drawdownDurationRange: null as any, // 回撤持续时间（天）
   });
   const [pagination, setPagination] = useState({
     current: 1,
@@ -142,8 +141,6 @@ const BacktestResults: React.FC = () => {
         max_win_ratio: filters.winRatioRange?.[1],
         min_market_cap: filters.marketCapRange?.[0],
         max_market_cap: filters.marketCapRange?.[1],
-        min_drawdown_duration: filters.drawdownDurationRange?.[0],
-        max_drawdown_duration: filters.drawdownDurationRange?.[1],
         sort_by: sortBy || undefined,
         sort_order: sortOrder || undefined,
       };
@@ -219,7 +216,6 @@ const BacktestResults: React.FC = () => {
       pnlRange: null,
       winRatioRange: null,
       marketCapRange: null,
-      drawdownDurationRange: null,
     });
     // 清除筛选后由 filters effect 触发刷新
   };
@@ -457,13 +453,6 @@ const BacktestResults: React.FC = () => {
           {value != null ? value.toFixed(0) : '-'}
         </span>
       ),
-    },
-    {
-      title: '回撤天数',
-      dataIndex: 'max_drawdown_duration',
-      key: 'max_drawdown_duration',
-      align: 'center' as const,
-      render: (value?: number) => value != null ? value : '-',
     },
     {
       title: '策略名称',
@@ -1041,36 +1030,6 @@ const BacktestResults: React.FC = () => {
                   onChange={(value) => {
                     const newRange = [filters.marketCapRange?.[0], value].filter(v => v !== undefined);
                     handleFilterChange('marketCapRange', newRange.length > 0 ? newRange : null);
-                  }}
-                  min={0}
-                  precision={0}
-                  size="small"
-                />
-              </div>
-            </Col> */}
-            {/* 回撤持续时间筛选（天）- 暂不使用 */}
-            {/* <Col xs={12} sm={8} md={4} lg={4}>
-              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                <InputNumber
-                  placeholder="最小回撤天数"
-                  style={{ width: '100%' }}
-                  value={filters.drawdownDurationRange?.[0]}
-                  onChange={(value) => {
-                    const newRange = [value, filters.drawdownDurationRange?.[1]].filter(v => v !== undefined);
-                    handleFilterChange('drawdownDurationRange', newRange.length > 0 ? newRange : null);
-                  }}
-                  min={0}
-                  precision={0}
-                  size="small"
-                />
-                <span style={{ color: '#999' }}>~</span>
-                <InputNumber
-                  placeholder="最大回撤天数"
-                  style={{ width: '100%' }}
-                  value={filters.drawdownDurationRange?.[1]}
-                  onChange={(value) => {
-                    const newRange = [filters.drawdownDurationRange?.[0], value].filter(v => v !== undefined);
-                    handleFilterChange('drawdownDurationRange', newRange.length > 0 ? newRange : null);
                   }}
                   min={0}
                   precision={0}
