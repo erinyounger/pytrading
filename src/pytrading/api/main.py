@@ -1656,6 +1656,140 @@ async def start_watchlist_backtest():
         raise HTTPException(status_code=500, detail=f"一键回测失败: {str(e)}")
 
 
+# ==================== 实时行情 API ====================
+
+def fetch_tencent_quote(code: str) -> dict:
+    """从腾讯财经获取行情"""
+    import requests
+    import json
+    
+    # 转换代码格式
+    if code.startswith('SHSE.'):
+        symbol = 'sh' + code.split('.')[-1]
+    elif code.startswith('SZSE.'):
+        symbol = 'sz' + code.split('.')[-1]
+    else:
+        symbol = code
+    
+    url = f"https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={symbol},day,,,1,qf"
+    try:
+        resp = requests.get(url, timeout=10)
+        data = resp.json()
+        qt = data.get('data', {}).get(symbol, {}).get('qt', {}).get(symbol, [])
+        if len(qt) > 32:
+            # qt[3] = 当前价, qt[31] = 涨跌额, qt[32] = 涨跌幅%
+            return {
+                "price": float(qt[3]),
+                "change_amount": float(qt[31]),
+                "change_pct": float(qt[32]),
+            }
+    except Exception as e:
+        logger.warning(f"获取行情失败: {code}, {e}")
+    return {}
+
+
+@app.get("/api/market/indices")
+async def get_market_indices():
+    """获取大盘指数实时行情"""
+    try:
+        indices = [
+            {"code": "000001", "name": "上证指数", "symbol": "SHSE.000001"},
+            {"code": "399001", "name": "深证成指", "symbol": "SZSE.399001"},
+            {"code": "399006", "name": "创业板指", "symbol": "SZSE.399006"},
+            {"code": "000300", "name": "沪深300", "symbol": "SHSE.000300"},
+        ]
+        
+        result = []
+        for idx in indices:
+            quote = fetch_tencent_quote(idx['symbol'])
+            if quote:
+                result.append({
+                    "code": idx['code'],
+                    "name": idx['name'],
+                    "symbol": idx['symbol'],
+                    "price": quote.get('price'),
+                    "change_pct": quote.get('change_pct'),
+                    "change_amount": quote.get('change_amount'),
+                })
+        
+        return {"data": result}
+    except Exception as e:
+        logger.error(f"获取大盘指数失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取大盘指数失败: {str(e)}")
+
+
+@app.get("/api/market/summary")
+async def get_market_summary():
+    """获取市场整体情况（涨跌停、成交额等）"""
+    try:
+        import akshare as ak
+        spot = ak.stock_zh_a_spot_em()
+        
+        # 涨跌停统计
+        limit_up = len(spot[spot['涨跌幅'] >= 9.9])
+        limit_down = len(spot[spot['涨跌幅'] <= -9.9])
+        
+        # 上涨下跌家数
+        up_count = len(spot[spot['涨跌幅'] > 0])
+        down_count = len(spot[spot['涨跌幅'] < 0])
+        flat_count = len(spot[spot['涨跌幅'] == 0])
+        
+        # 成交总额（亿）
+        total_amount = spot['成交额'].sum() / 1e8
+        
+        return {
+            "data": {
+                "limit_up": limit_up,
+                "limit_down": limit_down,
+                "up_count": up_count,
+                "down_count": down_count,
+                "flat_count": flat_count,
+                "total_amount": round(total_amount, 0),
+                "total_stocks": len(spot),
+            }
+        }
+    except Exception as e:
+        logger.error(f"获取市场概况失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取市场概况失败: {str(e)}")
+
+
+@app.get("/api/market/top/{type}")
+async def get_market_top(type: str):
+    """
+    获取涨跌幅排行
+    type: rise (涨幅榜) / fall (跌幅榜) / volume (成交额榜)
+    """
+    try:
+        import akshare as ak
+        spot = ak.stock_zh_a_spot_em()
+        
+        if type == "rise":
+            df = spot.nlargest(10, '涨跌幅')
+        elif type == "fall":
+            df = spot.nsmallest(10, '涨跌幅')
+        elif type == "volume":
+            df = spot.nlargest(10, '成交额')
+        else:
+            raise HTTPException(status_code=400, detail="type must be: rise, fall, volume")
+        
+        result = []
+        for _, r in df.iterrows():
+            result.append({
+                "code": r['代码'],
+                "name": r['名称'],
+                "price": float(r['最新价']) if r['最新价'] else None,
+                "change_pct": float(r['涨跌幅']) if r['涨跌幅'] else None,
+                "amount": float(r['成交额']) if r['成交额'] else None,
+            })
+        
+        return {"data": result}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取排行失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取排行失败: {str(e)}")
+
+
 if __name__ == "__main__":
     # 开发模式运行
     uvicorn.run(
