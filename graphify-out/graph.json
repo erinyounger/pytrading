@@ -4,54 +4,84 @@
   "graph": {
     "hyperedges": [
       {
-        "id": "watch_type_mapping_hyperedge",
-        "label": "TrendingType\u5230WatchType\u6620\u5c04\u5173\u7cfb",
-        "nodes": [
-          "trending_type_enum",
-          "watch_type_enum",
-          "trade_records_table",
-          "watch_type_no_state",
-          "watch_type_watching",
-          "watch_type_trend_up",
-          "watch_type_trend_down",
-          "watch_type_trend_end"
-        ],
-        "relation": "participate_in",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "specs/002-stock-watchlist/research.md"
-      },
-      {
-        "id": "market_data_test_fixtures",
-        "label": "\u5e02\u573a\u884c\u60c5\u6d4b\u8bd5\u6570\u636e\u96c6",
-        "nodes": [
-          "market_data_fixtures",
-          "bullish_trend_fixture",
-          "bearish_trend_fixture",
-          "sideways_range_fixture",
-          "golden_cross_fixture"
-        ],
-        "relation": "form",
-        "confidence": "EXTRACTED",
-        "confidence_score": 1.0,
-        "source_file": "specs/001-test-infra/data-model.md"
-      },
-      {
-        "id": "trade_signal_system",
+        "id": "macd_trading_signal_system",
         "label": "MACD\u7b56\u7565\u4ea4\u6613\u4fe1\u53f7\u7cfb\u7edf",
         "nodes": [
-          "macd_strategy",
-          "order_with_signal",
-          "trade_record_entity",
-          "trade_signal_build",
-          "trade_signal_buy",
-          "trade_signal_sell",
-          "trade_signal_close"
+          "MacdStrategy",
+          "Order_with_signal",
+          "TradeRecord",
+          "on_bar_handler",
+          "signal_build",
+          "signal_buy",
+          "signal_sell",
+          "signal_close"
         ],
         "relation": "participate_in",
         "confidence": "EXTRACTED",
         "confidence_score": 1.0,
         "source_file": "docs/design/kline-trade-signals.md"
+      },
+      {
+        "id": "trending_to_watch_mapping",
+        "label": "TrendingType\u5230WatchType\u6620\u5c04\u5173\u7cfb",
+        "nodes": [
+          "TrendingType",
+          "WatchType",
+          "backtest_results_table",
+          "WatchType_NO_STATE",
+          "WatchType_WATCHING",
+          "WatchType_TREND_UP",
+          "WatchType_TREND_DOWN",
+          "WatchType_TREND_END"
+        ],
+        "relation": "form",
+        "confidence": "EXTRACTED",
+        "confidence_score": 1.0,
+        "source_file": "docs/design/watchlist.md"
+      },
+      {
+        "id": "watchlist_architecture",
+        "label": "Watchlist Feature Architecture",
+        "nodes": [
+          "WatchlistItem",
+          "watchlist_items_table",
+          "backtest_results_table",
+          "WatchlistService",
+          "FastAPI_backend",
+          "React_frontend",
+          "WatchType",
+          "TrendingType"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 0.85,
+        "source_file": "docs/design/watchlist.md"
+      },
+      {
+        "id": "sort_arrow_sprite_sheet",
+        "label": "Sort Arrow Sprite Sheet States",
+        "nodes": [
+          "up_arrow_state",
+          "down_arrow_state",
+          "neutral_arrow_state"
+        ],
+        "relation": "participate_in",
+        "confidence": "EXTRACTED",
+        "confidence_score": 0.85,
+        "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png"
+      },
+      {
+        "id": "coverage_report_visual_identity",
+        "label": "Coverage Report Visual Identity Elements",
+        "nodes": [
+          "favicon_entity",
+          "letter_f_icon",
+          "lcov_coverage_report"
+        ],
+        "relation": "form",
+        "confidence": "INFERRED",
+        "confidence_score": 0.8,
+        "source_file": "frontend/coverage/lcov-report/favicon.png"
       }
     ]
   },
@@ -62,7 +92,7 @@
       "source_file": "start.py",
       "source_location": "L1",
       "id": "start",
-      "community": 4
+      "community": 5
     },
     {
       "label": "_log()",
@@ -70,7 +100,7 @@
       "source_file": "start.py",
       "source_location": "L19",
       "id": "start_log",
-      "community": 4
+      "community": 5
     },
     {
       "label": "print_header()",
@@ -78,7 +108,7 @@
       "source_file": "start.py",
       "source_location": "L23",
       "id": "start_print_header",
-      "community": 4
+      "community": 5
     },
     {
       "label": "print_info()",
@@ -86,7 +116,7 @@
       "source_file": "start.py",
       "source_location": "L29",
       "id": "start_print_info",
-      "community": 4
+      "community": 5
     },
     {
       "label": "print_ok()",
@@ -94,7 +124,7 @@
       "source_file": "start.py",
       "source_location": "L33",
       "id": "start_print_ok",
-      "community": 4
+      "community": 5
     },
     {
       "label": "print_error()",
@@ -102,7 +132,7 @@
       "source_file": "start.py",
       "source_location": "L37",
       "id": "start_print_error",
-      "community": 4
+      "community": 5
     },
     {
       "label": "print_warning()",
@@ -110,7 +140,7 @@
       "source_file": "start.py",
       "source_location": "L41",
       "id": "start_print_warning",
-      "community": 4
+      "community": 5
     },
     {
       "label": "get_venv_python()",
@@ -118,7 +148,7 @@
       "source_file": "start.py",
       "source_location": "L46",
       "id": "start_get_venv_python",
-      "community": 4
+      "community": 5
     },
     {
       "label": "run_command()",
@@ -126,7 +156,7 @@
       "source_file": "start.py",
       "source_location": "L52",
       "id": "start_run_command",
-      "community": 4
+      "community": 5
     },
     {
       "label": "kill_process_on_port()",
@@ -134,7 +164,7 @@
       "source_file": "start.py",
       "source_location": "L67",
       "id": "start_kill_process_on_port",
-      "community": 4
+      "community": 5
     },
     {
       "label": "check_python_version()",
@@ -142,7 +172,7 @@
       "source_file": "start.py",
       "source_location": "L123",
       "id": "start_check_python_version",
-      "community": 4
+      "community": 5
     },
     {
       "label": "get_uv_path()",
@@ -150,7 +180,7 @@
       "source_file": "start.py",
       "source_location": "L133",
       "id": "start_get_uv_path",
-      "community": 4
+      "community": 5
     },
     {
       "label": "check_node_environment()",
@@ -158,7 +188,7 @@
       "source_file": "start.py",
       "source_location": "L149",
       "id": "start_check_node_environment",
-      "community": 4
+      "community": 5
     },
     {
       "label": "setup_virtual_environment()",
@@ -166,7 +196,7 @@
       "source_file": "start.py",
       "source_location": "L176",
       "id": "start_setup_virtual_environment",
-      "community": 4
+      "community": 5
     },
     {
       "label": "install_frontend_deps()",
@@ -174,7 +204,7 @@
       "source_file": "start.py",
       "source_location": "L224",
       "id": "start_install_frontend_deps",
-      "community": 4
+      "community": 5
     },
     {
       "label": "build_frontend()",
@@ -182,7 +212,7 @@
       "source_file": "start.py",
       "source_location": "L246",
       "id": "start_build_frontend",
-      "community": 4
+      "community": 5
     },
     {
       "label": "_start_service()",
@@ -190,7 +220,7 @@
       "source_file": "start.py",
       "source_location": "L270",
       "id": "start_start_service",
-      "community": 4
+      "community": 5
     },
     {
       "label": "start_backend()",
@@ -198,7 +228,7 @@
       "source_file": "start.py",
       "source_location": "L285",
       "id": "start_start_backend",
-      "community": 4
+      "community": 5
     },
     {
       "label": "start_frontend()",
@@ -206,7 +236,7 @@
       "source_file": "start.py",
       "source_location": "L305",
       "id": "start_start_frontend",
-      "community": 4
+      "community": 5
     },
     {
       "label": "restart_services()",
@@ -214,7 +244,7 @@
       "source_file": "start.py",
       "source_location": "L321",
       "id": "start_restart_services",
-      "community": 4
+      "community": 5
     },
     {
       "label": "main()",
@@ -222,7 +252,7 @@
       "source_file": "start.py",
       "source_location": "L348",
       "id": "start_main",
-      "community": 4
+      "community": 5
     },
     {
       "label": "_wait_forever()",
@@ -230,7 +260,7 @@
       "source_file": "start.py",
       "source_location": "L441",
       "id": "start_wait_forever",
-      "community": 4
+      "community": 5
     },
     {
       "label": "_print_completion_info()",
@@ -238,7 +268,7 @@
       "source_file": "start.py",
       "source_location": "L453",
       "id": "start_print_completion_info",
-      "community": 4
+      "community": 5
     },
     {
       "label": "\u83b7\u53d6\u865a\u62df\u73af\u5883 Python \u53ef\u6267\u884c\u6587\u4ef6\u8def\u5f84",
@@ -246,7 +276,7 @@
       "source_file": "start.py",
       "source_location": "L47",
       "id": "start_rationale_47",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Kill process using the specified port (with retry, cross-platform)",
@@ -254,7 +284,7 @@
       "source_file": "start.py",
       "source_location": "L68",
       "id": "start_rationale_68",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Check if Python 3.9+ is available",
@@ -262,7 +292,7 @@
       "source_file": "start.py",
       "source_location": "L124",
       "id": "start_rationale_124",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Get path to uv executable",
@@ -270,7 +300,7 @@
       "source_file": "start.py",
       "source_location": "L134",
       "id": "start_rationale_134",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Check Node.js and npm environment",
@@ -278,7 +308,7 @@
       "source_file": "start.py",
       "source_location": "L150",
       "id": "start_rationale_150",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Setup Python virtual environment with uv",
@@ -286,7 +316,7 @@
       "source_file": "start.py",
       "source_location": "L177",
       "id": "start_rationale_177",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Install frontend dependencies",
@@ -294,7 +324,7 @@
       "source_file": "start.py",
       "source_location": "L225",
       "id": "start_rationale_225",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Build frontend application",
@@ -302,7 +332,7 @@
       "source_file": "start.py",
       "source_location": "L247",
       "id": "start_rationale_247",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Start backend service",
@@ -310,7 +340,7 @@
       "source_file": "start.py",
       "source_location": "L286",
       "id": "start_rationale_286",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Start frontend service",
@@ -318,7 +348,7 @@
       "source_file": "start.py",
       "source_location": "L306",
       "id": "start_rationale_306",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Restart backend and frontend services",
@@ -326,7 +356,7 @@
       "source_file": "start.py",
       "source_location": "L322",
       "id": "start_rationale_322",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Wait indefinitely until keyboard interrupt",
@@ -334,7 +364,7 @@
       "source_file": "start.py",
       "source_location": "L442",
       "id": "start_rationale_442",
-      "community": 4
+      "community": 5
     },
     {
       "label": "Print completion information",
@@ -342,7 +372,7 @@
       "source_file": "start.py",
       "source_location": "L454",
       "id": "start_rationale_454",
-      "community": 4
+      "community": 5
     },
     {
       "label": "run.py",
@@ -350,71 +380,7 @@
       "source_file": "run.py",
       "source_location": "L1",
       "id": "run",
-      "community": 37
-    },
-    {
-      "label": "coverage_html_cb_dd2e7eb5.js",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L1",
-      "id": "coverage_html_cb_dd2e7eb5",
-      "community": 22
-    },
-    {
-      "label": "debounce()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L11",
-      "id": "coverage_html_cb_dd2e7eb5_debounce",
-      "community": 22
-    },
-    {
-      "label": "checkVisible()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L21",
-      "id": "coverage_html_cb_dd2e7eb5_checkvisible",
-      "community": 22
-    },
-    {
-      "label": "on_click()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L28",
-      "id": "coverage_html_cb_dd2e7eb5_on_click",
-      "community": 22
-    },
-    {
-      "label": "getCellValue()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L36",
-      "id": "coverage_html_cb_dd2e7eb5_getcellvalue",
-      "community": 22
-    },
-    {
-      "label": "rowComparator()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L50",
-      "id": "coverage_html_cb_dd2e7eb5_rowcomparator",
-      "community": 22
-    },
-    {
-      "label": "sortColumn()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L59",
-      "id": "coverage_html_cb_dd2e7eb5_sortcolumn",
-      "community": 22
-    },
-    {
-      "label": "updateHeader()",
-      "file_type": "code",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L699",
-      "id": "coverage_html_cb_dd2e7eb5_updateheader",
-      "community": 22
+      "community": 40
     },
     {
       "label": "py_trading.py",
@@ -422,7 +388,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L1",
       "id": "py_trading",
-      "community": 2
+      "community": 1
     },
     {
       "label": "PyTrading",
@@ -430,7 +396,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L23",
       "id": "py_trading_pytrading",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".__init__()",
@@ -438,7 +404,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L27",
       "id": "py_trading_pytrading_init",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".run()",
@@ -446,7 +412,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L44",
       "id": "py_trading_pytrading_run",
-      "community": 2
+      "community": 1
     },
     {
       "label": "get_index_symbols()",
@@ -454,7 +420,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L49",
       "id": "py_trading_get_index_symbols",
-      "community": 2
+      "community": 1
     },
     {
       "label": "._check_task_cancelled()",
@@ -462,7 +428,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L57",
       "id": "py_trading_pytrading_check_task_cancelled",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".run_strategy()",
@@ -470,7 +436,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L73",
       "id": "py_trading_pytrading_run_strategy",
-      "community": 2
+      "community": 1
     },
     {
       "label": "terminate_task()",
@@ -478,7 +444,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L141",
       "id": "py_trading_terminate_task",
-      "community": 2
+      "community": 1
     },
     {
       "label": "run_backtest_task()",
@@ -486,7 +452,7 @@
       "source_file": "src/pytrading/py_trading.py",
       "source_location": "L149",
       "id": "py_trading_run_backtest_task",
-      "community": 2
+      "community": 1
     },
     {
       "label": "__init__.py",
@@ -494,7 +460,7 @@
       "source_file": "tests/fixtures/__init__.py",
       "source_location": "L1",
       "id": "init",
-      "community": 9
+      "community": 11
     },
     {
       "label": "logger.py",
@@ -502,7 +468,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L1",
       "id": "logger",
-      "community": 11
+      "community": 10
     },
     {
       "label": "DBLogHandler",
@@ -510,7 +476,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L38",
       "id": "logger_dbloghandler",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".__init__()",
@@ -518,7 +484,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L40",
       "id": "logger_dbloghandler_init",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".emit()",
@@ -526,7 +492,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L46",
       "id": "logger_dbloghandler_emit",
-      "community": 11
+      "community": 10
     },
     {
       "label": "set_log_context()",
@@ -534,7 +500,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L84",
       "id": "logger_set_log_context",
-      "community": 11
+      "community": 10
     },
     {
       "label": "clear_log_context()",
@@ -542,7 +508,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L93",
       "id": "logger_clear_log_context",
-      "community": 11
+      "community": 10
     },
     {
       "label": "get_logger()",
@@ -550,7 +516,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L110",
       "id": "logger_get_logger",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u5c06\u65e5\u5fd7\u5199\u5165 backtest_logs\uff08\u4ec5\u5f53\u8bbe\u7f6e\u4e86 task_id \u65f6\uff09",
@@ -558,7 +524,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L39",
       "id": "logger_rationale_39",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u83b7\u53d6logger: \u9ed8\u8ba4console/file\uff1b\u5f53\u63d0\u4f9btask_id\u6216symbol\u65f6\uff0c\u540c\u65f6\u5199\u5165DB",
@@ -566,7 +532,7 @@
       "source_file": "src/pytrading/logger.py",
       "source_location": "L111",
       "id": "logger_rationale_111",
-      "community": 11
+      "community": 10
     },
     {
       "label": "myquant.py",
@@ -574,7 +540,7 @@
       "source_file": "src/pytrading/utils/myquant.py",
       "source_location": "L1",
       "id": "myquant",
-      "community": 35
+      "community": 36
     },
     {
       "label": "get_current_price()",
@@ -582,7 +548,7 @@
       "source_file": "src/pytrading/utils/myquant.py",
       "source_location": "L11",
       "id": "myquant_get_current_price",
-      "community": 35
+      "community": 36
     },
     {
       "label": "talib_util.py",
@@ -694,7 +660,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L1",
       "id": "thread_pool",
-      "community": 21
+      "community": 22
     },
     {
       "label": "ThreadPool",
@@ -702,7 +668,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L18",
       "id": "thread_pool_threadpool",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".__init__()",
@@ -710,7 +676,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L19",
       "id": "thread_pool_threadpool_init",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".run()",
@@ -718,7 +684,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L28",
       "id": "thread_pool_threadpool_run",
-      "community": 21
+      "community": 22
     },
     {
       "label": "._worker()",
@@ -726,7 +692,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L61",
       "id": "thread_pool_threadpool_worker",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".register_process()",
@@ -734,7 +700,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L70",
       "id": "thread_pool_threadpool_register_process",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".unregister_process()",
@@ -742,7 +708,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L74",
       "id": "thread_pool_threadpool_unregister_process",
-      "community": 21
+      "community": 22
     },
     {
       "label": ".cancel()",
@@ -750,7 +716,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L81",
       "id": "thread_pool_threadpool_cancel",
-      "community": 21
+      "community": 22
     },
     {
       "label": "._terminate_processes()",
@@ -758,7 +724,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L86",
       "id": "thread_pool_threadpool_terminate_processes",
-      "community": 21
+      "community": 22
     },
     {
       "label": "._clear_queue()",
@@ -766,7 +732,7 @@
       "source_file": "src/pytrading/utils/thread_pool.py",
       "source_location": "L111",
       "id": "thread_pool_threadpool_clear_queue",
-      "community": 21
+      "community": 22
     },
     {
       "label": "float_fmt()",
@@ -774,7 +740,7 @@
       "source_file": "src/pytrading/utils/__init__.py",
       "source_location": "L24",
       "id": "init_float_fmt",
-      "community": 9
+      "community": 11
     },
     {
       "label": "cmp_time_str()",
@@ -782,7 +748,7 @@
       "source_file": "src/pytrading/utils/__init__.py",
       "source_location": "L29",
       "id": "init_cmp_time_str",
-      "community": 9
+      "community": 11
     },
     {
       "label": "is_live_mode()",
@@ -790,7 +756,7 @@
       "source_file": "src/pytrading/utils/__init__.py",
       "source_location": "L36",
       "id": "init_is_live_mode",
-      "community": 9
+      "community": 11
     },
     {
       "label": "clear_disk_space()",
@@ -798,7 +764,7 @@
       "source_file": "src/pytrading/utils/__init__.py",
       "source_location": "L40",
       "id": "init_clear_disk_space",
-      "community": 9
+      "community": 11
     },
     {
       "label": "process.py",
@@ -870,7 +836,7 @@
       "source_file": "src/pytrading/utils/akshare_util.py",
       "source_location": "L1",
       "id": "akshare_util",
-      "community": 31
+      "community": 32
     },
     {
       "label": "AkShareUtil",
@@ -878,7 +844,7 @@
       "source_file": "src/pytrading/utils/akshare_util.py",
       "source_location": "L11",
       "id": "akshare_util_akshareutil",
-      "community": 31
+      "community": 32
     },
     {
       "label": ".get_stock_individual_info()",
@@ -886,7 +852,7 @@
       "source_file": "src/pytrading/utils/akshare_util.py",
       "source_location": "L14",
       "id": "akshare_util_akshareutil_get_stock_individual_info",
-      "community": 31
+      "community": 32
     },
     {
       "label": "trade_record_service.py",
@@ -894,7 +860,7 @@
       "source_file": "src/pytrading/service/trade_record_service.py",
       "source_location": "L1",
       "id": "trade_record_service",
-      "community": 30
+      "community": 31
     },
     {
       "label": "TradeRecordService",
@@ -902,7 +868,7 @@
       "source_file": "src/pytrading/service/trade_record_service.py",
       "source_location": "L14",
       "id": "trade_record_service_traderecordservice",
-      "community": 2
+      "community": 1
     },
     {
       "label": "_get_session()",
@@ -910,7 +876,7 @@
       "source_file": "src/pytrading/service/trade_record_service.py",
       "source_location": "L18",
       "id": "trade_record_service_get_session",
-      "community": 30
+      "community": 31
     },
     {
       "label": "save_trade_record()",
@@ -918,7 +884,7 @@
       "source_file": "src/pytrading/service/trade_record_service.py",
       "source_location": "L29",
       "id": "trade_record_service_save_trade_record",
-      "community": 30
+      "community": 31
     },
     {
       "label": "get_trade_records()",
@@ -926,7 +892,7 @@
       "source_file": "src/pytrading/service/trade_record_service.py",
       "source_location": "L54",
       "id": "trade_record_service_get_trade_records",
-      "community": 30
+      "community": 31
     },
     {
       "label": "watchlist_service.py",
@@ -934,7 +900,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L1",
       "id": "watchlist_service",
-      "community": 9
+      "community": 11
     },
     {
       "label": "WatchlistService",
@@ -942,7 +908,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L20",
       "id": "watchlist_service_watchlistservice",
-      "community": 2
+      "community": 1
     },
     {
       "label": "_get_session()",
@@ -950,7 +916,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L24",
       "id": "watchlist_service_get_session",
-      "community": 9
+      "community": 11
     },
     {
       "label": "add_watch()",
@@ -958,7 +924,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L39",
       "id": "watchlist_service_add_watch",
-      "community": 9
+      "community": 11
     },
     {
       "label": "remove_watch()",
@@ -966,7 +932,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L85",
       "id": "watchlist_service_remove_watch",
-      "community": 9
+      "community": 11
     },
     {
       "label": "get_watchlist()",
@@ -974,7 +940,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L112",
       "id": "watchlist_service_get_watchlist",
-      "community": 9
+      "community": 11
     },
     {
       "label": "get_watchlist_by_symbols()",
@@ -982,7 +948,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L197",
       "id": "watchlist_service_get_watchlist_by_symbols",
-      "community": 9
+      "community": 11
     },
     {
       "label": "_check_has_close_signal()",
@@ -990,7 +956,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L218",
       "id": "watchlist_service_check_has_close_signal",
-      "community": 9
+      "community": 11
     },
     {
       "label": "update_metrics()",
@@ -998,7 +964,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L238",
       "id": "watchlist_service_update_metrics",
-      "community": 9
+      "community": 11
     },
     {
       "label": "mark_as_read()",
@@ -1006,7 +972,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L308",
       "id": "watchlist_service_mark_as_read",
-      "community": 9
+      "community": 11
     },
     {
       "label": "_resolve_start_time()",
@@ -1014,7 +980,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L338",
       "id": "watchlist_service_resolve_start_time",
-      "community": 9
+      "community": 11
     },
     {
       "label": "create_backtest_tasks()",
@@ -1022,7 +988,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L358",
       "id": "watchlist_service_create_backtest_tasks",
-      "community": 9
+      "community": 11
     },
     {
       "label": "\u5173\u6ce8\u5217\u8868\u670d\u52a1\u5c42\r \r \u529f\u80fd: 002-stock-watchlist\r \u63d0\u4f9b\u5173\u6ce8\u5217\u8868\u7684 CRUD \u64cd\u4f5c\u3001\u6307\u6807\u66f4\u65b0\u548c\u5173\u6ce8\u7c7b\u578b\u53d8\u5316\u68c0\u6d4b",
@@ -1030,7 +996,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L1",
       "id": "watchlist_service_rationale_1",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u6dfb\u52a0\u80a1\u7968\u5230\u5173\u6ce8\u5217\u8868\r \r         Args:\r             symbol: \u80a1\u7968\u4ee3\u7801\r             name: \u80a1\u7968\u540d\u79f0",
@@ -1038,7 +1004,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L45",
       "id": "watchlist_service_rationale_45",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u4ece\u5173\u6ce8\u5217\u8868\u79fb\u9664\r \r         Args:\r             item_id: \u5173\u6ce8\u6761\u76eeID\r \r         Returns:",
@@ -1046,7 +1012,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L86",
       "id": "watchlist_service_rationale_86",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u83b7\u53d6\u5173\u6ce8\u5217\u8868\r \r         Args:\r             sort_by: \u6392\u5e8f\u5b57\u6bb5\r             sort_order: \u6392\u5e8f\u65b9\u5411",
@@ -1054,7 +1020,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L118",
       "id": "watchlist_service_rationale_118",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u6279\u91cf\u83b7\u53d6\u5df2\u5173\u6ce8\u7684\u80a1\u7968\u4ee3\u7801\r \r         Args:\r             strategy_id: \u7b56\u7565ID\r \r         Returns:",
@@ -1062,7 +1028,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L198",
       "id": "watchlist_service_rationale_198",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u68c0\u67e5\u662f\u5426\u6709\u6e05\u4ed3\u4fe1\u53f7\r \r         Args:\r             session: \u6570\u636e\u5e93\u4f1a\u8bdd\r             symbol: \u80a1\u7968\u4ee3\u7801",
@@ -1070,7 +1036,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L219",
       "id": "watchlist_service_rationale_219",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u4ece\u56de\u6d4b\u7ed3\u679c\u66f4\u65b0\u5173\u6ce8\u6761\u76ee\u7684\u5173\u6ce8\u7c7b\u578b\r \r         \u6307\u6807\u6570\u636e\uff08pnl_ratio \u7b49\uff09\u76f4\u63a5\u4ece BackTestResult \u8868\u8bfb\u53d6\uff0c\u4e0d\u518d\u5197\u4f59\u4fdd\u5b58\u3002",
@@ -1078,7 +1044,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L243",
       "id": "watchlist_service_rationale_243",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u6807\u8bb0\u5173\u6ce8\u7c7b\u578b\u53d8\u5316\u4e3a\u5df2\u8bfb\r \r         Args:\r             item_id: \u5173\u6ce8\u6761\u76eeID\r \r         Returns:",
@@ -1086,7 +1052,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L309",
       "id": "watchlist_service_rationale_309",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u901a\u8fc7 last_backtest_task_id \u67e5\u627e\u539f\u56de\u6d4b\u4efb\u52a1\u7684 start_time\r \r         Args:\r             sessi",
@@ -1094,7 +1060,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L339",
       "id": "watchlist_service_rationale_339",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u4e3a\u5173\u6ce8\u5217\u8868\u521b\u5efa\u56de\u6d4b\u4efb\u52a1\r \r         \u6309 strategy_id \u5206\u7ec4\uff0c\u6bcf\u7ec4\u521b\u5efa\u4e00\u4e2a\u56de\u6d4b\u4efb\u52a1\u3002\r         \u53bb\u91cd\u68c0\u67e5\uff1a\u540c strategy_id",
@@ -1102,7 +1068,7 @@
       "source_file": "src/pytrading/service/watchlist_service.py",
       "source_location": "L359",
       "id": "watchlist_service_rationale_359",
-      "community": 2
+      "community": 1
     },
     {
       "label": "main.py",
@@ -1350,7 +1316,7 @@
       "source_file": "src/pytrading/api/main.py",
       "source_location": "L1477",
       "id": "main_watchlistrequest",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BaseModel",
@@ -1446,7 +1412,7 @@
       "source_file": "src/pytrading/api/main.py",
       "source_location": "L112",
       "id": "main_rationale_112",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u540c\u6b65K\u7ebf\u6570\u636e\u5230\u6570\u636e\u5e93     Args:         symbol: \u80a1\u7968\u4ee3\u7801         days: \u83b7\u53d6\u5929\u6570\uff0c\u9ed8\u8ba4\u4e3a365\u5929\uff08\u4ec5\u5728\u672a\u6307\u5b9a start",
@@ -1454,7 +1420,7 @@
       "source_file": "src/pytrading/api/main.py",
       "source_location": "L1102",
       "id": "main_rationale_1102",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u83b7\u53d6\u6da8\u8dcc\u5e45\u6392\u884c     type: rise (\u6da8\u5e45\u699c) / fall (\u8dcc\u5e45\u699c) / volume (\u6210\u4ea4\u989d\u699c)",
@@ -1526,7 +1492,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L1",
       "id": "run_strategy",
-      "community": 19
+      "community": 20
     },
     {
       "label": "get_market_data()",
@@ -1534,7 +1500,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L38",
       "id": "run_strategy_get_market_data",
-      "community": 19
+      "community": 20
     },
     {
       "label": "init()",
@@ -1542,7 +1508,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L81",
       "id": "run_strategy_init",
-      "community": 19
+      "community": 20
     },
     {
       "label": "on_bar()",
@@ -1550,7 +1516,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L102",
       "id": "run_strategy_on_bar",
-      "community": 19
+      "community": 20
     },
     {
       "label": "on_order_status()",
@@ -1558,7 +1524,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L134",
       "id": "run_strategy_on_order_status",
-      "community": 19
+      "community": 20
     },
     {
       "label": "on_backtest_finished()",
@@ -1566,7 +1532,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L163",
       "id": "run_strategy_on_backtest_finished",
-      "community": 19
+      "community": 20
     },
     {
       "label": "update_task_progress()",
@@ -1574,7 +1540,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L236",
       "id": "run_strategy_update_task_progress",
-      "community": 19
+      "community": 20
     },
     {
       "label": "save_kline_data()",
@@ -1582,7 +1548,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L275",
       "id": "run_strategy_save_kline_data",
-      "community": 19
+      "community": 20
     },
     {
       "label": "on_error()",
@@ -1590,7 +1556,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L372",
       "id": "run_strategy_on_error",
-      "community": 19
+      "community": 20
     },
     {
       "label": "multiple_run()",
@@ -1598,7 +1564,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L382",
       "id": "run_strategy_multiple_run",
-      "community": 19
+      "community": 20
     },
     {
       "label": "run_cli()",
@@ -1606,7 +1572,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L408",
       "id": "run_strategy_run_cli",
-      "community": 19
+      "community": 20
     },
     {
       "label": "\u83b7\u53d6\u5e02\u573a\u6570\u636e\uff1a7\u65e5\u5e73\u5747\u6210\u4ea4\u91cf\u3001\u5e02\u503c\u3001ATR",
@@ -1614,7 +1580,7 @@
       "source_file": "src/pytrading/run/run_strategy.py",
       "source_location": "L39",
       "id": "run_strategy_rationale_39",
-      "community": 2
+      "community": 1
     },
     {
       "label": "log_repository.py",
@@ -1622,7 +1588,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L1",
       "id": "log_repository",
-      "community": 11
+      "community": 10
     },
     {
       "label": "LogRepository",
@@ -1630,7 +1596,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L14",
       "id": "log_repository_logrepository",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".__init__()",
@@ -1638,7 +1604,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L17",
       "id": "log_repository_logrepository_init",
-      "community": 11
+      "community": 10
     },
     {
       "label": "from_config()",
@@ -1646,7 +1612,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L35",
       "id": "log_repository_from_config",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".append_log()",
@@ -1654,7 +1620,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L47",
       "id": "log_repository_logrepository_append_log",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".append_task_log()",
@@ -1662,7 +1628,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L67",
       "id": "log_repository_logrepository_append_task_log",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".append_result_log()",
@@ -1670,7 +1636,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L71",
       "id": "log_repository_logrepository_append_result_log",
-      "community": 11
+      "community": 10
     },
     {
       "label": ".query_logs()",
@@ -1678,7 +1644,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L75",
       "id": "log_repository_logrepository_query_logs",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u56de\u6d4b\u65e5\u5fd7\u4ed3\u50a8\uff0c\u8d1f\u8d23 backtest_logs \u8868\u7684\u589e\u5220\u67e5",
@@ -1686,7 +1652,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L15",
       "id": "log_repository_rationale_15",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u521d\u59cb\u5316\u65e5\u5fd7\u4ed3\u50a8\r         Args:\r             db_client: MySQLClient \u5b9e\u4f8b\uff08\u4f18\u5148\u4f7f\u7528\uff0c\u590d\u7528\u5176 engine\uff09",
@@ -1694,7 +1660,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L18",
       "id": "log_repository_rationale_18",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u4ece\u914d\u7f6e\u521b\u5efa\u72ec\u7acb\u5b9e\u4f8b\uff08\u4e0d\u63a8\u8350\uff0c\u5efa\u8bae\u590d\u7528 MySQLClient\uff09",
@@ -1702,7 +1668,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L36",
       "id": "log_repository_rationale_36",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u8ffd\u52a0\u4e00\u6761\u65e5\u5fd7\u5230 backtest_logs",
@@ -1710,7 +1676,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L48",
       "id": "log_repository_rationale_48",
-      "community": 11
+      "community": 10
     },
     {
       "label": "\u6309 task_id(+symbol) \u589e\u91cf\u62c9\u53d6\u65e5\u5fd7",
@@ -1718,7 +1684,7 @@
       "source_file": "src/pytrading/db/log_repository.py",
       "source_location": "L76",
       "id": "log_repository_rationale_76",
-      "community": 11
+      "community": 10
     },
     {
       "label": "init_db.py",
@@ -1726,7 +1692,7 @@
       "source_file": "src/pytrading/db/init_db.py",
       "source_location": "L1",
       "id": "init_db",
-      "community": 32
+      "community": 33
     },
     {
       "label": "init_mysql()",
@@ -1734,7 +1700,7 @@
       "source_file": "src/pytrading/db/init_db.py",
       "source_location": "L13",
       "id": "init_db_init_mysql",
-      "community": 32
+      "community": 33
     },
     {
       "label": "init_database()",
@@ -1742,7 +1708,7 @@
       "source_file": "src/pytrading/db/init_db.py",
       "source_location": "L31",
       "id": "init_db_init_database",
-      "community": 32
+      "community": 33
     },
     {
       "label": "mysql.py",
@@ -1750,7 +1716,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L1",
       "id": "mysql",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BacktestStatus",
@@ -1758,7 +1724,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L18",
       "id": "mysql_backteststatus",
-      "community": 2
+      "community": 1
     },
     {
       "label": "Strategy",
@@ -1766,7 +1732,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L25",
       "id": "mysql_strategy",
-      "community": 2
+      "community": 1
     },
     {
       "label": "base.py",
@@ -1774,7 +1740,7 @@
       "source_file": "src/pytrading/strategy/base.py",
       "source_location": "L1",
       "id": "base",
-      "community": 2
+      "community": 1
     },
     {
       "label": "StockSymbol",
@@ -1782,7 +1748,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L40",
       "id": "mysql_stocksymbol",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BacktestTask",
@@ -1790,7 +1756,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L54",
       "id": "mysql_backtesttask",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BackTestResult",
@@ -1798,7 +1764,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L74",
       "id": "mysql_backtestresult",
-      "community": 2
+      "community": 1
     },
     {
       "label": "SystemConfig",
@@ -1806,7 +1772,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L114",
       "id": "mysql_systemconfig",
-      "community": 2
+      "community": 1
     },
     {
       "label": "MySQLClient",
@@ -1814,7 +1780,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L127",
       "id": "mysql_mysqlclient",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".__init__()",
@@ -1822,7 +1788,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L128",
       "id": "mysql_mysqlclient_init",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".create_tables()",
@@ -1830,7 +1796,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L144",
       "id": "mysql_mysqlclient_create_tables",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".get_session()",
@@ -1838,7 +1804,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L148",
       "id": "mysql_mysqlclient_get_session",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_connection()",
@@ -1846,7 +1812,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L152",
       "id": "mysql_mysqlclient_test_connection",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TradeRecord",
@@ -1854,7 +1820,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L163",
       "id": "mysql_traderecord",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BacktestLog",
@@ -1862,7 +1828,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L183",
       "id": "mysql_backtestlog",
-      "community": 11
+      "community": 10
     },
     {
       "label": "StockKline",
@@ -1870,7 +1836,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L195",
       "id": "mysql_stockkline",
-      "community": 2
+      "community": 1
     },
     {
       "label": "WatchlistItem",
@@ -1878,7 +1844,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L218",
       "id": "mysql_watchlistitem",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u4ea4\u6613\u8bb0\u5f55\u8868 - \u8bb0\u5f55\u7b56\u7565\u5728\u56de\u6d4b\u4e2d\u7684\u4e70\u5356\u4fe1\u53f7",
@@ -1886,7 +1852,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L164",
       "id": "mysql_rationale_164",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u80a1\u7968\u5173\u6ce8\u5217\u8868\u6761\u76ee      \u4ee3\u8868\u7528\u6237\u5173\u6ce8\u7684\u4e00\u652f\u80a1\u7968\u5728\u7279\u5b9a\u7b56\u7565\u4e0b\u7684\u8ddf\u8e2a\u8bb0\u5f55",
@@ -1894,7 +1860,7 @@
       "source_file": "src/pytrading/db/mysql.py",
       "source_location": "L219",
       "id": "mysql_rationale_219",
-      "community": 2
+      "community": 1
     },
     {
       "label": "stock_api_adapter.py",
@@ -1902,7 +1868,7 @@
       "source_file": "src/pytrading/controller/stock_api_adapter.py",
       "source_location": "L1",
       "id": "stock_api_adapter",
-      "community": 33
+      "community": 34
     },
     {
       "label": "StockContext",
@@ -1910,7 +1876,7 @@
       "source_file": "src/pytrading/controller/stock_api_adapter.py",
       "source_location": "L11",
       "id": "stock_api_adapter_stockcontext",
-      "community": 33
+      "community": 34
     },
     {
       "label": ".__init__()",
@@ -1918,7 +1884,7 @@
       "source_file": "src/pytrading/controller/stock_api_adapter.py",
       "source_location": "L12",
       "id": "stock_api_adapter_stockcontext_init",
-      "community": 33
+      "community": 34
     },
     {
       "label": "order_controller.py",
@@ -2070,7 +2036,7 @@
       "source_file": "src/pytrading/controller/order_controller.py",
       "source_location": "L67",
       "id": "order_controller_rationale_67",
-      "community": 38
+      "community": 41
     },
     {
       "label": "\u6301\u4ed3\u989d (volume*vwap*multiplier)",
@@ -2078,7 +2044,7 @@
       "source_file": "src/pytrading/controller/order_controller.py",
       "source_location": "L72",
       "id": "order_controller_rationale_72",
-      "community": 39
+      "community": 42
     },
     {
       "label": "\u901a\u8fc7ATR\u83b7\u53d6\u5f71\u54cd\u603b\u4ed3\u4f4d\u767e\u5206\u6bd4\u7684\u4ea4\u6613\u91cf\uff0c\u8fd4\u56de\u591a\u5c11\u624b",
@@ -2094,7 +2060,7 @@
       "source_file": "src/pytrading/config/strategy_enum.py",
       "source_location": "L1",
       "id": "strategy_enum",
-      "community": 2
+      "community": 1
     },
     {
       "label": "StrategyType",
@@ -2102,7 +2068,7 @@
       "source_file": "src/pytrading/config/strategy_enum.py",
       "source_location": "L11",
       "id": "strategy_enum_strategytype",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TrendingType",
@@ -2126,7 +2092,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L1",
       "id": "watch_type",
-      "community": 9
+      "community": 11
     },
     {
       "label": "WatchType",
@@ -2134,7 +2100,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L13",
       "id": "watch_type_watchtype",
-      "community": 2
+      "community": 1
     },
     {
       "label": "Enum",
@@ -2142,7 +2108,7 @@
       "source_file": "",
       "source_location": "",
       "id": "enum",
-      "community": 2
+      "community": 1
     },
     {
       "label": "from_trending_type()",
@@ -2150,7 +2116,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L25",
       "id": "watch_type_from_trending_type",
-      "community": 9
+      "community": 11
     },
     {
       "label": ".participates_in_change_detection()",
@@ -2158,7 +2124,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L62",
       "id": "watch_type_watchtype_participates_in_change_detection",
-      "community": 2
+      "community": 1
     },
     {
       "label": "display_name()",
@@ -2166,7 +2132,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L72",
       "id": "watch_type_display_name",
-      "community": 9
+      "community": 11
     },
     {
       "label": "\u5173\u6ce8\u7c7b\u578b\u679a\u4e3e\u548c TrendingType \u6620\u5c04\u51fd\u6570\r \r \u529f\u80fd: 002-stock-watchlist",
@@ -2174,7 +2140,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L1",
       "id": "watch_type_rationale_1",
-      "community": 9
+      "community": 11
     },
     {
       "label": "\u5173\u6ce8\u5217\u8868\u4e2d\u7684\u5173\u6ce8\u7c7b\u578b\u679a\u4e3e\r \r     \u7528\u4e8e\u7528\u6237\u754c\u9762\u5c55\u793a\u7684\u7b80\u5316\u8d8b\u52bf\u72b6\u6001\u5206\u7c7b",
@@ -2182,7 +2148,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L14",
       "id": "watch_type_rationale_14",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u4ece\u5185\u90e8 TrendingType \u6620\u5c04\u5230\u5173\u6ce8\u7c7b\u578b\r \r         Args:\r             trending_type: \u5185\u90e8 Trendin",
@@ -2198,7 +2164,7 @@
       "source_file": "src/pytrading/config/watch_type.py",
       "source_location": "L63",
       "id": "watch_type_rationale_63",
-      "community": 2
+      "community": 1
     },
     {
       "label": "Settings.tsx",
@@ -2206,7 +2172,7 @@
       "source_file": "frontend/src/pages/Settings.tsx",
       "source_location": "L1",
       "id": "settings",
-      "community": 1
+      "community": 2
     },
     {
       "label": "Config",
@@ -2390,7 +2356,7 @@
       "source_file": "src/pytrading/model/mysql_back_test_saver.py",
       "source_location": "L57",
       "id": "mysql_back_test_saver_rationale_57",
-      "community": 2
+      "community": 1
     },
     {
       "label": "back_test_saver_factory.py",
@@ -2398,7 +2364,7 @@
       "source_file": "src/pytrading/model/back_test_saver_factory.py",
       "source_location": "L1",
       "id": "back_test_saver_factory",
-      "community": 2
+      "community": 1
     },
     {
       "label": "get_backtest_saver()",
@@ -2406,7 +2372,7 @@
       "source_file": "src/pytrading/model/back_test_saver_factory.py",
       "source_location": "L11",
       "id": "back_test_saver_factory_get_backtest_saver",
-      "community": 2
+      "community": 1
     },
     {
       "label": "back_test_saver.py",
@@ -2462,7 +2428,7 @@
       "source_file": "src/pytrading/model/back_test_saver.py",
       "source_location": "L40",
       "id": "back_test_saver_rationale_40",
-      "community": 40
+      "community": 43
     },
     {
       "label": "back_test.py",
@@ -2470,7 +2436,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L1",
       "id": "back_test",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BackTest",
@@ -2478,7 +2444,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L14",
       "id": "back_test_backtest",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".__init__()",
@@ -2486,7 +2452,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L17",
       "id": "back_test_backtest_init",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".init_attr()",
@@ -2494,7 +2460,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L45",
       "id": "back_test_backtest_init_attr",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".to_dict()",
@@ -2502,7 +2468,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L53",
       "id": "back_test_backtest_to_dict",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".save()",
@@ -2510,7 +2476,7 @@
       "source_file": "src/pytrading/model/back_test.py",
       "source_location": "L84",
       "id": "back_test_backtest_save",
-      "community": 2
+      "community": 1
     },
     {
       "label": "strategy_turtle.py",
@@ -2518,7 +2484,7 @@
       "source_file": "src/pytrading/strategy/strategy_turtle.py",
       "source_location": "L1",
       "id": "strategy_turtle",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TurtleStrategy",
@@ -2526,7 +2492,7 @@
       "source_file": "src/pytrading/strategy/strategy_turtle.py",
       "source_location": "L10",
       "id": "strategy_turtle_turtlestrategy",
-      "community": 2
+      "community": 1
     },
     {
       "label": "strategy_macd.py",
@@ -3030,7 +2996,7 @@
       "source_file": "src/pytrading/strategy/strategy_boll.py",
       "source_location": "L1",
       "id": "strategy_boll",
-      "community": 2
+      "community": 1
     },
     {
       "label": "BollStrategy",
@@ -3038,7 +3004,7 @@
       "source_file": "src/pytrading/strategy/strategy_boll.py",
       "source_location": "L10",
       "id": "strategy_boll_bollstrategy",
-      "community": 2
+      "community": 1
     },
     {
       "label": "StrategyBase",
@@ -3406,7 +3372,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L1",
       "id": "test_watch_type",
-      "community": 6
+      "community": 7
     },
     {
       "label": "TestWatchTypeEnumValues",
@@ -3414,7 +3380,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L13",
       "id": "test_watch_type_testwatchtypeenumvalues",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_watch_type_has_correct_values()",
@@ -3422,7 +3388,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L16",
       "id": "test_watch_type_testwatchtypeenumvalues_test_watch_type_has_correct_values",
-      "community": 6
+      "community": 7
     },
     {
       "label": "TestWatchTypeFromTrendingType",
@@ -3430,7 +3396,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L25",
       "id": "test_watch_type_testwatchtypefromtrendingtype",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_unknown_returns_no_state()",
@@ -3438,7 +3404,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L28",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_unknown_returns_no_state",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_up_down_returns_no_state()",
@@ -3446,7 +3412,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L34",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_up_down_returns_no_state",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_observing_returns_watching()",
@@ -3454,7 +3420,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L39",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_observing_returns_watching",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_rising_up_returns_trend_up()",
@@ -3462,7 +3428,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L44",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_rising_up_returns_trend_up",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_zero_axis_up_returns_trend_up()",
@@ -3470,7 +3436,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L49",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_zero_axis_up_returns_trend_up",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_dead_x_down_returns_trend_down()",
@@ -3478,7 +3444,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L54",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_dead_x_down_returns_trend_down",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_falling_down_returns_trend_down()",
@@ -3486,7 +3452,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L59",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_falling_down_returns_trend_down",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_with_close_signal_returns_trend_end()",
@@ -3494,7 +3460,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L64",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_with_close_signal_returns_trend_end",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_none_returns_no_state()",
@@ -3502,7 +3468,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L72",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_none_returns_no_state",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_empty_string_returns_no_state()",
@@ -3510,7 +3476,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L77",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_empty_string_returns_no_state",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_from_trending_type_unknown_value_returns_no_state()",
@@ -3518,7 +3484,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L82",
       "id": "test_watch_type_testwatchtypefromtrendingtype_test_from_trending_type_unknown_value_returns_no_state",
-      "community": 6
+      "community": 7
     },
     {
       "label": "TestWatchTypeParticipatesInChangeDetection",
@@ -3526,7 +3492,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L88",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_no_state_does_not_participate()",
@@ -3534,7 +3500,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L91",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection_test_no_state_does_not_participate",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_watching_participates()",
@@ -3542,7 +3508,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L95",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection_test_watching_participates",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_trend_up_participates()",
@@ -3550,7 +3516,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L99",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection_test_trend_up_participates",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_trend_down_participates()",
@@ -3558,7 +3524,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L103",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection_test_trend_down_participates",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_trend_end_participates()",
@@ -3566,7 +3532,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L107",
       "id": "test_watch_type_testwatchtypeparticipatesinchangedetection_test_trend_end_participates",
-      "community": 6
+      "community": 7
     },
     {
       "label": "TestWatchTypeDisplayName",
@@ -3574,7 +3540,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L112",
       "id": "test_watch_type_testwatchtypedisplayname",
-      "community": 6
+      "community": 7
     },
     {
       "label": ".test_display_name_returns_value()",
@@ -3582,7 +3548,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L115",
       "id": "test_watch_type_testwatchtypedisplayname_test_display_name_returns_value",
-      "community": 6
+      "community": 7
     },
     {
       "label": "WatchType \u679a\u4e3e\u548c\u6620\u5c04\u51fd\u6570\u5355\u5143\u6d4b\u8bd5\r \r \u9a8c\u8bc1\u5173\u6ce8\u7c7b\u578b\u679a\u4e3e\u3001TrendingType \u5230 WatchType \u7684\u6620\u5c04\u903b\u8f91.\r \u547d\u540d\u9075\u5faa: test_<\u573a",
@@ -3590,7 +3556,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L1",
       "id": "test_watch_type_rationale_1",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u6d4b\u8bd5 from_trending_type \u6620\u5c04\u51fd\u6570",
@@ -3598,7 +3564,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L26",
       "id": "test_watch_type_rationale_26",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1 UpDown (\u6a2a\u76d8\u9707\u8361) \u6620\u5c04\u4e3a\u65e0\u72b6\u6001",
@@ -3606,7 +3572,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L35",
       "id": "test_watch_type_rationale_35",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1 ZeroAxisUp \u6620\u5c04\u4e3a\u8d8b\u52bf\u4e0a\u6da8",
@@ -3614,7 +3580,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L50",
       "id": "test_watch_type_rationale_50",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1 FallingDown \u6620\u5c04\u4e3a\u8d8b\u52bf\u4e0b\u884c",
@@ -3622,7 +3588,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L60",
       "id": "test_watch_type_rationale_60",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1\u6709\u6e05\u4ed3\u4fe1\u53f7\u65f6\u8fd4\u56de\u8d8b\u52bf\u7ed3\u675f(\u6700\u9ad8\u4f18\u5148\u7ea7)",
@@ -3630,7 +3596,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L65",
       "id": "test_watch_type_rationale_65",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1\u672a\u77e5 TrendingType \u503c\u8fd4\u56de\u65e0\u72b6\u6001",
@@ -3638,7 +3604,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L83",
       "id": "test_watch_type_rationale_83",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u6d4b\u8bd5 participates_in_change_detection \u65b9\u6cd5",
@@ -3646,7 +3612,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L89",
       "id": "test_watch_type_rationale_89",
-      "community": 6
+      "community": 7
     },
     {
       "label": "\u9a8c\u8bc1 display_name \u8fd4\u56de\u4e2d\u6587\u503c",
@@ -3654,7 +3620,7 @@
       "source_file": "tests/unit/test_watch_type.py",
       "source_location": "L116",
       "id": "test_watch_type_rationale_116",
-      "community": 6
+      "community": 7
     },
     {
       "label": "test_watchlist_service.py",
@@ -3782,7 +3748,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L1",
       "id": "test_settings",
-      "community": 10
+      "community": 9
     },
     {
       "label": "TestConfigDefaults",
@@ -3790,7 +3756,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L11",
       "id": "test_settings_testconfigdefaults",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_default_values_correct()",
@@ -3798,7 +3764,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L14",
       "id": "test_settings_testconfigdefaults_test_config_default_values_correct",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_default_trading_mode_is_backtest()",
@@ -3806,7 +3772,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L25",
       "id": "test_settings_testconfigdefaults_test_config_default_trading_mode_is_backtest",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_default_symbols_empty_list()",
@@ -3814,7 +3780,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L31",
       "id": "test_settings_testconfigdefaults_test_config_default_symbols_empty_list",
-      "community": 10
+      "community": 9
     },
     {
       "label": "TestConfigOverrides",
@@ -3822,7 +3788,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L37",
       "id": "test_settings_testconfigoverrides",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_custom_env_overrides_defaults()",
@@ -3830,7 +3796,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L40",
       "id": "test_settings_testconfigoverrides_test_config_custom_env_overrides_defaults",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_symbols_parsed_from_comma_string()",
@@ -3838,7 +3804,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L56",
       "id": "test_settings_testconfigoverrides_test_config_symbols_parsed_from_comma_string",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_symbols_strips_whitespace()",
@@ -3846,7 +3812,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L61",
       "id": "test_settings_testconfigoverrides_test_config_symbols_strips_whitespace",
-      "community": 10
+      "community": 9
     },
     {
       "label": "TestConfigTradingMode",
@@ -3854,7 +3820,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L67",
       "id": "test_settings_testconfigtradingmode",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_trading_mode_backtest_maps_to_constant()",
@@ -3862,7 +3828,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L70",
       "id": "test_settings_testconfigtradingmode_test_config_trading_mode_backtest_maps_to_constant",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_trading_mode_live_maps_to_constant()",
@@ -3870,7 +3836,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L76",
       "id": "test_settings_testconfigtradingmode_test_config_trading_mode_live_maps_to_constant",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_strategy_id_follows_trading_mode()",
@@ -3878,7 +3844,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L82",
       "id": "test_settings_testconfigtradingmode_test_config_strategy_id_follows_trading_mode",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_token_follows_trading_mode()",
@@ -3886,7 +3852,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L91",
       "id": "test_settings_testconfigtradingmode_test_config_token_follows_trading_mode",
-      "community": 10
+      "community": 9
     },
     {
       "label": "TestConfigAccessors",
@@ -3894,7 +3860,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L101",
       "id": "test_settings_testconfigaccessors",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_getitem_returns_attribute()",
@@ -3902,7 +3868,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L104",
       "id": "test_settings_testconfigaccessors_test_config_getitem_returns_attribute",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_get_returns_default_for_missing()",
@@ -3910,7 +3876,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L109",
       "id": "test_settings_testconfigaccessors_test_config_get_returns_default_for_missing",
-      "community": 10
+      "community": 9
     },
     {
       "label": ".test_config_to_dict_returns_all_fields()",
@@ -3918,7 +3884,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L114",
       "id": "test_settings_testconfigaccessors_test_config_to_dict_returns_all_fields",
-      "community": 10
+      "community": 9
     },
     {
       "label": "Config \u7c7b\u5355\u5143\u6d4b\u8bd5\r \r \u9a8c\u8bc1\u7edf\u4e00\u914d\u7f6e\u7ba1\u7406\u7684\u9ed8\u8ba4\u503c\u3001\u73af\u5883\u53d8\u91cf\u8986\u76d6\u548c\u4ea4\u6613\u6a21\u5f0f\u6620\u5c04.\r \u547d\u540d\u9075\u5faa: test_config_<\u573a\u666f>_<\u9884\u671f\u7ed3\u679c>",
@@ -3926,7 +3892,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L1",
       "id": "test_settings_rationale_1",
-      "community": 10
+      "community": 9
     },
     {
       "label": "\u9a8c\u8bc1\u9017\u53f7\u5206\u9694\u7684\u80a1\u7968\u4ee3\u7801\u5b57\u7b26\u4e32\u6b63\u786e\u89e3\u6790\u4e3a\u5217\u8868",
@@ -3934,7 +3900,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L57",
       "id": "test_settings_rationale_57",
-      "community": 10
+      "community": 9
     },
     {
       "label": "\u9a8c\u8bc1 'backtest' \u6620\u5c04\u4e3a MODE_BACKTEST \u5e38\u91cf",
@@ -3942,7 +3908,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L71",
       "id": "test_settings_rationale_71",
-      "community": 10
+      "community": 9
     },
     {
       "label": "\u9a8c\u8bc1 'live' \u6620\u5c04\u4e3a MODE_LIVE \u5e38\u91cf",
@@ -3950,7 +3916,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L77",
       "id": "test_settings_rationale_77",
-      "community": 10
+      "community": 9
     },
     {
       "label": "\u9a8c\u8bc1 get() \u5bf9\u4e0d\u5b58\u5728\u7684\u5c5e\u6027\u8fd4\u56de\u9ed8\u8ba4\u503c",
@@ -3958,7 +3924,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L110",
       "id": "test_settings_rationale_110",
-      "community": 10
+      "community": 9
     },
     {
       "label": "\u9a8c\u8bc1 to_dict() \u5305\u542b\u6240\u6709\u516c\u5171\u5b57\u6bb5",
@@ -3966,7 +3932,7 @@
       "source_file": "tests/unit/test_settings.py",
       "source_location": "L115",
       "id": "test_settings_rationale_115",
-      "community": 10
+      "community": 9
     },
     {
       "label": "test_mysql_models.py",
@@ -3974,7 +3940,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L1",
       "id": "test_mysql_models",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TestStrategyModel",
@@ -3982,7 +3948,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L12",
       "id": "test_mysql_models_teststrategymodel",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_strategy_model_create_and_query_returns_record()",
@@ -3990,7 +3956,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L15",
       "id": "test_mysql_models_teststrategymodel_test_strategy_model_create_and_query_returns_record",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_strategy_model_parameters_stores_json()",
@@ -3998,7 +3964,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L37",
       "id": "test_mysql_models_teststrategymodel_test_strategy_model_parameters_stores_json",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TestBackTestResultModel",
@@ -4006,7 +3972,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L55",
       "id": "test_mysql_models_testbacktestresultmodel",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_backtest_result_model_stores_metrics_correctly()",
@@ -4014,7 +3980,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L58",
       "id": "test_mysql_models_testbacktestresultmodel_test_backtest_result_model_stores_metrics_correctly",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TestTradeRecordModel",
@@ -4022,7 +3988,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L93",
       "id": "test_mysql_models_testtraderecordmodel",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_trade_record_create_with_all_actions()",
@@ -4030,7 +3996,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L96",
       "id": "test_mysql_models_testtraderecordmodel_test_trade_record_create_with_all_actions",
-      "community": 2
+      "community": 1
     },
     {
       "label": "TestDbSessionIsolation",
@@ -4038,7 +4004,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L120",
       "id": "test_mysql_models_testdbsessionisolation",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_db_session_insert_data_in_first_test()",
@@ -4046,7 +4012,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L123",
       "id": "test_mysql_models_testdbsessionisolation_test_db_session_insert_data_in_first_test",
-      "community": 2
+      "community": 1
     },
     {
       "label": ".test_db_session_rollback_isolates_tests()",
@@ -4054,7 +4020,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L137",
       "id": "test_mysql_models_testdbsessionisolation_test_db_session_rollback_isolates_tests",
-      "community": 2
+      "community": 1
     },
     {
       "label": "ORM \u6a21\u578b\u5355\u5143\u6d4b\u8bd5\r \r \u4f7f\u7528 SQLite \u5185\u5b58\u6570\u636e\u5e93\u9a8c\u8bc1\u6a21\u578b CRUD \u64cd\u4f5c\u548c fixture \u9694\u79bb\u6027.\r \u547d\u540d\u9075\u5faa: test_<\u6a21\u578b>_<\u573a\u666f>_<\u9884",
@@ -4062,7 +4028,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L1",
       "id": "test_mysql_models_rationale_1",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u521b\u5efa Strategy \u8bb0\u5f55\u5e76\u67e5\u8be2\u9a8c\u8bc1\u5b57\u6bb5\u503c",
@@ -4070,7 +4036,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L16",
       "id": "test_mysql_models_rationale_16",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u521b\u5efa BackTestResult \u5e76\u9a8c\u8bc1\u6307\u6807\u5b57\u6bb5",
@@ -4078,7 +4044,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L59",
       "id": "test_mysql_models_rationale_59",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u9a8c\u8bc1\u56db\u79cd\u4ea4\u6613\u52a8\u4f5c(\u5efa/\u4e70/\u5356/\u5e73)\u5747\u53ef\u6b63\u786e\u5b58\u50a8",
@@ -4086,7 +4052,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L97",
       "id": "test_mysql_models_rationale_97",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u9a8c\u8bc1 db_session fixture \u7684\u6d4b\u8bd5\u9694\u79bb\u6027",
@@ -4094,7 +4060,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L121",
       "id": "test_mysql_models_rationale_121",
-      "community": 2
+      "community": 1
     },
     {
       "label": "\u9a8c\u8bc1\u4e0a\u4e00\u4e2a\u6d4b\u8bd5\u7684\u6570\u636e\u5728\u6b64\u6d4b\u8bd5\u4e2d\u4e0d\u5b58\u5728(\u5df2\u56de\u6eda)",
@@ -4102,7 +4068,7 @@
       "source_file": "tests/unit/test_mysql_models.py",
       "source_location": "L138",
       "id": "test_mysql_models_rationale_138",
-      "community": 2
+      "community": 1
     },
     {
       "label": "test_strategy_signals.py",
@@ -4750,7 +4716,7 @@
       "source_file": "frontend/src/App.tsx",
       "source_location": "L1",
       "id": "app",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleCollapsed()",
@@ -4758,7 +4724,7 @@
       "source_file": "frontend/src/App.tsx",
       "source_location": "L28",
       "id": "app_handlecollapsed",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleMenuClick()",
@@ -4766,7 +4732,7 @@
       "source_file": "frontend/src/App.tsx",
       "source_location": "L61",
       "id": "app_handlemenuclick",
-      "community": 1
+      "community": 2
     },
     {
       "label": "index.ts",
@@ -4774,7 +4740,7 @@
       "source_file": "frontend/src/types/index.ts",
       "source_location": "L1",
       "id": "index",
-      "community": 1
+      "community": 19
     },
     {
       "label": "setupTests.ts",
@@ -4782,7 +4748,7 @@
       "source_file": "frontend/src/setupTests.ts",
       "source_location": "L1",
       "id": "setuptests",
-      "community": 36
+      "community": 37
     },
     {
       "label": "MockResizeObserver",
@@ -4790,7 +4756,7 @@
       "source_file": "frontend/src/setupTests.ts",
       "source_location": "L23",
       "id": "setuptests_mockresizeobserver",
-      "community": 36
+      "community": 37
     },
     {
       "label": "formatCurrency()",
@@ -4798,7 +4764,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L4",
       "id": "index_formatcurrency",
-      "community": 1
+      "community": 19
     },
     {
       "label": "formatPercent()",
@@ -4806,7 +4772,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L12",
       "id": "index_formatpercent",
-      "community": 1
+      "community": 19
     },
     {
       "label": "formatNumber()",
@@ -4814,7 +4780,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L16",
       "id": "index_formatnumber",
-      "community": 1
+      "community": 19
     },
     {
       "label": "formatDate()",
@@ -4822,7 +4788,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L23",
       "id": "index_formatdate",
-      "community": 1
+      "community": 19
     },
     {
       "label": "formatVolume()",
@@ -4830,7 +4796,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L27",
       "id": "index_formatvolume",
-      "community": 1
+      "community": 19
     },
     {
       "label": "getStatusColor()",
@@ -4838,7 +4804,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L36",
       "id": "index_getstatuscolor",
-      "community": 1
+      "community": 19
     },
     {
       "label": "getPerformanceLevel()",
@@ -4846,7 +4812,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L49",
       "id": "index_getperformancelevel",
-      "community": 1
+      "community": 19
     },
     {
       "label": "calculateSummaryStats()",
@@ -4854,7 +4820,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L74",
       "id": "index_calculatesummarystats",
-      "community": 1
+      "community": 19
     },
     {
       "label": "downloadCSV()",
@@ -4862,7 +4828,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L107",
       "id": "index_downloadcsv",
-      "community": 1
+      "community": 19
     },
     {
       "label": "debounce()",
@@ -4870,7 +4836,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L136",
       "id": "index_debounce",
-      "community": 1
+      "community": 19
     },
     {
       "label": "throttle()",
@@ -4878,7 +4844,7 @@
       "source_file": "frontend/src/utils/index.ts",
       "source_location": "L148",
       "id": "index_throttle",
-      "community": 1
+      "community": 19
     },
     {
       "label": "Watchlist.test.tsx",
@@ -4886,7 +4852,7 @@
       "source_file": "frontend/src/__tests__/Watchlist.test.tsx",
       "source_location": "L1",
       "id": "watchlist_test",
-      "community": 1
+      "community": 2
     },
     {
       "label": "App.test.tsx",
@@ -4894,7 +4860,7 @@
       "source_file": "frontend/src/__tests__/App.test.tsx",
       "source_location": "L1",
       "id": "app_test",
-      "community": 1
+      "community": 2
     },
     {
       "label": "utils.test.ts",
@@ -4902,7 +4868,7 @@
       "source_file": "frontend/src/__tests__/utils.test.ts",
       "source_location": "L1",
       "id": "utils_test",
-      "community": 41
+      "community": 44
     },
     {
       "label": "api.ts",
@@ -4910,7 +4876,7 @@
       "source_file": "frontend/src/services/api.ts",
       "source_location": "L1",
       "id": "api",
-      "community": 1
+      "community": 2
     },
     {
       "label": "lightweight-charts.ts",
@@ -4918,7 +4884,7 @@
       "source_file": "frontend/src/__mocks__/lightweight-charts.ts",
       "source_location": "L1",
       "id": "lightweight_charts",
-      "community": 1
+      "community": 4
     },
     {
       "label": "createSeriesMock()",
@@ -4926,7 +4892,7 @@
       "source_file": "frontend/src/__mocks__/lightweight-charts.ts",
       "source_location": "L8",
       "id": "lightweight_charts_createseriesmock",
-      "community": 1
+      "community": 4
     },
     {
       "label": "createTimeScaleMock()",
@@ -4934,7 +4900,7 @@
       "source_file": "frontend/src/__mocks__/lightweight-charts.ts",
       "source_location": "L20",
       "id": "lightweight_charts_createtimescalemock",
-      "community": 1
+      "community": 4
     },
     {
       "label": "handleSave()",
@@ -4942,7 +4908,7 @@
       "source_file": "frontend/src/pages/Settings.tsx",
       "source_location": "L67",
       "id": "settings_handlesave",
-      "community": 1
+      "community": 2
     },
     {
       "label": "addSymbol()",
@@ -4950,7 +4916,7 @@
       "source_file": "frontend/src/pages/Settings.tsx",
       "source_location": "L80",
       "id": "settings_addsymbol",
-      "community": 1
+      "community": 2
     },
     {
       "label": "removeSymbol()",
@@ -4958,7 +4924,7 @@
       "source_file": "frontend/src/pages/Settings.tsx",
       "source_location": "L94",
       "id": "settings_removesymbol",
-      "community": 1
+      "community": 2
     },
     {
       "label": "Watchlist.tsx",
@@ -4966,7 +4932,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L1",
       "id": "watchlist",
-      "community": 1
+      "community": 2
     },
     {
       "label": "loadConfig()",
@@ -4974,7 +4940,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L82",
       "id": "watchlist_loadconfig",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleViewChart()",
@@ -4982,7 +4948,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L96",
       "id": "watchlist_handleviewchart",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleRemove()",
@@ -4990,7 +4956,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L137",
       "id": "watchlist_handleremove",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleMarkAsRead()",
@@ -4998,7 +4964,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L149",
       "id": "watchlist_handlemarkasread",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleBacktest()",
@@ -5006,7 +4972,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L159",
       "id": "watchlist_handlebacktest",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleAutoBacktestChange()",
@@ -5014,7 +4980,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L190",
       "id": "watchlist_handleautobacktestchange",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleTimeChange()",
@@ -5022,7 +4988,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L205",
       "id": "watchlist_handletimechange",
-      "community": 1
+      "community": 2
     },
     {
       "label": "getWatchTypeColor()",
@@ -5030,7 +4996,7 @@
       "source_file": "frontend/src/pages/Watchlist.tsx",
       "source_location": "L221",
       "id": "watchlist_getwatchtypecolor",
-      "community": 1
+      "community": 2
     },
     {
       "label": "StrategyManager.tsx",
@@ -5038,7 +5004,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L1",
       "id": "strategymanager",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchInitialData()",
@@ -5046,7 +5012,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L48",
       "id": "strategymanager_fetchinitialdata",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleStartBacktest()",
@@ -5054,7 +5020,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L64",
       "id": "strategymanager_handlestartbacktest",
-      "community": 1
+      "community": 2
     },
     {
       "label": "refreshTaskStatus()",
@@ -5062,7 +5028,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L97",
       "id": "strategymanager_refreshtaskstatus",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showStrategyDetail()",
@@ -5070,7 +5036,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L108",
       "id": "strategymanager_showstrategydetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showTaskDetail()",
@@ -5078,7 +5044,7 @@
       "source_file": "frontend/src/pages/StrategyManager.tsx",
       "source_location": "L113",
       "id": "strategymanager_showtaskdetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "BacktestResults.tsx",
@@ -5086,7 +5052,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L1",
       "id": "backtestresults",
-      "community": 1
+      "community": 2
     },
     {
       "label": "translateTrendingType()",
@@ -5094,7 +5060,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L58",
       "id": "backtestresults_translatetrendingtype",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchWatchedSymbols()",
@@ -5102,7 +5068,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L178",
       "id": "backtestresults_fetchwatchedsymbols",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleFilterChange()",
@@ -5110,7 +5076,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L206",
       "id": "backtestresults_handlefilterchange",
-      "community": 1
+      "community": 2
     },
     {
       "label": "clearAllFilters()",
@@ -5118,7 +5084,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L210",
       "id": "backtestresults_clearallfilters",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleSort()",
@@ -5126,7 +5092,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L223",
       "id": "backtestresults_handlesort",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchAvailableStrategies()",
@@ -5134,7 +5100,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L241",
       "id": "backtestresults_fetchavailablestrategies",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showDetail()",
@@ -5142,7 +5108,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L276",
       "id": "backtestresults_showdetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "exportData()",
@@ -5150,7 +5116,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L281",
       "id": "backtestresults_exportdata",
-      "community": 1
+      "community": 2
     },
     {
       "label": "async()",
@@ -5158,7 +5124,7 @@
       "source_file": "frontend/src/pages/BacktestResults.tsx",
       "source_location": "L315",
       "id": "backtestresults_async",
-      "community": 1
+      "community": 2
     },
     {
       "label": "Dashboard.tsx",
@@ -5166,7 +5132,7 @@
       "source_file": "frontend/src/pages/Dashboard.tsx",
       "source_location": "L1",
       "id": "dashboard",
-      "community": 1
+      "community": 2
     },
     {
       "label": "calculateStockScore()",
@@ -5174,7 +5140,7 @@
       "source_file": "frontend/src/pages/Dashboard.tsx",
       "source_location": "L94",
       "id": "dashboard_calculatestockscore",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchWatchedSymbols()",
@@ -5182,7 +5148,7 @@
       "source_file": "frontend/src/pages/Dashboard.tsx",
       "source_location": "L351",
       "id": "dashboard_fetchwatchedsymbols",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleExport()",
@@ -5190,7 +5156,7 @@
       "source_file": "frontend/src/pages/Dashboard.tsx",
       "source_location": "L363",
       "id": "dashboard_handleexport",
-      "community": 1
+      "community": 2
     },
     {
       "label": "async()",
@@ -5198,7 +5164,7 @@
       "source_file": "frontend/src/pages/Dashboard.tsx",
       "source_location": "L750",
       "id": "dashboard_async",
-      "community": 1
+      "community": 2
     },
     {
       "label": "RealtimeMonitor.tsx",
@@ -5206,7 +5172,7 @@
       "source_file": "frontend/src/pages/RealtimeMonitor.tsx",
       "source_location": "L1",
       "id": "realtimemonitor",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchRealtimeData()",
@@ -5214,7 +5180,7 @@
       "source_file": "frontend/src/pages/RealtimeMonitor.tsx",
       "source_location": "L98",
       "id": "realtimemonitor_fetchrealtimedata",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showPositionDetail()",
@@ -5222,7 +5188,7 @@
       "source_file": "frontend/src/pages/RealtimeMonitor.tsx",
       "source_location": "L144",
       "id": "realtimemonitor_showpositiondetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleStrategyAction()",
@@ -5230,7 +5196,7 @@
       "source_file": "frontend/src/pages/RealtimeMonitor.tsx",
       "source_location": "L149",
       "id": "realtimemonitor_handlestrategyaction",
-      "community": 1
+      "community": 2
     },
     {
       "label": "BacktestManager.tsx",
@@ -5238,7 +5204,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L1",
       "id": "backtestmanager",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleDatePresetChange()",
@@ -5246,7 +5212,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L123",
       "id": "backtestmanager_handledatepresetchange",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchInitialData()",
@@ -5254,7 +5220,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L157",
       "id": "backtestmanager_fetchinitialdata",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchBacktestPoolSymbols()",
@@ -5262,7 +5228,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L173",
       "id": "backtestmanager_fetchbacktestpoolsymbols",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleModeChange()",
@@ -5270,7 +5236,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L203",
       "id": "backtestmanager_handlemodechange",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleOpenCreateModal()",
@@ -5278,7 +5244,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L207",
       "id": "backtestmanager_handleopencreatemodal",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleStartBacktest()",
@@ -5286,7 +5252,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L226",
       "id": "backtestmanager_handlestartbacktest",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleDeleteTask()",
@@ -5294,7 +5260,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L268",
       "id": "backtestmanager_handledeletetask",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showStrategyDetail()",
@@ -5302,7 +5268,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L278",
       "id": "backtestmanager_showstrategydetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "showTaskDetail()",
@@ -5310,7 +5276,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L283",
       "id": "backtestmanager_showtaskdetail",
-      "community": 1
+      "community": 2
     },
     {
       "label": "fetchTaskResults()",
@@ -5318,7 +5284,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L288",
       "id": "backtestmanager_fetchtaskresults",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleExpand()",
@@ -5326,7 +5292,7 @@
       "source_file": "frontend/src/pages/BacktestManager.tsx",
       "source_location": "L302",
       "id": "backtestmanager_handleexpand",
-      "community": 1
+      "community": 2
     },
     {
       "label": "darkTheme.ts",
@@ -5334,7 +5300,7 @@
       "source_file": "frontend/src/styles/darkTheme.ts",
       "source_location": "L1",
       "id": "darktheme",
-      "community": 1
+      "community": 2
     },
     {
       "label": "StockChart.tsx",
@@ -5342,7 +5308,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L1",
       "id": "stockchart",
-      "community": 1
+      "community": 2
     },
     {
       "label": "calculateMA()",
@@ -5350,7 +5316,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L59",
       "id": "stockchart_calculatema",
-      "community": 1
+      "community": 2
     },
     {
       "label": "syncCharts()",
@@ -5358,7 +5324,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L282",
       "id": "stockchart_synccharts",
-      "community": 1
+      "community": 2
     },
     {
       "label": "mainRangeHandler()",
@@ -5366,7 +5332,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L300",
       "id": "stockchart_mainrangehandler",
-      "community": 1
+      "community": 2
     },
     {
       "label": "volumeRangeHandler()",
@@ -5374,7 +5340,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L311",
       "id": "stockchart_volumerangehandler",
-      "community": 1
+      "community": 2
     },
     {
       "label": "macdRangeHandler()",
@@ -5382,7 +5348,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L322",
       "id": "stockchart_macdrangehandler",
-      "community": 1
+      "community": 2
     },
     {
       "label": "crosshairHandler()",
@@ -5390,7 +5356,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L338",
       "id": "stockchart_crosshairhandler",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleResize()",
@@ -5398,7 +5364,7 @@
       "source_file": "frontend/src/components/StockChart.tsx",
       "source_location": "L399",
       "id": "stockchart_handleresize",
-      "community": 1
+      "community": 2
     },
     {
       "label": "LogViewer.tsx",
@@ -5406,7 +5372,7 @@
       "source_file": "frontend/src/components/LogViewer.tsx",
       "source_location": "L1",
       "id": "logviewer",
-      "community": 1
+      "community": 2
     },
     {
       "label": "getLevelIcon()",
@@ -5414,7 +5380,7 @@
       "source_file": "frontend/src/components/LogViewer.tsx",
       "source_location": "L92",
       "id": "logviewer_getlevelicon",
-      "community": 1
+      "community": 2
     },
     {
       "label": "handleDownload()",
@@ -5422,7 +5388,7 @@
       "source_file": "frontend/src/components/LogViewer.tsx",
       "source_location": "L115",
       "id": "logviewer_handledownload",
-      "community": 1
+      "community": 2
     },
     {
       "label": "scrollToBottom()",
@@ -5430,7 +5396,7 @@
       "source_file": "frontend/src/components/LogViewer.tsx",
       "source_location": "L132",
       "id": "logviewer_scrolltobottom",
-      "community": 1
+      "community": 2
     },
     {
       "label": "block-navigation.js",
@@ -5438,7 +5404,7 @@
       "source_file": "frontend/coverage/lcov-report/block-navigation.js",
       "source_location": "L1",
       "id": "block_navigation",
-      "community": 27
+      "community": 28
     },
     {
       "label": "toggleClass()",
@@ -5446,7 +5412,7 @@
       "source_file": "frontend/coverage/lcov-report/block-navigation.js",
       "source_location": "L24",
       "id": "block_navigation_toggleclass",
-      "community": 27
+      "community": 28
     },
     {
       "label": "makeCurrent()",
@@ -5454,7 +5420,7 @@
       "source_file": "frontend/coverage/lcov-report/block-navigation.js",
       "source_location": "L31",
       "id": "block_navigation_makecurrent",
-      "community": 27
+      "community": 28
     },
     {
       "label": "goToPrevious()",
@@ -5462,7 +5428,7 @@
       "source_file": "frontend/coverage/lcov-report/block-navigation.js",
       "source_location": "L41",
       "id": "block_navigation_gotoprevious",
-      "community": 27
+      "community": 28
     },
     {
       "label": "goToNext()",
@@ -5470,7 +5436,7 @@
       "source_file": "frontend/coverage/lcov-report/block-navigation.js",
       "source_location": "L52",
       "id": "block_navigation_gotonext",
-      "community": 27
+      "community": 28
     },
     {
       "label": "prettify.js",
@@ -5478,7 +5444,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L1",
       "id": "prettify",
-      "community": 20
+      "community": 21
     },
     {
       "label": "k()",
@@ -5486,7 +5452,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_k",
-      "community": 20
+      "community": 21
     },
     {
       "label": "a()",
@@ -5494,7 +5460,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_a",
-      "community": 20
+      "community": 21
     },
     {
       "label": "B()",
@@ -5502,7 +5468,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_b",
-      "community": 20
+      "community": 21
     },
     {
       "label": "o()",
@@ -5510,7 +5476,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_o",
-      "community": 20
+      "community": 21
     },
     {
       "label": "g()",
@@ -5518,7 +5484,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_g",
-      "community": 20
+      "community": 21
     },
     {
       "label": "i()",
@@ -5526,7 +5492,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_i",
-      "community": 20
+      "community": 21
     },
     {
       "label": "Q()",
@@ -5534,7 +5500,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_q",
-      "community": 20
+      "community": 21
     },
     {
       "label": "D()",
@@ -5542,7 +5508,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_d",
-      "community": 20
+      "community": 21
     },
     {
       "label": "c()",
@@ -5550,7 +5516,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_c",
-      "community": 20
+      "community": 21
     },
     {
       "label": "y()",
@@ -5558,7 +5524,7 @@
       "source_file": "frontend/coverage/lcov-report/prettify.js",
       "source_location": "L2",
       "id": "prettify_y",
-      "community": 20
+      "community": 21
     },
     {
       "label": "sorter.js",
@@ -5678,7 +5644,7 @@
       "source_file": "test/realtime.py",
       "source_location": "L1",
       "id": "realtime",
-      "community": 28
+      "community": 29
     },
     {
       "label": "init()",
@@ -5686,7 +5652,7 @@
       "source_file": "test/realtime.py",
       "source_location": "L15",
       "id": "realtime_init",
-      "community": 28
+      "community": 29
     },
     {
       "label": "on_bar()",
@@ -5694,7 +5660,7 @@
       "source_file": "test/realtime.py",
       "source_location": "L30",
       "id": "realtime_on_bar",
-      "community": 28
+      "community": 29
     },
     {
       "label": "on_order_status()",
@@ -5702,7 +5668,7 @@
       "source_file": "test/realtime.py",
       "source_location": "L69",
       "id": "realtime_on_order_status",
-      "community": 28
+      "community": 29
     },
     {
       "label": "on_backtest_finished()",
@@ -5710,7 +5676,7 @@
       "source_file": "test/realtime.py",
       "source_location": "L100",
       "id": "realtime_on_backtest_finished",
-      "community": 28
+      "community": 29
     },
     {
       "label": "jk.py",
@@ -5718,7 +5684,7 @@
       "source_file": "test/jk.py",
       "source_location": "L1",
       "id": "jk",
-      "community": 42
+      "community": 45
     },
     {
       "label": "strategy.py",
@@ -5726,7 +5692,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L1",
       "id": "strategy",
-      "community": 5
+      "community": 6
     },
     {
       "label": "MACDPoint",
@@ -5734,7 +5700,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L18",
       "id": "strategy_macdpoint",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".__init__()",
@@ -5742,7 +5708,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L28",
       "id": "strategy_macdpoint_init",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".get_macd()",
@@ -5750,7 +5716,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L34",
       "id": "strategy_macdpoint_get_macd",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".get_datetime()",
@@ -5758,7 +5724,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L37",
       "id": "strategy_macdpoint_get_datetime",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".set_position()",
@@ -5766,7 +5732,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L40",
       "id": "strategy_macdpoint_set_position",
-      "community": 5
+      "community": 6
     },
     {
       "label": "XPointType",
@@ -5774,7 +5740,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L45",
       "id": "strategy_xpointtype",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".__init__()",
@@ -5782,7 +5748,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L52",
       "id": "strategy_xpointtype_init",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_golden()",
@@ -5790,7 +5756,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L58",
       "id": "strategy_xpointtype_is_golden",
-      "community": 5
+      "community": 6
     },
     {
       "label": "TradeSignal",
@@ -5798,7 +5764,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L63",
       "id": "strategy_tradesignal",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".__init__()",
@@ -5806,7 +5772,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L79",
       "id": "strategy_tradesignal_init",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".create_golden_x()",
@@ -5814,7 +5780,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L82",
       "id": "strategy_tradesignal_create_golden_x",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".create_zero_axis()",
@@ -5822,7 +5788,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L86",
       "id": "strategy_tradesignal_create_zero_axis",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".create_dead_axis()",
@@ -5830,7 +5796,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L90",
       "id": "strategy_tradesignal_create_dead_axis",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".set_first_golden_x()",
@@ -5838,7 +5804,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L94",
       "id": "strategy_tradesignal_set_first_golden_x",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_golden_x()",
@@ -5846,7 +5812,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L107",
       "id": "strategy_tradesignal_is_golden_x",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_dead_x()",
@@ -5854,7 +5820,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L115",
       "id": "strategy_tradesignal_is_dead_x",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".has_first_care()",
@@ -5862,7 +5828,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L121",
       "id": "strategy_tradesignal_has_first_care",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_zero_axis_up()",
@@ -5870,7 +5836,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L125",
       "id": "strategy_tradesignal_is_zero_axis_up",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_zero_axis_down()",
@@ -5878,7 +5844,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L134",
       "id": "strategy_tradesignal_is_zero_axis_down",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_above_zero_axis()",
@@ -5886,7 +5852,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L143",
       "id": "strategy_tradesignal_is_above_zero_axis",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".run()",
@@ -5894,7 +5860,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L151",
       "id": "strategy_tradesignal_run",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_macd_fall_down_n()",
@@ -5902,7 +5868,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L223",
       "id": "strategy_tradesignal_is_macd_fall_down_n",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".buy()",
@@ -5910,7 +5876,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L232",
       "id": "strategy_tradesignal_buy",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".sell()",
@@ -5918,7 +5884,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L238",
       "id": "strategy_tradesignal_sell",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".set_clear()",
@@ -5926,7 +5892,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L247",
       "id": "strategy_tradesignal_set_clear",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_clear()",
@@ -5934,7 +5900,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L251",
       "id": "strategy_tradesignal_is_clear",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".clear()",
@@ -5942,7 +5908,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L255",
       "id": "strategy_tradesignal_clear",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".set_no_action()",
@@ -5950,7 +5916,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L266",
       "id": "strategy_tradesignal_set_no_action",
-      "community": 5
+      "community": 6
     },
     {
       "label": ".is_valid()",
@@ -5958,7 +5924,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L270",
       "id": "strategy_tradesignal_is_valid",
-      "community": 5
+      "community": 6
     },
     {
       "label": "init()",
@@ -5966,7 +5932,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L275",
       "id": "strategy_init",
-      "community": 5
+      "community": 6
     },
     {
       "label": "float_fmt()",
@@ -5974,7 +5940,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L292",
       "id": "strategy_float_fmt",
-      "community": 5
+      "community": 6
     },
     {
       "label": "on_bar()",
@@ -5982,7 +5948,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L297",
       "id": "strategy_on_bar",
-      "community": 5
+      "community": 6
     },
     {
       "label": "on_order_status()",
@@ -5990,7 +5956,7 @@
       "source_file": "test/strategy.py",
       "source_location": "L353",
       "id": "strategy_on_order_status",
-      "community": 5
+      "community": 6
     },
     {
       "label": "trend.py",
@@ -5998,7 +5964,7 @@
       "source_file": "test/trend.py",
       "source_location": "L1",
       "id": "trend",
-      "community": 25
+      "community": 26
     },
     {
       "label": "init()",
@@ -6006,7 +5972,7 @@
       "source_file": "test/trend.py",
       "source_location": "L25",
       "id": "trend_init",
-      "community": 25
+      "community": 26
     },
     {
       "label": "on_bar()",
@@ -6014,7 +5980,7 @@
       "source_file": "test/trend.py",
       "source_location": "L33",
       "id": "trend_on_bar",
-      "community": 25
+      "community": 26
     },
     {
       "label": "on_order_status()",
@@ -6022,7 +5988,7 @@
       "source_file": "test/trend.py",
       "source_location": "L71",
       "id": "trend_on_order_status",
-      "community": 25
+      "community": 26
     },
     {
       "label": "on_backtest_finished()",
@@ -6030,7 +5996,7 @@
       "source_file": "test/trend.py",
       "source_location": "L108",
       "id": "trend_on_backtest_finished",
-      "community": 25
+      "community": 26
     },
     {
       "label": "run_strategy()",
@@ -6038,7 +6004,7 @@
       "source_file": "test/trend.py",
       "source_location": "L117",
       "id": "trend_run_strategy",
-      "community": 25
+      "community": 26
     },
     {
       "label": "init()",
@@ -6078,7 +6044,7 @@
       "source_file": "test/test_mysql.py",
       "source_location": "L1",
       "id": "test_mysql",
-      "community": 34
+      "community": 35
     },
     {
       "label": "test_mysql_connection()",
@@ -6086,7 +6052,7 @@
       "source_file": "test/test_mysql.py",
       "source_location": "L22",
       "id": "test_mysql_test_mysql_connection",
-      "community": 34
+      "community": 35
     },
     {
       "label": "test_pymysql_direct()",
@@ -6094,7 +6060,7 @@
       "source_file": "test/test_mysql.py",
       "source_location": "L77",
       "id": "test_mysql_test_pymysql_direct",
-      "community": 34
+      "community": 35
     },
     {
       "label": "talib_test.py",
@@ -6102,7 +6068,7 @@
       "source_file": "test/talib_test.py",
       "source_location": "L1",
       "id": "talib_test",
-      "community": 29
+      "community": 30
     },
     {
       "label": "init()",
@@ -6110,7 +6076,7 @@
       "source_file": "test/talib_test.py",
       "source_location": "L31",
       "id": "talib_test_init",
-      "community": 29
+      "community": 30
     },
     {
       "label": "on_bar()",
@@ -6118,7 +6084,7 @@
       "source_file": "test/talib_test.py",
       "source_location": "L36",
       "id": "talib_test_on_bar",
-      "community": 29
+      "community": 30
     },
     {
       "label": "on_backtest_finished()",
@@ -6126,7 +6092,7 @@
       "source_file": "test/talib_test.py",
       "source_location": "L52",
       "id": "talib_test_on_backtest_finished",
-      "community": 29
+      "community": 30
     },
     {
       "label": "run_strategy()",
@@ -6134,7 +6100,7 @@
       "source_file": "test/talib_test.py",
       "source_location": "L59",
       "id": "talib_test_run_strategy",
-      "community": 29
+      "community": 30
     },
     {
       "label": "demo.py",
@@ -6142,7 +6108,7 @@
       "source_file": "test/demo.py",
       "source_location": "L1",
       "id": "demo",
-      "community": 26
+      "community": 27
     },
     {
       "label": "init()",
@@ -6150,7 +6116,7 @@
       "source_file": "test/demo.py",
       "source_location": "L17",
       "id": "demo_init",
-      "community": 26
+      "community": 27
     },
     {
       "label": "before_market()",
@@ -6158,7 +6124,7 @@
       "source_file": "test/demo.py",
       "source_location": "L35",
       "id": "demo_before_market",
-      "community": 26
+      "community": 27
     },
     {
       "label": "begin_market()",
@@ -6166,7 +6132,7 @@
       "source_file": "test/demo.py",
       "source_location": "L78",
       "id": "demo_begin_market",
-      "community": 26
+      "community": 27
     },
     {
       "label": "get_previous_N_trading_date()",
@@ -6174,7 +6140,7 @@
       "source_file": "test/demo.py",
       "source_location": "L99",
       "id": "demo_get_previous_n_trading_date",
-      "community": 26
+      "community": 27
     },
     {
       "label": "\u83b7\u53d6end_date\u524dN\u4e2a\u4ea4\u6613\u65e5,end_date\u4e3adatetime\u683c\u5f0f\uff0c\u5305\u62ecdate\u65e5\u671f\r     :param date\uff1a\u76ee\u6807\u65e5\u671f\r     :param",
@@ -6182,7 +6148,7 @@
       "source_file": "test/demo.py",
       "source_location": "L100",
       "id": "demo_rationale_100",
-      "community": 26
+      "community": 27
     },
     {
       "label": "test.py",
@@ -6190,451 +6156,371 @@
       "source_file": "test/test.py",
       "source_location": "L1",
       "id": "test",
-      "community": 43
+      "community": 46
     },
     {
-      "label": "PyTrading\u91cf\u5316\u4ea4\u6613\u7cfb\u7edf",
+      "label": "graphify System",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "id": "graphify_system",
+      "community": 38
+    },
+    {
+      "label": "graphify Knowledge Graph Rules",
+      "file_type": "document",
+      "source_file": "CLAUDE.md",
+      "id": "graphify_rules",
+      "community": 38
+    },
+    {
+      "label": "PyTrading System",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "pytrading_project",
-      "community": 7
+      "id": "PyTrading",
+      "community": 39
     },
     {
-      "label": "\u6398\u91d1\u91cf\u5316\u5e73\u53f0",
+      "label": "MyQuant Trading Platform",
       "file_type": "document",
       "source_file": "README.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "myquant_platform",
-      "community": 7
+      "id": "MyQuant",
+      "community": 39
     },
     {
-      "label": "\u80a1\u7968\u5173\u6ce8\u5217\u8868\u529f\u80fd",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/spec.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watchlist_feature",
-      "community": 7
+      "label": "MACD Strategy",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "MacdStrategy",
+      "community": 4
     },
     {
-      "label": "\u5173\u6ce8\u6761\u76ee\u5b9e\u4f53",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watchlist_item_entity",
-      "community": 7
+      "label": "Market Trend Type",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "TrendingType",
+      "community": 4
     },
     {
-      "label": "watchlist_items\u6570\u636e\u5e93\u8868",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watchlist_item_table",
-      "community": 7
+      "label": "Trading Order Action",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "OrderAction",
+      "community": 4
     },
     {
-      "label": "\u5173\u6ce8\u7c7b\u578b\u679a\u4e3e",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_enum",
-      "community": 7
+      "label": "MACD Point",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "MACDPoint",
+      "community": 4
     },
     {
-      "label": "\u65e0\u72b6\u6001",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_no_state",
-      "community": 7
+      "label": "Backtest Result",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
+      "id": "BackTestResult",
+      "community": 4
     },
     {
-      "label": "\u5173\u6ce8\u4e2d",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_watching",
-      "community": 7
+      "label": "Strategy Base",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_base.py",
+      "id": "Strategy",
+      "community": 47
     },
     {
-      "label": "\u8d8b\u52bf\u4e0a\u6da8",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_trend_up",
-      "community": 7
+      "label": "Watch Type",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType",
+      "community": 4
     },
     {
-      "label": "\u8d8b\u52bf\u4e0b\u884c",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_trend_down",
-      "community": 7
+      "label": "Order",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "Order",
+      "community": 4
     },
     {
-      "label": "\u8d8b\u52bf\u7ed3\u675f",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watch_type_trend_end",
-      "community": 7
+      "label": "Trade Record",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
+      "id": "TradeRecord",
+      "community": 4
     },
     {
-      "label": "\u5185\u90e8\u8d8b\u52bf\u7c7b\u578b\u679a\u4e3e",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trending_type_enum",
-      "community": 7
+      "label": "Strategy Base Class",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_base.py",
+      "id": "StrategyBase",
+      "community": 4
     },
     {
-      "label": "backtest_results\u8868",
+      "label": "Watchlist Item",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
+      "id": "WatchlistItem",
+      "community": 4
+    },
+    {
+      "label": "Watchlist Service",
+      "file_type": "code",
+      "source_file": "src/pytrading/service/watchlist_service.py",
+      "id": "WatchlistService",
+      "community": 4
+    },
+    {
+      "label": "Trade Record Service",
+      "file_type": "code",
+      "source_file": "src/pytrading/service/trade_record_service.py",
+      "id": "TradeRecordService",
+      "community": 4
+    },
+    {
+      "label": "Watchlist REST API",
       "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
+      "source_file": "docs/design/watchlist.md",
+      "id": "watchlist_api",
+      "community": 4
+    },
+    {
+      "label": "Watchlist Design Document",
+      "file_type": "document",
+      "source_file": "docs/design/watchlist.md",
+      "id": "watchlist_design",
+      "community": 4
+    },
+    {
+      "label": "WatchType NO_STATE",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType_NO_STATE",
+      "community": 4
+    },
+    {
+      "label": "WatchType WATCHING",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType_WATCHING",
+      "community": 4
+    },
+    {
+      "label": "WatchType TREND_UP",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType_TREND_UP",
+      "community": 4
+    },
+    {
+      "label": "WatchType TREND_DOWN",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType_TREND_DOWN",
+      "community": 4
+    },
+    {
+      "label": "WatchType TREND_END",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/watch_type.py",
+      "id": "WatchType_TREND_END",
+      "community": 4
+    },
+    {
+      "label": "K\u7ebf\u56fe\u4e70\u5356\u4fe1\u53f7\u6807\u6ce8\u529f\u80fd",
+      "file_type": "document",
+      "source_file": "docs/design/kline-trade-signals.md",
+      "id": "kline_trade_signals_design",
+      "community": 4
+    },
+    {
+      "label": "Signal Build (\u5efa)",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "signal_build",
+      "community": 4
+    },
+    {
+      "label": "Signal Buy (\u4e70)",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "signal_buy",
+      "community": 4
+    },
+    {
+      "label": "Signal Sell (\u5356)",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "signal_sell",
+      "community": 4
+    },
+    {
+      "label": "Signal Close (\u5e73)",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "signal_close",
+      "community": 4
+    },
+    {
+      "label": "MACD Strategy Main Method",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "macd_strategy_method",
+      "community": 4
+    },
+    {
+      "label": "MACD Strategy 1030 Method",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "macd_strategy_1030_method",
+      "community": 4
+    },
+    {
+      "label": "Golden Cross Detection",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "golden_cross_detection",
+      "community": 4
+    },
+    {
+      "label": "Zero Axis Cross Detection",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "zero_axis_cross_detection",
+      "community": 4
+    },
+    {
+      "label": "ATR Stop Loss",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "atr_stop_loss",
+      "community": 4
+    },
+    {
+      "label": "Fixed Drawdown Stop Loss",
+      "file_type": "code",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "id": "fixed_drawdown_stop_loss",
+      "community": 4
+    },
+    {
+      "label": "Order.with_signal Chainable Method",
+      "file_type": "code",
+      "source_file": "src/pytrading/config/order_enum.py",
+      "id": "Order_with_signal",
+      "community": 4
+    },
+    {
+      "label": "backtest_results Table",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
       "id": "backtest_results_table",
-      "community": 7
+      "community": 4
     },
     {
-      "label": "trade_records\u8868",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
+      "label": "trade_records Table",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
       "id": "trade_records_table",
-      "community": 7
+      "community": 4
     },
     {
-      "label": "strategies\u8868",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "strategies_table",
-      "community": 7
+      "label": "watchlist_items Table",
+      "file_type": "code",
+      "source_file": "src/pytrading/db/mysql.py",
+      "id": "watchlist_items_table",
+      "community": 4
     },
     {
-      "label": "\u6d4b\u8bd5\u57fa\u7840\u8bbe\u65bd",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/spec.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "test_infra_feature",
-      "community": 7
+      "label": "FastAPI Backend",
+      "file_type": "code",
+      "source_file": "src/pytrading/api/main.py",
+      "id": "FastAPI_backend",
+      "community": 4
     },
     {
-      "label": "\u6570\u636e\u5e93\u6d4b\u8bd5\u4f1a\u8bddfixture",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "db_session_fixture",
-      "community": 7
+      "label": "React Frontend",
+      "file_type": "code",
+      "source_file": "frontend/src/App.tsx",
+      "id": "React_frontend",
+      "community": 4
     },
     {
-      "label": "\u6398\u91d1API Mock Fixture",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "mock_gm_api_fixture",
-      "community": 7
+      "label": "createSeriesMarkers API",
+      "file_type": "code",
+      "source_file": "frontend/src/components/StockChart.tsx",
+      "id": "createSeriesMarkers",
+      "community": 4
     },
     {
-      "label": "\u5e02\u573a\u884c\u60c5\u6d4b\u8bd5\u6570\u636e\u96c6",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "market_data_fixtures",
-      "community": 7
+      "label": "run_backtest_task Function",
+      "file_type": "code",
+      "source_file": "src/pytrading/run/run_strategy.py",
+      "id": "run_backtest_task",
+      "community": 4
     },
     {
-      "label": "\u4e0a\u6da8\u8d8b\u52bf\u6570\u636e\u96c6",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "bullish_trend_fixture",
-      "community": 7
+      "label": "on_bar Handler",
+      "file_type": "code",
+      "source_file": "src/pytrading/run/run_strategy.py",
+      "id": "on_bar_handler",
+      "community": 4
     },
     {
-      "label": "\u4e0b\u8dcc\u8d8b\u52bf\u6570\u636e\u96c6",
+      "label": "MySQL Database",
       "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "bearish_trend_fixture",
-      "community": 7
+      "source_file": "README.md",
+      "id": "MySQL_database",
+      "community": 4
     },
     {
-      "label": "\u9707\u8361\u76d8\u6574\u6570\u636e\u96c6",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "sideways_range_fixture",
-      "community": 7
+      "label": "Coverage Report Favicon Icon",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/favicon.png",
+      "id": "favicon_entity",
+      "community": 25
     },
     {
-      "label": "\u91d1\u53c9\u4fe1\u53f7\u6570\u636e\u96c6",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "golden_cross_fixture",
-      "community": 7
+      "label": "Sort Arrow Sprite Sheet",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "id": "sort_arrow_sprite_entity",
+      "community": 25
     },
     {
-      "label": "Mock\u7b56\u7565Context\u5bf9\u8c61",
-      "file_type": "document",
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "mock_strategy_context",
-      "community": 7
+      "label": "LCov Code Coverage Report UI",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/favicon.png",
+      "id": "lcov_coverage_report",
+      "community": 25
     },
     {
-      "label": "\u4ea4\u6613\u8bb0\u5f55\u5b9e\u4f53",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trade_record_entity",
-      "community": 7
+      "label": "Ascending Sort Arrow",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "id": "up_arrow_state",
+      "community": 25
     },
     {
-      "label": "\u5efa\u4ed3\u4fe1\u53f7",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trade_signal_build",
-      "community": 7
+      "label": "Descending Sort Arrow",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "id": "down_arrow_state",
+      "community": 25
     },
     {
-      "label": "\u4e70\u5165\u4fe1\u53f7",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trade_signal_buy",
-      "community": 7
+      "label": "Neutral Sort Arrow",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "id": "neutral_arrow_state",
+      "community": 25
     },
     {
-      "label": "\u5356\u51fa\u4fe1\u53f7",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trade_signal_sell",
-      "community": 7
-    },
-    {
-      "label": "\u5e73\u4ed3\u4fe1\u53f7",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "trade_signal_close",
-      "community": 7
-    },
-    {
-      "label": "MACD\u7b56\u7565",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "macd_strategy",
-      "community": 7
-    },
-    {
-      "label": "Order.with_signal\u94fe\u5f0f\u8c03\u7528",
-      "file_type": "document",
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "order_with_signal",
-      "community": 7
-    },
-    {
-      "label": "\u5173\u6ce8\u5217\u8868REST API\u5408\u540c",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "watchlist_api_contract",
-      "community": 9
-    },
-    {
-      "label": "POST /api/watchlist",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "api_add_watch",
-      "community": 9
-    },
-    {
-      "label": "DELETE /api/watchlist/{id}",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "api_delete_watch",
-      "community": 9
-    },
-    {
-      "label": "GET /api/watchlist",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "api_get_watchlist",
-      "community": 9
-    },
-    {
-      "label": "GET /api/watchlist/watched-symbols",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "api_get_watched_symbols",
-      "community": 9
-    },
-    {
-      "label": "PUT /api/watchlist/{id}/read",
-      "file_type": "document",
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "source_url": null,
-      "captured_at": null,
-      "author": null,
-      "contributor": null,
-      "id": "api_mark_read",
-      "community": 9
+      "label": "Letter F Icon Symbol",
+      "file_type": "image",
+      "source_file": "frontend/coverage/lcov-report/favicon.png",
+      "id": "letter_f_icon",
+      "community": 25
     }
   ],
   "links": [
@@ -7777,102 +7663,6 @@
       "source": "start_print_completion_info",
       "target": "start_rationale_454",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_debounce",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_debounce",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_checkvisible",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_checkvisible",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L28",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_on_click",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_on_click",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L36",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_getcellvalue",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_getcellvalue",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L50",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_rowcomparator",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_rowcomparator",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L59",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_sortcolumn",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_sortcolumn",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L699",
-      "weight": 1.0,
-      "_src": "coverage_html_cb_dd2e7eb5",
-      "_tgt": "coverage_html_cb_dd2e7eb5_updateheader",
-      "source": "coverage_html_cb_dd2e7eb5",
-      "target": "coverage_html_cb_dd2e7eb5_updateheader",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "INFERRED",
-      "source_file": "htmlcov/coverage_html_cb_dd2e7eb5.js",
-      "source_location": "L51",
-      "weight": 0.8,
-      "_src": "coverage_html_cb_dd2e7eb5_rowcomparator",
-      "_tgt": "coverage_html_cb_dd2e7eb5_getcellvalue",
-      "source": "coverage_html_cb_dd2e7eb5_getcellvalue",
-      "target": "coverage_html_cb_dd2e7eb5_rowcomparator",
-      "confidence_score": 0.5
     },
     {
       "relation": "contains",
@@ -9181,78 +8971,6 @@
       "source": "watchlist_service",
       "target": "watchlist_service_rationale_1",
       "confidence_score": 1.0
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "watchlist_item_entity",
-      "source": "watchlist_service",
-      "target": "watchlist_item_entity"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": "T006",
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "api_add_watch",
-      "source": "watchlist_service",
-      "target": "api_add_watch"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": "T006",
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "api_delete_watch",
-      "source": "watchlist_service",
-      "target": "api_delete_watch"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": "T006",
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "api_get_watchlist",
-      "source": "watchlist_service",
-      "target": "api_get_watchlist"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": "T006",
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "api_get_watched_symbols",
-      "source": "watchlist_service",
-      "target": "api_get_watched_symbols"
-    },
-    {
-      "relation": "implements",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/plan.md",
-      "source_location": "T006",
-      "weight": 1.0,
-      "_src": "watchlist_service",
-      "_tgt": "api_mark_read",
-      "source": "watchlist_service",
-      "target": "api_mark_read"
     },
     {
       "relation": "uses",
@@ -20655,6 +20373,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "React_frontend",
+      "_tgt": "lightweight_charts",
+      "source": "lightweight_charts",
+      "target": "React_frontend"
+    },
+    {
       "relation": "imports_from",
       "confidence": "EXTRACTED",
       "source_file": "frontend/src/pages/Watchlist.tsx",
@@ -23091,644 +22820,779 @@
       "confidence_score": 1.0
     },
     {
-      "relation": "includes",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "CLAUDE.md",
+      "weight": 1.0,
+      "_src": "graphify_rules",
+      "_tgt": "graphify_system",
+      "source": "graphify_system",
+      "target": "graphify_rules"
+    },
+    {
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "README.md",
-      "source_location": null,
       "weight": 1.0,
-      "_src": "pytrading_project",
-      "_tgt": "watchlist_feature",
-      "source": "pytrading_project",
-      "target": "watchlist_feature"
+      "_src": "PyTrading",
+      "_tgt": "MyQuant",
+      "source": "PyTrading",
+      "target": "MyQuant"
     },
     {
-      "relation": "includes",
+      "relation": "implements",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_location": null,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
       "weight": 1.0,
-      "_src": "pytrading_project",
-      "_tgt": "test_infra_feature",
-      "source": "pytrading_project",
-      "target": "test_infra_feature"
+      "_src": "MacdStrategy",
+      "_tgt": "StrategyBase",
+      "source": "MacdStrategy",
+      "target": "StrategyBase"
     },
     {
-      "relation": "includes",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_location": null,
+      "source_file": "graphify-out/memory/query_20260408_152605_macd\u7b56\u7565\u662f\u5982\u4f55\u5b9e\u73b0\u7684.md",
       "weight": 1.0,
-      "_src": "pytrading_project",
-      "_tgt": "macd_strategy",
-      "source": "pytrading_project",
-      "target": "macd_strategy"
+      "_src": "MacdStrategy",
+      "_tgt": "TrendingType",
+      "source": "MacdStrategy",
+      "target": "TrendingType"
     },
     {
-      "relation": "supports",
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_location": null,
+      "source_file": "graphify-out/memory/query_20260408_152605_macd\u7b56\u7565\u662f\u5982\u4f55\u5b9e\u73b0\u7684.md",
       "weight": 1.0,
-      "_src": "myquant_platform",
-      "_tgt": "watchlist_feature",
-      "source": "myquant_platform",
-      "target": "watchlist_feature"
+      "_src": "MacdStrategy",
+      "_tgt": "OrderAction",
+      "source": "MacdStrategy",
+      "target": "OrderAction"
     },
     {
-      "relation": "provides_api_for",
+      "relation": "calls",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "README.md",
-      "source_location": null,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
       "weight": 1.0,
-      "_src": "myquant_platform",
-      "_tgt": "macd_strategy",
-      "source": "myquant_platform",
-      "target": "macd_strategy"
+      "_src": "macd_strategy_method",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "macd_strategy_method"
     },
     {
-      "relation": "mocks",
+      "relation": "calls",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R2",
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
       "weight": 1.0,
-      "_src": "mock_strategy_context",
-      "_tgt": "myquant_platform",
-      "source": "myquant_platform",
-      "target": "mock_strategy_context"
+      "_src": "macd_strategy_1030_method",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "macd_strategy_1030_method"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "golden_cross_detection",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "golden_cross_detection"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "zero_axis_cross_detection",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "zero_axis_cross_detection"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "atr_stop_loss",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "atr_stop_loss"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "fixed_drawdown_stop_loss",
+      "_tgt": "MacdStrategy",
+      "source": "MacdStrategy",
+      "target": "fixed_drawdown_stop_loss"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "graphify-out/GRAPH_REPORT.md",
+      "weight": 1.0,
+      "_src": "MacdStrategy",
+      "_tgt": "MACDPoint",
+      "source": "MacdStrategy",
+      "target": "MACDPoint"
+    },
+    {
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "graphify-out/memory/query_20260408_152605_macd\u7b56\u7565\u662f\u5982\u4f55\u5b9e\u73b0\u7684.md",
+      "weight": 1.0,
+      "_src": "MacdStrategy",
+      "_tgt": "Order",
+      "source": "MacdStrategy",
+      "target": "Order"
     },
     {
       "relation": "conceptually_related_to",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/spec.md",
-      "source_location": null,
+      "source_file": "docs/design/watchlist.md",
       "weight": 1.0,
-      "_src": "watchlist_feature",
-      "_tgt": "watchlist_item_entity",
-      "source": "watchlist_feature",
-      "target": "watchlist_item_entity"
+      "_src": "TrendingType",
+      "_tgt": "WatchType",
+      "source": "TrendingType",
+      "target": "WatchType"
     },
     {
-      "relation": "implemented_as",
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType_NO_STATE",
+      "_tgt": "TrendingType",
+      "source": "TrendingType",
+      "target": "WatchType_NO_STATE"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType_TREND_UP",
+      "_tgt": "TrendingType",
+      "source": "TrendingType",
+      "target": "WatchType_TREND_UP"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType_TREND_DOWN",
+      "_tgt": "TrendingType",
+      "source": "TrendingType",
+      "target": "WatchType_TREND_DOWN"
+    },
+    {
+      "relation": "references",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
+      "source_file": "docs/design/kline-trade-signals.md",
       "weight": 1.0,
-      "_src": "watchlist_item_entity",
-      "_tgt": "watchlist_item_table",
-      "source": "watchlist_item_entity",
-      "target": "watchlist_item_table"
+      "_src": "signal_build",
+      "_tgt": "OrderAction",
+      "source": "OrderAction",
+      "target": "signal_build"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "signal_buy",
+      "_tgt": "OrderAction",
+      "source": "OrderAction",
+      "target": "signal_buy"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "signal_sell",
+      "_tgt": "OrderAction",
+      "source": "OrderAction",
+      "target": "signal_sell"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "signal_close",
+      "_tgt": "OrderAction",
+      "source": "OrderAction",
+      "target": "signal_close"
+    },
+    {
+      "relation": "implements",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/config/order_enum.py",
+      "weight": 1.0,
+      "_src": "OrderAction",
+      "_tgt": "Order",
+      "source": "OrderAction",
+      "target": "Order"
     },
     {
       "relation": "shares_data_with",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
+      "source_file": "docs/design/watchlist.md",
       "weight": 1.0,
-      "_src": "watchlist_item_entity",
-      "_tgt": "strategies_table",
-      "source": "watchlist_item_entity",
-      "target": "strategies_table"
+      "_src": "WatchlistService",
+      "_tgt": "BackTestResult",
+      "source": "BackTestResult",
+      "target": "WatchlistService"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType",
+      "_tgt": "WatchType_NO_STATE",
+      "source": "WatchType",
+      "target": "WatchType_NO_STATE"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType",
+      "_tgt": "WatchType_WATCHING",
+      "source": "WatchType",
+      "target": "WatchType_WATCHING"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType",
+      "_tgt": "WatchType_TREND_UP",
+      "source": "WatchType",
+      "target": "WatchType_TREND_UP"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType",
+      "_tgt": "WatchType_TREND_DOWN",
+      "source": "WatchType",
+      "target": "WatchType_TREND_DOWN"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType",
+      "_tgt": "WatchType_TREND_END",
+      "source": "WatchType",
+      "target": "WatchType_TREND_END"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "watchlist_design",
+      "_tgt": "WatchType",
+      "source": "WatchType",
+      "target": "watchlist_design"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/config/order_enum.py",
+      "weight": 1.0,
+      "_src": "Order_with_signal",
+      "_tgt": "Order",
+      "source": "Order",
+      "target": "Order_with_signal"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "TradeRecord",
+      "_tgt": "trade_records_table",
+      "source": "TradeRecord",
+      "target": "trade_records_table"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "createSeriesMarkers",
+      "_tgt": "TradeRecord",
+      "source": "TradeRecord",
+      "target": "createSeriesMarkers"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "kline_trade_signals_design",
+      "_tgt": "TradeRecord",
+      "source": "TradeRecord",
+      "target": "kline_trade_signals_design"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchlistItem",
+      "_tgt": "watchlist_items_table",
+      "source": "WatchlistItem",
+      "target": "watchlist_items_table"
     },
     {
       "relation": "shares_data_with",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
+      "source_file": "docs/design/watchlist.md",
       "weight": 1.0,
-      "_src": "watchlist_item_entity",
+      "_src": "WatchlistItem",
       "_tgt": "backtest_results_table",
-      "source": "watchlist_item_entity",
+      "source": "WatchlistItem",
       "target": "backtest_results_table"
     },
     {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/service/watchlist_service.py",
+      "weight": 1.0,
+      "_src": "WatchlistService",
+      "_tgt": "WatchlistItem",
+      "source": "WatchlistItem",
+      "target": "WatchlistService"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "watchlist_design",
+      "_tgt": "WatchlistItem",
+      "source": "WatchlistItem",
+      "target": "watchlist_design"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "run_backtest_task",
+      "_tgt": "WatchlistService",
+      "source": "WatchlistService",
+      "target": "run_backtest_task"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "FastAPI_backend",
+      "_tgt": "WatchlistService",
+      "source": "WatchlistService",
+      "target": "FastAPI_backend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "watchlist_api",
+      "_tgt": "WatchlistService",
+      "source": "WatchlistService",
+      "target": "watchlist_api"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "on_bar_handler",
+      "_tgt": "TradeRecordService",
+      "source": "TradeRecordService",
+      "target": "on_bar_handler"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/service/trade_record_service.py",
+      "weight": 1.0,
+      "_src": "TradeRecordService",
+      "_tgt": "trade_records_table",
+      "source": "TradeRecordService",
+      "target": "trade_records_table"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "FastAPI_backend",
+      "_tgt": "TradeRecordService",
+      "source": "TradeRecordService",
+      "target": "FastAPI_backend"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "WatchType_TREND_END",
+      "_tgt": "signal_close",
+      "source": "WatchType_TREND_END",
+      "target": "signal_close"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "kline_trade_signals_design",
+      "_tgt": "signal_build",
+      "source": "kline_trade_signals_design",
+      "target": "signal_build"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "kline_trade_signals_design",
+      "_tgt": "signal_buy",
+      "source": "kline_trade_signals_design",
+      "target": "signal_buy"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "kline_trade_signals_design",
+      "_tgt": "signal_sell",
+      "source": "kline_trade_signals_design",
+      "target": "signal_sell"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "kline_trade_signals_design",
+      "_tgt": "signal_close",
+      "source": "kline_trade_signals_design",
+      "target": "signal_close"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/kline-trade-signals.md",
+      "weight": 1.0,
+      "_src": "macd_strategy_method",
+      "_tgt": "Order_with_signal",
+      "source": "macd_strategy_method",
+      "target": "Order_with_signal"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "macd_strategy_method",
+      "_tgt": "golden_cross_detection",
+      "source": "macd_strategy_method",
+      "target": "golden_cross_detection"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/pytrading/strategy/strategy_macd.py",
+      "weight": 1.0,
+      "_src": "macd_strategy_method",
+      "_tgt": "zero_axis_cross_detection",
+      "source": "macd_strategy_method",
+      "target": "zero_axis_cross_detection"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_src": "MySQL_database",
+      "_tgt": "backtest_results_table",
+      "source": "backtest_results_table",
+      "target": "MySQL_database"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_src": "MySQL_database",
+      "_tgt": "trade_records_table",
+      "source": "trade_records_table",
+      "target": "MySQL_database"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "README.md",
+      "weight": 1.0,
+      "_src": "MySQL_database",
+      "_tgt": "watchlist_items_table",
+      "source": "watchlist_items_table",
+      "target": "MySQL_database"
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md",
+      "weight": 1.0,
+      "_src": "React_frontend",
+      "_tgt": "FastAPI_backend",
+      "source": "FastAPI_backend",
+      "target": "React_frontend"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/coverage/lcov-report/favicon.png",
+      "weight": 1.0,
+      "_src": "favicon_entity",
+      "_tgt": "lcov_coverage_report",
+      "source": "favicon_entity",
+      "target": "lcov_coverage_report"
+    },
+    {
+      "relation": "conceptually_related_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.9,
+      "source_file": "frontend/coverage/lcov-report/favicon.png",
+      "weight": 1.0,
+      "_src": "favicon_entity",
+      "_tgt": "letter_f_icon",
+      "source": "favicon_entity",
+      "target": "letter_f_icon"
+    },
+    {
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "weight": 1.0,
+      "_src": "sort_arrow_sprite_entity",
+      "_tgt": "lcov_coverage_report",
+      "source": "sort_arrow_sprite_entity",
+      "target": "lcov_coverage_report"
+    },
+    {
       "relation": "shares_data_with",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
       "weight": 1.0,
-      "_src": "watchlist_item_entity",
-      "_tgt": "trade_records_table",
-      "source": "watchlist_item_entity",
-      "target": "trade_records_table"
+      "_src": "sort_arrow_sprite_entity",
+      "_tgt": "up_arrow_state",
+      "source": "sort_arrow_sprite_entity",
+      "target": "up_arrow_state"
     },
     {
-      "relation": "tested_against",
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "weight": 1.0,
+      "_src": "sort_arrow_sprite_entity",
+      "_tgt": "down_arrow_state",
+      "source": "sort_arrow_sprite_entity",
+      "target": "down_arrow_state"
+    },
+    {
+      "relation": "shares_data_with",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "weight": 1.0,
+      "_src": "sort_arrow_sprite_entity",
+      "_tgt": "neutral_arrow_state",
+      "source": "sort_arrow_sprite_entity",
+      "target": "neutral_arrow_state"
+    },
+    {
+      "relation": "semantically_similar_to",
+      "confidence": "INFERRED",
+      "confidence_score": 0.85,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
+      "weight": 1.0,
+      "_src": "up_arrow_state",
+      "_tgt": "down_arrow_state",
+      "source": "up_arrow_state",
+      "target": "down_arrow_state"
+    },
+    {
+      "relation": "semantically_similar_to",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R1",
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png",
       "weight": 1.0,
-      "_src": "db_session_fixture",
-      "_tgt": "watchlist_item_table",
-      "source": "watchlist_item_table",
-      "target": "db_session_fixture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watch_type_enum",
-      "_tgt": "watch_type_no_state",
-      "source": "watch_type_enum",
-      "target": "watch_type_no_state"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watch_type_enum",
-      "_tgt": "watch_type_watching",
-      "source": "watch_type_enum",
-      "target": "watch_type_watching"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watch_type_enum",
-      "_tgt": "watch_type_trend_up",
-      "source": "watch_type_enum",
-      "target": "watch_type_trend_up"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watch_type_enum",
-      "_tgt": "watch_type_trend_down",
-      "source": "watch_type_enum",
-      "target": "watch_type_trend_down"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watch_type_enum",
-      "_tgt": "watch_type_trend_end",
-      "source": "watch_type_enum",
-      "target": "watch_type_trend_end"
-    },
-    {
-      "relation": "maps_to",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trending_type_enum",
-      "_tgt": "watch_type_enum",
-      "source": "watch_type_enum",
-      "target": "trending_type_enum"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trending_type_enum",
-      "_tgt": "watch_type_no_state",
-      "source": "watch_type_no_state",
-      "target": "trending_type_enum"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trending_type_enum",
-      "_tgt": "watch_type_watching",
-      "source": "watch_type_watching",
-      "target": "trending_type_enum"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trending_type_enum",
-      "_tgt": "watch_type_trend_up",
-      "source": "watch_type_trend_up",
-      "target": "trending_type_enum"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trending_type_enum",
-      "_tgt": "watch_type_trend_down",
-      "source": "watch_type_trend_down",
-      "target": "trending_type_enum"
-    },
-    {
-      "relation": "rationale_for",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md",
-      "source_location": "R-001",
-      "weight": 1.0,
-      "_src": "trade_records_table",
-      "_tgt": "watch_type_trend_end",
-      "source": "watch_type_trend_end",
-      "target": "trade_records_table"
-    },
-    {
-      "relation": "tested_against",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R1",
-      "weight": 1.0,
-      "_src": "db_session_fixture",
-      "_tgt": "backtest_results_table",
-      "source": "backtest_results_table",
-      "target": "db_session_fixture"
-    },
-    {
-      "relation": "tested_against",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R1",
-      "weight": 1.0,
-      "_src": "db_session_fixture",
-      "_tgt": "trade_records_table",
-      "source": "trade_records_table",
-      "target": "db_session_fixture"
-    },
-    {
-      "relation": "tested_against",
-      "confidence": "INFERRED",
-      "confidence_score": 0.8,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R1",
-      "weight": 1.0,
-      "_src": "db_session_fixture",
-      "_tgt": "strategies_table",
-      "source": "strategies_table",
-      "target": "db_session_fixture"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "test_infra_feature",
-      "_tgt": "db_session_fixture",
-      "source": "test_infra_feature",
-      "target": "db_session_fixture"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/research.md",
-      "source_location": "R3",
-      "weight": 1.0,
-      "_src": "test_infra_feature",
-      "_tgt": "mock_gm_api_fixture",
-      "source": "test_infra_feature",
-      "target": "mock_gm_api_fixture"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "test_infra_feature",
-      "_tgt": "market_data_fixtures",
-      "source": "test_infra_feature",
-      "target": "market_data_fixtures"
-    },
-    {
-      "relation": "defines",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "test_infra_feature",
-      "_tgt": "mock_strategy_context",
-      "source": "test_infra_feature",
-      "target": "mock_strategy_context"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "market_data_fixtures",
-      "_tgt": "bullish_trend_fixture",
-      "source": "market_data_fixtures",
-      "target": "bullish_trend_fixture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "market_data_fixtures",
-      "_tgt": "bearish_trend_fixture",
-      "source": "market_data_fixtures",
-      "target": "bearish_trend_fixture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "market_data_fixtures",
-      "_tgt": "sideways_range_fixture",
-      "source": "market_data_fixtures",
-      "target": "sideways_range_fixture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "market_data_fixtures",
-      "_tgt": "golden_cross_fixture",
-      "source": "market_data_fixtures",
-      "target": "golden_cross_fixture"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "trade_record_entity",
-      "_tgt": "trade_signal_build",
-      "source": "trade_record_entity",
-      "target": "trade_signal_build"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "trade_record_entity",
-      "_tgt": "trade_signal_buy",
-      "source": "trade_record_entity",
-      "target": "trade_signal_buy"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "trade_record_entity",
-      "_tgt": "trade_signal_sell",
-      "source": "trade_record_entity",
-      "target": "trade_signal_sell"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "trade_record_entity",
-      "_tgt": "trade_signal_close",
-      "source": "trade_record_entity",
-      "target": "trade_signal_close"
-    },
-    {
-      "relation": "generates",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "macd_strategy",
-      "_tgt": "trade_record_entity",
-      "source": "trade_record_entity",
-      "target": "macd_strategy"
-    },
-    {
-      "relation": "produces",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "order_with_signal",
-      "_tgt": "trade_signal_build",
-      "source": "trade_signal_build",
-      "target": "order_with_signal"
-    },
-    {
-      "relation": "produces",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "order_with_signal",
-      "_tgt": "trade_signal_buy",
-      "source": "trade_signal_buy",
-      "target": "order_with_signal"
-    },
-    {
-      "relation": "produces",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "order_with_signal",
-      "_tgt": "trade_signal_sell",
-      "source": "trade_signal_sell",
-      "target": "order_with_signal"
-    },
-    {
-      "relation": "produces",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "order_with_signal",
-      "_tgt": "trade_signal_close",
-      "source": "trade_signal_close",
-      "target": "order_with_signal"
-    },
-    {
-      "relation": "uses",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "docs/design/kline-trade-signals.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "macd_strategy",
-      "_tgt": "order_with_signal",
-      "source": "macd_strategy",
-      "target": "order_with_signal"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_api_contract",
-      "_tgt": "api_add_watch",
-      "source": "watchlist_api_contract",
-      "target": "api_add_watch"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_api_contract",
-      "_tgt": "api_delete_watch",
-      "source": "watchlist_api_contract",
-      "target": "api_delete_watch"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_api_contract",
-      "_tgt": "api_get_watchlist",
-      "source": "watchlist_api_contract",
-      "target": "api_get_watchlist"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_api_contract",
-      "_tgt": "api_get_watched_symbols",
-      "source": "watchlist_api_contract",
-      "target": "api_get_watched_symbols"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/contracts/rest-api.md",
-      "source_location": null,
-      "weight": 1.0,
-      "_src": "watchlist_api_contract",
-      "_tgt": "api_mark_read",
-      "source": "watchlist_api_contract",
-      "target": "api_mark_read"
+      "_src": "up_arrow_state",
+      "_tgt": "neutral_arrow_state",
+      "source": "up_arrow_state",
+      "target": "neutral_arrow_state"
     }
   ],
   "hyperedges": [
     {
-      "id": "watch_type_mapping_hyperedge",
-      "label": "TrendingType\u5230WatchType\u6620\u5c04\u5173\u7cfb",
-      "nodes": [
-        "trending_type_enum",
-        "watch_type_enum",
-        "trade_records_table",
-        "watch_type_no_state",
-        "watch_type_watching",
-        "watch_type_trend_up",
-        "watch_type_trend_down",
-        "watch_type_trend_end"
-      ],
-      "relation": "participate_in",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/002-stock-watchlist/research.md"
-    },
-    {
-      "id": "market_data_test_fixtures",
-      "label": "\u5e02\u573a\u884c\u60c5\u6d4b\u8bd5\u6570\u636e\u96c6",
-      "nodes": [
-        "market_data_fixtures",
-        "bullish_trend_fixture",
-        "bearish_trend_fixture",
-        "sideways_range_fixture",
-        "golden_cross_fixture"
-      ],
-      "relation": "form",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "specs/001-test-infra/data-model.md"
-    },
-    {
-      "id": "trade_signal_system",
+      "id": "macd_trading_signal_system",
       "label": "MACD\u7b56\u7565\u4ea4\u6613\u4fe1\u53f7\u7cfb\u7edf",
       "nodes": [
-        "macd_strategy",
-        "order_with_signal",
-        "trade_record_entity",
-        "trade_signal_build",
-        "trade_signal_buy",
-        "trade_signal_sell",
-        "trade_signal_close"
+        "MacdStrategy",
+        "Order_with_signal",
+        "TradeRecord",
+        "on_bar_handler",
+        "signal_build",
+        "signal_buy",
+        "signal_sell",
+        "signal_close"
       ],
       "relation": "participate_in",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "docs/design/kline-trade-signals.md"
+    },
+    {
+      "id": "trending_to_watch_mapping",
+      "label": "TrendingType\u5230WatchType\u6620\u5c04\u5173\u7cfb",
+      "nodes": [
+        "TrendingType",
+        "WatchType",
+        "backtest_results_table",
+        "WatchType_NO_STATE",
+        "WatchType_WATCHING",
+        "WatchType_TREND_UP",
+        "WatchType_TREND_DOWN",
+        "WatchType_TREND_END"
+      ],
+      "relation": "form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "docs/design/watchlist.md"
+    },
+    {
+      "id": "watchlist_architecture",
+      "label": "Watchlist Feature Architecture",
+      "nodes": [
+        "WatchlistItem",
+        "watchlist_items_table",
+        "backtest_results_table",
+        "WatchlistService",
+        "FastAPI_backend",
+        "React_frontend",
+        "WatchType",
+        "TrendingType"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85,
+      "source_file": "docs/design/watchlist.md"
+    },
+    {
+      "id": "sort_arrow_sprite_sheet",
+      "label": "Sort Arrow Sprite Sheet States",
+      "nodes": [
+        "up_arrow_state",
+        "down_arrow_state",
+        "neutral_arrow_state"
+      ],
+      "relation": "participate_in",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.85,
+      "source_file": "frontend/coverage/lcov-report/sort-arrow-sprite.png"
+    },
+    {
+      "id": "coverage_report_visual_identity",
+      "label": "Coverage Report Visual Identity Elements",
+      "nodes": [
+        "favicon_entity",
+        "letter_f_icon",
+        "lcov_coverage_report"
+      ],
+      "relation": "form",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "frontend/coverage/lcov-report/favicon.png"
     }
   ]
 }

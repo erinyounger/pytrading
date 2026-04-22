@@ -1,24 +1,9 @@
-# pytrading 开发指南
 
-基于所有功能计划自动生成. 最后更新时间: 2026-03-07
+## graphify
 
-## 活跃技术
-- (001-test-infra)
+This project has a graphify knowledge graph at graphify-out/.
 
-## 项目结构
-```
-src/
-tests/
-```
-
-## 命令
-# Add commands for 
-
-## 代码风格
-: Follow standard conventions
-
-## 最近变更
-- 001-test-infra: Added
-
-<!-- MANUAL ADDITIONS START -->
-<!-- MANUAL ADDITIONS END -->
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current

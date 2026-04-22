@@ -71,4 +71,8 @@ coverage.xml
 .env.development.local
 .env.test.local
 .env.production.local
+<<<<<<< HEAD
 .playwright-mcp
+=======
+graphify-out/
+>>>>>>> 0f7187a (chore: remove speckit/specify scaffolding and update project config)
