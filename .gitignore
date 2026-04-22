@@ -72,3 +72,4 @@ coverage.xml
 .env.test.local
 .env.production.local
 .playwright-mcp
+graphify-out/
