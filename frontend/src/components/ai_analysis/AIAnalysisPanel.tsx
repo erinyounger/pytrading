@@ -108,7 +108,6 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({
           重新分析
         </Button>
       }
-      bodyStyle={{ padding: 16, background: darkTheme.cardBackground }}
       styles={{
         header: { background: darkTheme.cardBackground },
         body: { padding: 16, background: darkTheme.cardBackground },

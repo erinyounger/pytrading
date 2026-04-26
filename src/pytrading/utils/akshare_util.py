@@ -159,9 +159,14 @@ class AkShareUtil:
             for _, row in df.iterrows():
                 # 分红通常被视为正面事件
                 desc = row.get('方案', '')
-                # 如果方案为空，跳过或使用默认值
+                amount = row.get('分红金额(亿元)', None)
+                # 如果方案为空，使用金额作为描述
                 if not desc:
-                    desc = f"分红 ({row.get('分红金额(亿元)', 'N/A')}亿元)"
+                    if amount:
+                        desc = f"分红 {amount}亿元"
+                    else:
+                        # 如果方案和金额都为空，跳过这条记录
+                        continue
                 # 去重
                 if desc in seen_descriptions:
                     continue
@@ -171,7 +176,7 @@ class AkShareUtil:
                     "description": desc,
                     "date": str(row.get('除权除息日', '')),
                     "severity": 0.3,
-                    "amount": row.get('分红金额(亿元)', None),
+                    "amount": amount,
                 })
             return result
         except Exception as e:
