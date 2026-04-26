@@ -1,0 +1,51 @@
+{
+  "project_name": "pytrading",
+  "initialized_at": "2026-04-26T05:08:00Z",
+  "overview": {
+    "description": "现代化量化交易系统 - 基于Python FastAPI和React Web界面的量化交易平台，支持多策略回测和实盘交易",
+    "technology_stack": {
+      "languages": [
+        {"name": "Python", "file_count": 36, "primary": true},
+        {"name": "TypeScript", "file_count": 12, "primary": false},
+        {"name": "JavaScript", "file_count": 3, "primary": false}
+      ],
+      "frameworks": ["FastAPI", "React 18", "SQLAlchemy", "Pydantic", "TA-Lib", "akshare"],
+      "build_tools": ["uv", "npm"],
+      "test_frameworks": ["pytest", "pytest-cov", "pytest-mock"]
+    },
+    "architecture": {
+      "style": "layered",
+      "layers": ["controller", "service", "model", "db"],
+      "patterns": ["repository", "factory", "strategy"]
+    },
+    "key_components": [
+      {"name": "api/main.py", "path": "src/pytrading/api/main.py", "description": "FastAPI Web服务主入口，路由定义，生命周期管理", "importance": "core"},
+      {"name": "py_trading.py", "path": "src/pytrading/py_trading.py", "description": "核心交易引擎，负责订单执行和仓位管理", "importance": "core"},
+      {"name": "service/watchlist_service.py", "path": "src/pytrading/service/watchlist_service.py", "description": "自选股服务，管理用户自选股和行情数据", "importance": "high"},
+      {"name": "strategy/", "path": "src/pytrading/strategy/", "description": "交易策略模块，包含Turtle、MACD、Boll等多个策略实现", "importance": "high"},
+      {"name": "db/mysql.py", "path": "src/pytrading/db/mysql.py", "description": "MySQL数据库连接和ORM映射", "importance": "core"},
+      {"name": "model/back_test.py", "path": "src/pytrading/model/back_test.py", "description": "回测数据模型定义", "importance": "high"},
+      {"name": "config/settings.py", "path": "src/pytrading/config/settings.py", "description": "系统配置管理", "importance": "high"},
+      {"name": "utils/myquant.py", "path": "src/pytrading/utils/myquant.py", "description": "掘金量化SDK封装", "importance": "high"},
+      {"name": "frontend/src/App.tsx", "path": "frontend/src/App.tsx", "description": "React Web应用主组件", "importance": "high"}
+    ]
+  },
+  "features": [],
+  "development_index": {
+    "feature": [],
+    "enhancement": [],
+    "bugfix": [],
+    "refactor": [],
+    "docs": []
+  },
+  "statistics": {
+    "total_features": 0,
+    "total_sessions": 0,
+    "last_updated": "2026-04-26T05:08:00Z"
+  },
+  "_metadata": {
+    "initialized_by": "cli-explore-agent",
+    "analysis_timestamp": "2026-04-26T05:08:00Z",
+    "analysis_mode": "deep-scan"
+  }
+}

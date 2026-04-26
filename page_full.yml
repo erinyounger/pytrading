@@ -1,0 +1,188 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - heading "PyTrading" [level=4] [ref=e7]
+        - menu [ref=e8]:
+          - menuitem "dashboard 仪表板" [ref=e9] [cursor=pointer]:
+            - img "dashboard" [ref=e10]:
+              - img [ref=e11]
+            - generic [ref=e13]: 仪表板
+          - menuitem "bar-chart 回测结果" [ref=e14] [cursor=pointer]:
+            - img "bar-chart" [ref=e15]:
+              - img [ref=e16]
+            - generic [ref=e18]: 回测结果
+          - menuitem "star 关注列表" [ref=e19] [cursor=pointer]:
+            - img "star" [ref=e20]:
+              - img [ref=e21]
+            - generic [ref=e23]: 关注列表
+          - menuitem "experiment 回测管理" [ref=e24] [cursor=pointer]:
+            - img "experiment" [ref=e25]:
+              - img [ref=e26]
+            - generic [ref=e28]: 回测管理
+          - menuitem "setting 系统设置" [ref=e29] [cursor=pointer]:
+            - img "setting" [ref=e30]:
+              - img [ref=e31]
+            - generic [ref=e33]: 系统设置
+      - img "left" [ref=e35] [cursor=pointer]:
+        - img [ref=e36]
+    - generic [ref=e38]:
+      - banner [ref=e39]:
+        - heading "量化交易系统" [level=3] [ref=e40]
+        - generic [ref=e41]:
+          - generic [ref=e42]: 管理员
+          - img "user" [ref=e44]:
+            - img [ref=e45]
+      - main [ref=e47]:
+        - generic [ref=e49]:
+          - generic [ref=e51]:
+            - generic [ref=e52]: 关注列表
+            - generic [ref=e54]:
+              - generic [ref=e56] [cursor=pointer]:
+                - generic [ref=e58]:
+                  - generic [ref=e59]:
+                    - combobox
+                  - generic: 筛选类型
+                - generic:
+                  - img:
+                    - img
+              - button "thunderbolt 一键回测" [ref=e61] [cursor=pointer]:
+                - img "thunderbolt" [ref=e63]:
+                  - img [ref=e64]
+                - generic [ref=e66]: 一键回测
+              - button "reload 刷新" [ref=e92] [cursor=pointer]:
+                - img "reload" [ref=e94]:
+                  - img [ref=e95]
+                - generic [ref=e73]: 刷新
+              - generic [ref=e74]: 定时回测
+              - switch [checked] [ref=e76] [cursor=pointer]
+              - generic [ref=e81]:
+                - textbox "Select time" [ref=e82]: 13:30
+                - generic:
+                  - img "clock-circle":
+                    - img
+                - button "close-circle" [ref=e97] [cursor=pointer]:
+                  - img "close-circle" [ref=e98]:
+                    - img [ref=e99]
+          - generic [ref=e103]:
+            - table [ref=e107]:
+              - rowgroup [ref=e121]:
+                - row "股票代码 股票名称 策略 关注类型 收益率 夏普比率 胜率 最大回撤 当前价格 最近回测 关注时间 操作" [ref=e122]:
+                  - columnheader "股票代码" [ref=e123]
+                  - columnheader "股票名称" [ref=e124]
+                  - columnheader "策略" [ref=e125]
+                  - columnheader "关注类型" [ref=e126]
+                  - columnheader "收益率" [ref=e127] [cursor=pointer]:
+                    - generic [ref=e128]
+                  - columnheader "夏普比率" [ref=e138] [cursor=pointer]:
+                    - generic [ref=e139]
+                  - columnheader "胜率" [ref=e149] [cursor=pointer]:
+                    - generic [ref=e150]
+                  - columnheader "最大回撤" [ref=e160] [cursor=pointer]:
+                    - generic [ref=e161]
+                  - columnheader "当前价格" [ref=e171]
+                  - columnheader "最近回测" [ref=e172]
+                  - columnheader "关注时间" [ref=e173] [cursor=pointer]:
+                    - generic [ref=e174]
+                  - columnheader "操作" [ref=e184]
+              - rowgroup [ref=e185]:
+                - row [ref=e186]:
+                  - cell [ref=e187]
+                  - cell [ref=e188]
+                  - cell [ref=e189]
+                  - cell [ref=e190]
+                  - cell [ref=e191]
+                  - cell [ref=e192]
+                  - cell [ref=e193]
+                  - cell [ref=e194]
+                  - cell [ref=e195]
+                  - cell [ref=e196]
+                  - cell [ref=e197]
+                  - cell [ref=e198]
+                - row "SHSE.601615 明阳智能 MACD 趋势结束 73.50% 1.08 66.7% 16.10% ¥16.19 2026-04-26 16:00:00 2026-04-22 21:21:24 robot delete" [ref=e199]:
+                  - cell "SHSE.601615" [ref=e200]:
+                    - generic [ref=e202] [cursor=pointer]: SHSE.601615
+                  - cell "明阳智能" [ref=e203]
+                  - cell "MACD" [ref=e204]:
+                    - generic [ref=e205]: MACD
+                  - cell "趋势结束" [ref=e206]:
+                    - generic [ref=e207]: 趋势结束
+                  - cell "73.50%" [ref=e208]
+                  - cell "1.08" [ref=e209]
+                  - cell "66.7%" [ref=e210]
+                  - cell "16.10%" [ref=e211]
+                  - cell "¥16.19" [ref=e212]
+                  - cell "2026-04-26 16:00:00" [ref=e213]
+                  - cell "2026-04-22 21:21:24" [ref=e214]
+                  - cell "robot delete" [ref=e215]:
+                    - generic [ref=e216]
+                - row "SZSE.002851 麦格米特 MACD 趋势结束 212.30% 1.38 64.3% 23.30% ¥104.54 2026-04-26 16:00:00 2026-04-22 21:20:43 robot delete" [ref=e229]:
+                  - cell "SZSE.002851" [ref=e230]:
+                    - generic [ref=e232] [cursor=pointer]: SZSE.002851
+                  - cell "麦格米特" [ref=e233]
+                  - cell "MACD" [ref=e234]:
+                    - generic [ref=e235]: MACD
+                  - cell "趋势结束" [ref=e236]:
+                    - generic [ref=e237]: 趋势结束
+                  - cell "212.30%" [ref=e238]
+                  - cell "1.38" [ref=e239]
+                  - cell "64.3%" [ref=e240]
+                  - cell "23.30%" [ref=e241]
+                  - cell "¥104.54" [ref=e242]
+                  - cell "2026-04-26 16:00:00" [ref=e243]
+                  - cell "2026-04-22 21:20:43" [ref=e244]
+                  - cell "robot delete" [ref=e245]:
+                    - generic [ref=e246]
+                - row "SHSE.603179 新泉股份 MACD 趋势结束 47.60% 0.81 43.8% 22.70% ¥61.17 2026-04-26 16:00:00 2026-04-22 21:19:45 robot delete" [ref=e259]:
+                  - cell "SHSE.603179" [ref=e260]:
+                    - generic [ref=e262] [cursor=pointer]: SHSE.603179
+                  - cell "新泉股份" [ref=e263]
+                  - cell "MACD" [ref=e264]:
+                    - generic [ref=e265]: MACD
+                  - cell "趋势结束" [ref=e266]:
+                    - generic [ref=e267]: 趋势结束
+                  - cell "47.60%" [ref=e268]
+                  - cell "0.81" [ref=e269]
+                  - cell "43.8%" [ref=e270]
+                  - cell "22.70%" [ref=e271]
+                  - cell "¥61.17" [ref=e272]
+                  - cell "2026-04-26 16:00:00" [ref=e273]
+                  - cell "2026-04-22 21:19:45" [ref=e274]
+                  - cell "robot delete" [ref=e275]:
+                    - generic [ref=e276]
+                - row "SZSE.002664 信质集团 MACD 趋势结束 86.90% 0.94 84.6% 21.10% ¥19.69 2026-04-26 16:00:00 2026-04-22 21:19:11 robot delete" [ref=e289]:
+                  - cell "SZSE.002664" [ref=e290]:
+                    - generic [ref=e292] [cursor=pointer]: SZSE.002664
+                  - cell "信质集团" [ref=e293]
+                  - cell "MACD" [ref=e294]:
+                    - generic [ref=e295]: MACD
+                  - cell "趋势结束" [ref=e296]:
+                    - generic [ref=e297]: 趋势结束
+                  - cell "86.90%" [ref=e298]
+                  - cell "0.94" [ref=e299]
+                  - cell "84.6%" [ref=e300]
+                  - cell "21.10%" [ref=e301]
+                  - cell "¥19.69" [ref=e302]
+                  - cell "2026-04-26 16:00:00" [ref=e303]
+                  - cell "2026-04-22 21:19:11" [ref=e304]
+                  - cell "robot delete" [ref=e305]:
+                    - generic [ref=e306]
+            - list [ref=e319]:
+              - listitem "Previous Page" [ref=e320]:
+                - button "left" [disabled] [ref=e321]:
+                  - img "left" [ref=e322]:
+                    - img [ref=e323]
+              - listitem "1" [ref=e325] [cursor=pointer]:
+                - generic [ref=e326]: "1"
+              - listitem "Next Page" [ref=e327]:
+                - button "right" [disabled] [ref=e328]:
+                  - img "right" [ref=e329]:
+                    - img [ref=e330]
+              - listitem [ref=e332]:
+                - generic "Page Size" [ref=e333] [cursor=pointer]:
+                  - generic [ref=e335]:
+                    - generic [ref=e336]
+                    - generic "20 / page" [ref=e337]
+                  - generic:
+                    - img
+  - tooltip "AI分析" [ref=e340]

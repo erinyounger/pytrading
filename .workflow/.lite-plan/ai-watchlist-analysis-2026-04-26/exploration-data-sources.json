@@ -1,0 +1,137 @@
+{
+  "_metadata": {
+    "exploration_angle": "data-sources",
+    "exploration_index": 1
+  },
+  "findings": {
+    "akshare_functions": [
+      {
+        "name": "ak.stock.stock_board_industry_name_em",
+        "description": "东方财富-沪深板块-行业板块-名称列表，返回所有行业板块名称",
+        "category": "sector"
+      },
+      {
+        "name": "ak.stock.stock_board_industry_spot_em",
+        "description": "东方财富-沪深板块-行业板块-实时行情，返回涨跌幅、成交量、成交额等",
+        "category": "sector"
+      },
+      {
+        "name": "ak.stock.stock_board_concept_name_em",
+        "description": "东方财富-沪深板块-概念板块-名称列表，返回所有概念板块名称",
+        "category": "sector"
+      },
+      {
+        "name": "ak.stock.stock_board_concept_spot_em",
+        "description": "东方财富-沪深板块-概念板块-实时行情，返回涨跌幅、资金流向等",
+        "category": "sector"
+      },
+      {
+        "name": "ak.stock.stock_hot_rank_em",
+        "description": "东方财富个股人气榜，反映市场关注度和情绪",
+        "category": "sentiment"
+      },
+      {
+        "name": "ak.stock.stock_hsgt_em",
+        "description": "东方财富沪深港通资金流向，反映外资情绪和资金偏好",
+        "category": "sentiment"
+      },
+      {
+        "name": "ak.stock_fundamental.stock_notice",
+        "description": "东方财富沪深A股公告，支持按股票代码和日期查询公司公告",
+        "category": "event"
+      },
+      {
+        "name": "ak.stock.stock_dividend_cninfo",
+        "description": "CNInfo分红配股数据，包括分红预案、分红实施、配股等信息",
+        "category": "event"
+      },
+      {
+        "name": "ak.stock.stock_repurchase_em",
+        "description": "东方财富股票回购数据，反映公司管理层对股价的态度",
+        "category": "event"
+      },
+      {
+        "name": "ak.stock_fundamental.stock_profit_forecast_em",
+        "description": "东方财富盈利预测数据，包括券商对个股的业绩预期",
+        "category": "event"
+      },
+      {
+        "name": "ak.news.news_baidu",
+        "description": "百度财经新闻，通用财经新闻来源",
+        "category": "news"
+      },
+      {
+        "name": "ak.news.news_cctv",
+        "description": "央视财经新闻，权威财经媒体来源",
+        "category": "news"
+      },
+      {
+        "name": "ak.news.news_stock",
+        "description": "股票新闻，个股相关新闻报道",
+        "category": "news"
+      },
+      {
+        "name": "ak.stock.stock_industry_sw",
+        "description": "申万行业分类，提供更精细的行业划分用于板块对比",
+        "category": "sector"
+      }
+    ],
+    "data_gaps": [
+      "缺少实时资金流向数据（个股级别的主力资金、大单净流入等），需要另外获取或估算",
+      "缺少龙虎榜数据（营业部游资动向），AkShare有 stock_lhb_em 但当前项目未引用",
+      "缺少股票舆情分析数据（情感倾向评分），news接口仅返回原始新闻",
+      "缺少宏观情绪指标（如VIX恐惧指数、融资融券余额等）",
+      "stock_notice接口返回原始HTML或未结构化数据，需要额外解析",
+      "stock_profit_forecast_em数据覆盖不够全面，部分股票缺少券商预测"
+    ],
+    "integration_points": [
+      {
+        "file": "/home/eeric/code/pytrading/src/pytrading/utils/akshare_util.py",
+        "line": 1,
+        "role": "extension_target",
+        "description": "现有AkShareUtil类可扩展，添加get_stock_notice、get_industry_sentiment等方法"
+      },
+      {
+        "file": "/home/eeric/code/pytrading/src/pytrading/api/main.py",
+        "line": 36,
+        "role": "context",
+        "description": "已import akshare as ak，可直接调用新增的数据接口"
+      },
+      {
+        "file": "/home/eeric/code/pytrading/src/pytrading/api/main.py",
+        "line": 1721,
+        "role": "reference_pattern",
+        "description": "get_market_summary函数展示了如何调用akshare.stock_zh_a_spot_em()获取市场数据"
+      }
+    ]
+  },
+  "clarification_needs": [
+    {
+      "question": "是否需要实时资金流向数据（如单笔大单、主力净流入等）？",
+      "context": "AkShare主要提供板块级别的资金流向，个股实时资金流向需要通过其他方式（如Tushare付费接口）获取",
+      "options": [
+        "仅使用AkShare的板块资金流向数据",
+        "集成其他数据源获取个股级别资金流向"
+      ],
+      "recommended": 0
+    },
+    {
+      "question": "AI分析的新闻来源优先级？",
+      "context": "AkShare提供百度财经、央视财经、股票新闻等多个来源，数据重复性较高",
+      "options": [
+        "使用news_stock获取个股新闻（东方财富来源）",
+        "聚合多个新闻源进行综合分析"
+      ],
+      "recommended": 0
+    },
+    {
+      "question": "业绩预告/盈利预测的使用方式？",
+      "context": "stock_profit_forecast_em返回券商预测数据，但覆盖度有限且更新频率不确定",
+      "options": [
+        "仅将盈利预测作为辅助参考",
+        "作为AI分析的重要输入因子"
+      ],
+      "recommended": 0
+    }
+  ]
+}

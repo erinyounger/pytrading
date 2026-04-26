@@ -1,0 +1,143 @@
+{
+  "id": "TASK-002",
+  "title": "Data Collection Service - AkShare Extensions for Sentiment/Events/News",
+  "scope": "utils/akshare_util.py, services/data_collector.py",
+  "action": "Implement",
+  "description": "Extend AkShare utility with new data collection methods for sentiment analysis, company events, news data, and sector information. Targets 14 identified AkShare functions across 4 categories.",
+  "files": [
+    {
+      "path": "utils/akshare_util.py",
+      "action": "extend",
+      "target": "AkShare data fetching methods",
+      "change": "Add methods: get_stock_sentiment(), get_company_events(), get_stock_news(), get_sector_sentiment(), get_industry_data(), get_concept_spot()"
+    },
+    {
+      "path": "services/data_collector.py",
+      "action": "create",
+      "target": "Data collection service",
+      "change": "Create DataCollectorService that orchestrates multi-source data fetching: fetch_sentiment(symbol), fetch_events(symbol, date_range), fetch_news(symbol), fetch_sector_data(board_name)"
+    },
+    {
+      "path": "schemas/market_data.py",
+      "action": "extend",
+      "target": "Market data schemas",
+      "change": "Add Pydantic schemas for: SentimentData, CompanyEvent, NewsItem, SectorData"
+    }
+  ],
+  "implementation": [
+    "Add to akshare_util.py: get_stock_hot_rank_em() for sentiment, stock_notice() for company announcements, stock_dividend_cninfo() for dividends, stock_repurchase_em() for buybacks, stock_profit_forecast_em() for forecasts",
+    "Add to akshare_util.py: news_baidu(), news_cctv(), news_stock() for news aggregation",
+    "Add to akshare_util.py: stock_board_industry_name_em(), stock_board_industry_spot_em(), stock_board_concept_name_em(), stock_board_concept_spot_em(), stock_industry_sw() for sector data",
+    "Create DataCollectorService in services/data_collector.py with methods: collect_sentiment(symbol), collect_events(symbol, start_date, end_date), collect_news(symbol, days), collect_sector_info(board_code)",
+    "Add Pydantic schemas in schemas/market_data.py for type-safe data structures",
+    "Write unit tests for each data collection method with mocked AkShare responses"
+  ],
+  "reference": {
+    "pattern": "Follow existing async pattern in akshare_util.py, use pandas-to-dict conversion",
+    "files": [
+      "utils/akshare_util.py"
+    ],
+    "examples": "AkShare functions: stock_hot_rank_em(), stock_notice(), news_baidu(), stock_board_industry_name_em()"
+  },
+  "convergence": {
+    "criteria": [
+      "14 AkShare functions integrated covering 4 categories: sentiment (2), event (4), news (3), sector (5)",
+      "DataCollectorService provides unified interface for all data types",
+      "All methods return Pydantic-validated data structures",
+      "Unit tests: test_data_collector_sentiment, test_data_collector_events, test_data_collector_news, test_data_collector_sector"
+    ]
+  },
+  "depends_on": [
+    "TASK-001"
+  ],
+  "cli_execution_id": "ai-watchlist-analysis-2026-04-26-TASK-002",
+  "cli_execution": {
+    "strategy": "resume",
+    "resume_from": "ai-watchlist-analysis-2026-04-26-TASK-001"
+  },
+  "rationale": {
+    "chosen_approach": "Build on existing akshare_util.py pattern for consistency; create DataCollectorService for orchestration",
+    "alternatives_considered": [
+      "Add directly to existing services - rejected,分散 logic makes testing harder",
+      "Create separate data collector classes - rejected, over-engineering for this scope"
+    ],
+    "decision_factors": [
+      "Consistency with existing codebase",
+      "Minimize new files",
+      "Enable easy mocking in tests"
+    ],
+    "tradeoffs": "DataCollectorService becomes a large class; can be refactored later if needed"
+  },
+  "test": {
+    "unit": [
+      "test_akshare_util_sentiment",
+      "test_akshare_util_events",
+      "test_akshare_util_news",
+      "test_akshare_util_sector",
+      "test_data_collector_service"
+    ],
+    "integration": [
+      "test_data_collector_integration_with_akshare"
+    ],
+    "manual_checks": [
+      "Verify data formats match Pydantic schemas",
+      "Check AkShare rate limits are respected"
+    ],
+    "success_metrics": [
+      "All unit tests pass with 100% success rate",
+      "Data collection completes within 5 seconds per symbol"
+    ]
+  },
+  "risks": [
+    {
+      "description": "AkShare rate limiting could cause data collection failures",
+      "probability": "Medium",
+      "impact": "Medium",
+      "mitigation": "Implement exponential backoff retry, cache frequently accessed data",
+      "fallback": "Return partial data with missing_source indicators"
+    },
+    {
+      "description": "Data gaps: individual stock capital flow and dragon tiger list not available via AkShare",
+      "probability": "High",
+      "impact": "Low",
+      "mitigation": "Document as known limitations; focus on available data sources",
+      "fallback": "None - feature works with partial data"
+    }
+  ],
+  "code_skeleton": {
+    "interfaces": [
+      "DataCollectorInterface: collect_sentiment(symbol), collect_events(symbol, start, end), collect_news(symbol, days), collect_sector(board) - abstract data collection"
+    ],
+    "functions": [
+      "async def get_stock_sentiment(symbol: str) -> SentimentData - fetch from stock_hot_rank_em and stock_hsgt_em",
+      "async def get_company_events(symbol: str, start: date, end: date) -> list[CompanyEvent] - fetch notices, dividends, repurchases, forecasts",
+      "async def get_stock_news(symbol: str, days: int) -> list[NewsItem] - aggregate from news_baidu, news_cctv, news_stock"
+    ],
+    "classes": [
+      {
+        "name": "DataCollectorService",
+        "purpose": "Orchestrates multi-source data collection from AkShare",
+        "methods": [
+          "collect_sentiment()",
+          "collect_events()",
+          "collect_news()",
+          "collect_sector_info()",
+          "_retry_with_backoff()"
+        ]
+      }
+    ]
+  },
+  "status": "completed",
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "in_progress",
+      "changed_at": "2026-04-26T14:02:46+08:00"
+    },
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-04-26T14:04:58+08:00"
+    }
+  ]
+}

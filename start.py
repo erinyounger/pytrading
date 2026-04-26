@@ -296,7 +296,7 @@ def start_backend(venv_python: str):
     }
 
     cmd = [
-        venv_python, "-m", "uvicorn", "src.pytrading.api.main:app",
+        venv_python, "-m", "uvicorn", "pytrading.api.main:app",
         "--host", "0.0.0.0", "--port", "8000", "--reload"
     ]
     return _start_service(cmd, project_root, "Backend service", "http://localhost:8000", env)

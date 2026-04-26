@@ -1,0 +1,87 @@
+{
+  "_metadata": {
+    "exploration_angle": "frontend-integration",
+    "exploration_index": 3
+  },
+  "findings": {
+    "existing_patterns": [
+      {
+        "pattern": "React functional component with useState/useEffect hooks for state management",
+        "location": "/frontend/src/pages/Watchlist.tsx:34-51",
+        "role": "State management pattern to replicate for AI analysis state"
+      },
+      {
+        "pattern": "Ant Design Modal pattern for displaying detail views",
+        "location": "/frontend/src/pages/Watchlist.tsx:500-578",
+        "role": "Template for AI analysis panel modal"
+      },
+      {
+        "pattern": "apiService method pattern with axios HTTP client",
+        "location": "/frontend/src/services/api.ts:20-328",
+        "role": "Pattern for new AI analysis API methods"
+      },
+      {
+        "pattern": "WatchlistItem type interface for stock data",
+        "location": "/frontend/src/types/index.ts:114-134",
+        "role": "Reference for AIAnalysisResult type definition"
+      },
+      {
+        "pattern": "Reusable StockChart component with external data",
+        "location": "/frontend/src/components/StockChart.tsx:32",
+        "role": "Reference for AIAnalysisPanel component structure"
+      },
+      {
+        "pattern": "Column definition pattern for antd Table rendering",
+        "location": "/frontend/src/pages/Watchlist.tsx:236-397",
+        "role": "Pattern for AI recommendation column or expandable row"
+      },
+      {
+        "pattern": "Loading state management with useState/useCallback",
+        "location": "/frontend/src/pages/Watchlist.tsx:47-48, 110-133",
+        "role": "Pattern for AI analysis loading states"
+      }
+    ],
+    "new_components": [
+      "AIAnalysisPanel: Expandable panel/drawer displaying AI-generated investment analysis, market sentiment, and recommendations",
+      "RecommendationCard: Card component showing individual stock AI recommendation with confidence score, sentiment indicator, and key factors",
+      "MarketSentimentBadge: Badge component displaying sector/market sentiment (bullish/bearish/neutral) with color coding",
+      "AIFactorsList: Component listing key factors contributing to the AI recommendation (e.g., earnings, sector trends, technical signals)",
+      "AIRecommendationModal: Modal wrapper for detailed AI analysis view triggered from watchlist row"
+    ],
+    "api_endpoints_needed": [
+      {
+        "endpoint": "/api/ai/analysis/{symbol}",
+        "method": "GET",
+        "purpose": "Fetch AI investment analysis for a single stock symbol, including recommendation, confidence score, sentiment, and key factors"
+      },
+      {
+        "endpoint": "/api/ai/batch-analysis",
+        "method": "POST",
+        "purpose": "Trigger batch AI analysis for multiple watchlist symbols, returns task_id for polling"
+      },
+      {
+        "endpoint": "/api/ai/analysis/status/{task_id}",
+        "method": "GET",
+        "purpose": "Check batch analysis task status (polling endpoint for long-running AI analysis)"
+      },
+      {
+        "endpoint": "/api/ai/market-sentiment",
+        "method": "GET",
+        "purpose": "Get overall market sentiment and sector-level sentiment data"
+      },
+      {
+        "endpoint": "/api/ai/company-events/{symbol}",
+        "method": "GET",
+        "purpose": "Fetch recent company events (earnings, dividends, filings) for AI analysis context"
+      }
+    ],
+    "state_management": "AI analysis state should be managed via React useState in Watchlist component, similar to existing chartModalVisible pattern. Add states: aiAnalysisModalVisible (boolean), aiAnalysisData (AIAnalysisResult | null), aiAnalysisLoading (boolean), selectedSymbolForAnalysis (string). When user clicks 'AI分析' button on a watchlist row, set selectedSymbolForAnalysis and trigger fetch from apiService. The aiAnalysisData should contain: symbol, recommendation (buy/sell/hold), confidence (0-1), sentiment (bullish/bearish/neutral), keyFactors (array of {type, description, impact}), backtestCorrelation (how recommendation aligns with backtest data). Use useCallback for fetchAianalysis function to encapsulate API call logic."
+  },
+  "clarification_needs": [
+    "Should AI analysis be triggered per-stock (on-demand) or computed for entire watchlist on refresh?",
+    "Is there an existing AI/ML backend service to integrate with, or should the frontend call external AI APIs directly?",
+    "What data sources should AI analysis consider: backtest results, market data, company events, sector trends, news sentiment?",
+    "Should AI analysis results be cached/stored, and if so, for how long?",
+    "Is there a preferred AI model or service provider (OpenAI, Anthropic, custom model) for investment recommendations?"
+  ]
+}

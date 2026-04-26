@@ -1,0 +1,184 @@
+{
+  "id": "TASK-004",
+  "title": "Frontend UI - AI Analysis Panel, Recommendation Card, and Market Sentiment Display",
+  "scope": "frontend/src/components/ai_analysis/, frontend/src/pages/WatchlistPage.tsx",
+  "action": "Implement",
+  "description": "Build frontend UI components for AI stock analysis display: AIAnalysisPanel expandable panel, RecommendationCard for individual stock recommendations, MarketSentimentBadge for sector sentiment, AIFactorsList for key factors, and AIRecommendationModal wrapper.",
+  "files": [
+    {
+      "path": "frontend/src/components/ai_analysis/AIAnalysisPanel.tsx",
+      "action": "create",
+      "target": "Expandable panel component",
+      "change": "Create AIAnalysisPanel component: expandable panel/drawer showing AI analysis for selected stock. Contains RecommendationCard, MarketSentimentBadge, AIFactorsList. Follows chartModalVisible pattern with useState."
+    },
+    {
+      "path": "frontend/src/components/ai_analysis/RecommendationCard.tsx",
+      "action": "create",
+      "target": "Recommendation display card",
+      "change": "Create RecommendationCard: displays recommendation (买入/持有/卖出/观望), confidence percentage, risk level badge, technical/sentiment/event/news scores as progress bars"
+    },
+    {
+      "path": "frontend/src/components/ai_analysis/MarketSentimentBadge.tsx",
+      "action": "create",
+      "target": "Sector sentiment indicator",
+      "change": "Create MarketSentimentBadge: shows sector sentiment (bullish/bearish/neutral) with color coding and percentage"
+    },
+    {
+      "path": "frontend/src/components/ai_analysis/AIFactorsList.tsx",
+      "action": "create",
+      "target": "Key factors list",
+      "change": "Create AIFactorsList: displays key factors influencing the recommendation with positive/negative indicators"
+    },
+    {
+      "path": "frontend/src/components/ai_analysis/AIRecommendationModal.tsx",
+      "action": "create",
+      "target": "Modal wrapper",
+      "change": "Create AIRecommendationModal: modal wrapper for AI analysis, integrates AIAnalysisPanel with close handling"
+    },
+    {
+      "path": "frontend/src/pages/WatchlistPage.tsx",
+      "action": "extend",
+      "target": "Watchlist page integration",
+      "change": "Integrate AIAnalysisPanel into WatchlistPage, add AI analysis trigger button per stock, add batch analysis option"
+    },
+    {
+      "path": "frontend/src/services/aiAnalysisApi.ts",
+      "action": "create",
+      "target": "API service for AI analysis",
+      "change": "Create aiAnalysisApi service with methods: getAnalysis(symbol), batchAnalyze(symbols), getAnalysisStatus(taskId), getMarketSentiment(), getCompanyEvents(symbol)"
+    }
+  ],
+  "implementation": [
+    "Create AIAnalysisPanel.tsx: expandable panel with animation, contains RecommendationCard, MarketSentimentBadge, AIFactorsList. Use useState for expanded/collapsed state following chartModalVisible pattern.",
+    "Create RecommendationCard.tsx: display recommendation badge (color-coded), confidence circle, risk level indicator, 4 score progress bars for technical/sentiment/event/news",
+    "Create MarketSentimentBadge.tsx: sector sentiment indicator with icon (bullish/bearish/neutral), percentage, and color coding",
+    "Create AIFactorsList.tsx: list of key factors with +/- indicators, truncate long lists with 'show more'",
+    "Create AIRecommendationModal.tsx: modal wrapper with backdrop, close button, keyboard escape handling",
+    "Create aiAnalysisApi.ts: API service calling backend endpoints with proper TypeScript types",
+    "Update WatchlistPage.tsx: add AIAnalysisPanel state, 'Analyze' button per stock row, 'Batch Analyze' button in header",
+    "Write unit tests for all components with React Testing Library"
+  ],
+  "reference": {
+    "pattern": "Follow existing component patterns in frontend/src/components/, use existing API service pattern from watchlistApi.ts",
+    "files": [
+      "frontend/src/components/chart/ChartModal.tsx",
+      "frontend/src/services/watchlistApi.ts",
+      "frontend/src/pages/WatchlistPage.tsx"
+    ],
+    "examples": "chartModalVisible pattern for state management, existing card component styling"
+  },
+  "convergence": {
+    "criteria": [
+      "AIAnalysisPanel expands/collapses smoothly with animation",
+      "RecommendationCard displays all 4 score types with progress bars",
+      "MarketSentimentBadge shows correct sentiment with color coding",
+      "AIFactorsList supports expand/collapse for long lists",
+      "AIRecommendationModal closes on backdrop click, escape key, and close button",
+      "WatchlistPage integration: AI button visible per stock, batch analyze accessible",
+      "All API calls use proper TypeScript types",
+      "Unit tests: test_AIAnalysisPanel, test_RecommendationCard, test_MarketSentimentBadge, test_AIFactorsList"
+    ]
+  },
+  "depends_on": [
+    "TASK-001"
+  ],
+  "cli_execution_id": "ai-watchlist-analysis-2026-04-26-TASK-004",
+  "cli_execution": {
+    "strategy": "resume",
+    "resume_from": "ai-watchlist-analysis-2026-04-26-TASK-001"
+  },
+  "rationale": {
+    "chosen_approach": "Build reusable components that can be used in multiple places (panel, modal, cards)",
+    "alternatives_considered": [
+      "Single large component - rejected, harder to maintain and test",
+      "Direct inline in WatchlistPage - rejected, poor reusability"
+    ],
+    "decision_factors": [
+      "Component reusability across different views",
+      "Testability of individual components",
+      "Consistency with existing frontend patterns"
+    ],
+    "tradeoffs": "More files but better maintainability and testability"
+  },
+  "test": {
+    "unit": [
+      "test_AIAnalysisPanel",
+      "test_RecommendationCard",
+      "test_MarketSentimentBadge",
+      "test_AIFactorsList",
+      "test_AIRecommendationModal",
+      "test_aiAnalysisApi"
+    ],
+    "integration": [
+      "test_watchlist_page_ai_integration"
+    ],
+    "manual_checks": [
+      "Verify panel animation is smooth",
+      "Check color coding matches recommendation values",
+      "Test modal close behaviors"
+    ],
+    "success_metrics": [
+      "All unit tests pass with 100% success rate",
+      "Components render without console errors"
+    ]
+  },
+  "risks": [
+    {
+      "description": "Frontend-backend API contract mismatch",
+      "probability": "Low",
+      "impact": "Medium",
+      "mitigation": "Use shared TypeScript types, API service abstracts endpoint details",
+      "fallback": "Frontend uses mock data during backend development"
+    },
+    {
+      "description": "Large analysis result payload affecting page load",
+      "probability": "Low",
+      "impact": "Low",
+      "mitigation": "Lazy load AIAnalysisPanel, paginate if needed",
+      "fallback": "Show loading skeleton while fetching"
+    }
+  ],
+  "code_skeleton": {
+    "interfaces": [
+      "AIAnalysisResult: { recommendation, confidence, sentiment_score, technical_score, event_signals, news_impact, risk_level }",
+      "AIAnalysisPanelProps: { symbol: string, isOpen: boolean, onClose: () => void }"
+    ],
+    "functions": [
+      "async function getStockAnalysis(symbol: string): Promise<AIAnalysisResult> - fetch single stock analysis",
+      "async function batchAnalyzeStocks(symbols: string[]): Promise<{ task_id: string }> - initiate batch analysis"
+    ],
+    "classes": [
+      {
+        "name": "RecommendationCard",
+        "purpose": "Displays recommendation with scores",
+        "methods": [
+          "render()",
+          "_getRecommendationColor()",
+          "_renderScoreBar()"
+        ]
+      },
+      {
+        "name": "MarketSentimentBadge",
+        "purpose": "Shows sector sentiment indicator",
+        "methods": [
+          "render()",
+          "_getSentimentIcon()",
+          "_getSentimentColor()"
+        ]
+      }
+    ]
+  },
+  "status": "completed",
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "in_progress",
+      "changed_at": "2026-04-26T14:08:37+08:00"
+    },
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-04-26T14:14:26+08:00"
+    }
+  ]
+}

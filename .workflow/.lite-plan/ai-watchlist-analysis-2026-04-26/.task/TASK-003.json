@@ -1,0 +1,191 @@
+{
+  "id": "TASK-003",
+  "title": "Analysis Engine - Technical, Sentiment, Event, News Analyzers with Weighted Scoring",
+  "scope": "services/analysis_engine.py, services/technical_analyzer.py, services/sentiment_analyzer.py, services/event_processor.py, services/news_analyzer.py, services/recommendation_scorer.py",
+  "action": "Implement",
+  "description": "Build the core analysis engine that combines technical analysis, sentiment analysis, event processing, and news impact into a unified recommendation score using weighted scoring algorithm.",
+  "files": [
+    {
+      "path": "services/analysis_engine.py",
+      "action": "create",
+      "target": "Main analysis orchestrator",
+      "change": "Create AnalysisEngine class that orchestrates all analyzers and produces AIAnalysisResult"
+    },
+    {
+      "path": "services/technical_analyzer.py",
+      "action": "create",
+      "target": "Technical indicator analysis",
+      "change": "Create TechnicalAnalyzer that calculates technical_score (0-100) from price, volume, MA, RSI, MACD indicators. Reuses BackTestResult from existing code."
+    },
+    {
+      "path": "services/sentiment_analyzer.py",
+      "action": "create",
+      "target": "Market sentiment analysis",
+      "change": "Create SentimentCollector that calculates sentiment_score (-1 to 1) from sector sentiment and HSGT flow data"
+    },
+    {
+      "path": "services/event_processor.py",
+      "action": "create",
+      "target": "Company event processing",
+      "change": "Create EventProcessor that extracts event_signals and calculates event_score from dividends, repurchases, forecasts, announcements"
+    },
+    {
+      "path": "services/news_analyzer.py",
+      "action": "create",
+      "target": "News impact analysis",
+      "change": "Create NewsImpactAnalyzer that calculates news_impact (-1 to 1) from news sentiment analysis"
+    },
+    {
+      "path": "services/recommendation_scorer.py",
+      "action": "create",
+      "target": "Final scoring and recommendation",
+      "change": "Create RecommendationScorer that combines all scores using weights: technical(0.35) + sentiment(0.25) + event(0.25) + news(0.15), outputs recommendation (买入/持有/卖出/观望), confidence (0-1), risk_level (高/中/低)"
+    }
+  ],
+  "implementation": [
+    "Create TechnicalAnalyzer: calculate technical_score from RSI, MACD, Moving Averages, Volume ratios. Score 0-100 based on indicator values.",
+    "Create SentimentCollector: aggregate sector sentiment from stock_board_industry_spot_em and HSGT flow from stock_hsgt_em. Normalize to -1 to 1 scale.",
+    "Create EventProcessor: parse company events (dividends, repurchases, forecasts, announcements), assign positive/negative weights, calculate event_score.",
+    "Create NewsImpactAnalyzer: analyze news headlines and content sentiment using keyword extraction and scoring. Output news_impact in -1 to 1 range.",
+    "Create RecommendationScorer: implement weighted sum algorithm with weights [0.35, 0.25, 0.25, 0.15], map composite score to recommendation, calculate confidence, assess risk_level.",
+    "Create AnalysisEngine: orchestrate all analyzers, handle errors gracefully, call LLM service for insight enhancement, persist result to database.",
+    "Write comprehensive unit tests for each analyzer and integration tests for AnalysisEngine"
+  ],
+  "reference": {
+    "pattern": "Follow service layer pattern in services/watchlist_service.py, reuse BackTestResult from existing backtest code",
+    "files": [
+      "services/watchlist_service.py:154",
+      "utils/backtest.py"
+    ],
+    "examples": "Reuse technical indicator calculations from existing backtest module, sentiment scoring from market analysis"
+  },
+  "convergence": {
+    "criteria": [
+      "TechnicalAnalyzer outputs technical_score (0-100) within expected range",
+      "SentimentCollector outputs sentiment_score (-1 to 1) within expected range",
+      "EventProcessor outputs event_signals list with severity ratings",
+      "NewsImpactAnalyzer outputs news_impact (-1 to 1) within expected range",
+      "RecommendationScorer produces: recommendation (4 options), confidence (0-1), risk_level (3 levels)",
+      "AnalysisEngine orchestrates all components and persists to AIAnalysisResult",
+      "Unit tests: test_technical_analyzer, test_sentiment_analyzer, test_event_processor, test_news_analyzer, test_recommendation_scorer, test_analysis_engine"
+    ]
+  },
+  "depends_on": [
+    "TASK-001",
+    "TASK-002"
+  ],
+  "cli_execution_id": "ai-watchlist-analysis-2026-04-26-TASK-003",
+  "cli_execution": {
+    "strategy": "merge_fork",
+    "merge_from": [
+      "ai-watchlist-analysis-2026-04-26-TASK-001",
+      "ai-watchlist-analysis-2026-04-26-TASK-002"
+    ]
+  },
+  "rationale": {
+    "chosen_approach": "Modular analyzers with single orchestrator enables independent testing and future extension",
+    "alternatives_considered": [
+      "Single monolithic AnalysisEngine - rejected, harder to test individual components",
+      "Separate microservices - rejected, over-engineering for this scope"
+    ],
+    "decision_factors": [
+      "Testability: each analyzer can be unit tested in isolation",
+      "Maintainability: weights and algorithms can be adjusted independently",
+      "Extensibility: new data sources can be added as new analyzers"
+    ],
+    "tradeoffs": "More files to maintain; IPC overhead between analyzers is minimal for this use case"
+  },
+  "test": {
+    "unit": [
+      "test_technical_analyzer",
+      "test_sentiment_analyzer",
+      "test_event_processor",
+      "test_news_analyzer",
+      "test_recommendation_scorer",
+      "test_weighted_scoring_algorithm"
+    ],
+    "integration": [
+      "test_analysis_engine_end_to_end",
+      "test_recommendation_score_boundaries"
+    ],
+    "manual_checks": [
+      "Verify scoring algorithm matches specification exactly",
+      "Test edge cases: all zeros, all max values"
+    ],
+    "success_metrics": [
+      "All unit tests pass with 100% success rate",
+      "Score calculation matches expected values within 0.01 precision"
+    ]
+  },
+  "risks": [
+    {
+      "description": "News sentiment scoring may not accurately reflect real market impact",
+      "probability": "Medium",
+      "impact": "Medium",
+      "mitigation": "Use keyword-based scoring with domain-specific financial vocabulary, allow manual tuning",
+      "fallback": "Assign neutral news_impact (0) when confidence is low"
+    },
+    {
+      "description": "Weight tuning needed for optimal recommendations",
+      "probability": "High",
+      "impact": "Medium",
+      "mitigation": "Make weights configurable via environment variables, implement A/B testing framework",
+      "fallback": "Use default weights; provide admin interface for weight adjustment"
+    }
+  ],
+  "code_skeleton": {
+    "interfaces": [
+      "Analyzer: analyze(data: dict) -> AnalyzerResult - base interface for all analyzers"
+    ],
+    "functions": [
+      "async def analyze_stock(symbol: str, date_range: tuple[date, date]) -> AIAnalysisResult - main entry point",
+      "def calculate_weighted_score(scores: list[float], weights: list[float]) -> float - scoring algorithm",
+      "def map_score_to_recommendation(score: float) -> str - score to recommendation mapping"
+    ],
+    "classes": [
+      {
+        "name": "AnalysisEngine",
+        "purpose": "Orchestrates all analyzers and LLM enhancement",
+        "methods": [
+          "analyze_stock()",
+          "_run_analyzers()",
+          "_combine_results()",
+          "_enhance_with_llm()"
+        ]
+      },
+      {
+        "name": "TechnicalAnalyzer",
+        "purpose": "Calculates technical indicators and technical_score",
+        "methods": [
+          "calculate_rsi()",
+          "calculate_macd()",
+          "calculate_ma()",
+          "get_technical_score()"
+        ]
+      },
+      {
+        "name": "RecommendationScorer",
+        "purpose": "Combines component scores into final recommendation",
+        "methods": [
+          "calculate_composite()",
+          "determine_recommendation()",
+          "assess_risk()",
+          "calculate_confidence()"
+        ]
+      }
+    ]
+  },
+  "status": "completed",
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "in_progress",
+      "changed_at": "2026-04-26T14:05:01+08:00"
+    },
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-04-26T14:08:34+08:00"
+    }
+  ]
+}

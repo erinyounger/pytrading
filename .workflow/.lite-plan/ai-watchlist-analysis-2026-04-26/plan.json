@@ -1,0 +1,95 @@
+{
+  "summary": "AI Stock Analysis Feature for watchlist - provides AI-assisted investment recommendations by integrating market sentiment, company events, news sentiment, and technical analysis with LLM-powered insights",
+  "approach": "Backend Infrastructure (DB + API + LLM) → Data Collection Service (AkShare extensions) → Analysis Engine → Frontend UI. Sequential dependency: each layer builds on the previous.",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004"
+  ],
+  "task_count": 4,
+  "estimated_time": "8-10 hours",
+  "recommended_execution": "Codex",
+  "complexity": "High",
+  "design_decisions": [
+    {
+      "decision": "Use AkShare for data collection instead of proprietary APIs",
+      "rationale": "AkShare provides 14+ functions covering sentiment, events, news, and sector data with no additional cost",
+      "tradeoff": "Limited to Chinese market data; some gaps in individual stock capital flow data"
+    },
+    {
+      "decision": "LLM integration via OpenAI-compatible API endpoint",
+      "rationale": "Flexibility to use any LLM provider (self-hosted or cloud) while maintaining standard interface",
+      "tradeoff": "Requires external LLM service; latency depends on API provider"
+    },
+    {
+      "decision": "Async API endpoints with connection pooling",
+      "rationale": "Meets 200ms p95 latency requirement; batch analysis can be async with status polling",
+      "tradeoff": "Increased complexity in error handling for async operations"
+    },
+    {
+      "decision": "Weighted scoring: technical(35%) + sentiment(25%) + event(25%) + news(15%)",
+      "rationale": "Balances quantitative (technical) with qualitative signals; weights configurable",
+      "tradeoff": "Fixed weights may not suit all investment styles"
+    }
+  ],
+  "data_flow": {
+    "diagram": "User Request → API Layer → AnalysisEngine → [TechnicalAnalyzer, SentimentCollector, EventProcessor, NewsImpactAnalyzer] → RecommendationScorer → LLM Enhancement → Database → Response",
+    "stages": [
+      {
+        "stage": "Data Collection",
+        "input": "Stock symbol + date range",
+        "output": "Raw data: technical indicators, sentiment scores, events, news",
+        "component": "AkShare extensions",
+        "transformations": ["fetch_hsgt", "fetch_notices", "fetch_news", "fetch_board_data"]
+      },
+      {
+        "stage": "Analysis",
+        "input": "Raw market data",
+        "output": "Component scores: technical_score, sentiment_score, event_score, news_impact",
+        "component": "AnalysisEngine",
+        "transformations": ["calculate_technical", "calculate_sentiment", "process_events", "analyze_news"]
+      },
+      {
+        "stage": "Scoring",
+        "input": "Component scores",
+        "output": "composite_score, recommendation, confidence",
+        "component": "RecommendationScorer",
+        "transformations": ["weighted_sum", "normalize", "LLM_enhancement"]
+      },
+      {
+        "stage": "Persistence & Response",
+        "input": "Analysis result",
+        "output": "AIAnalysisResult record + API response",
+        "component": "MySQL + FastAPI",
+        "transformations": ["serialize", "store", "respond"]
+      }
+    ],
+    "dependencies": ["AkShare", "OpenAI-compatible LLM API", "MySQL", "FastAPI"]
+  },
+  "_metadata": {
+    "timestamp": "2026-04-26T00:00:00.000Z",
+    "source": "cli-lite-planning-agent",
+    "plan_type": "feature",
+    "schema_version": "2.0",
+    "planning_mode": "direct",
+    "exploration_angles": ["data-sources", "analysis-engine", "frontend-integration"],
+    "duration_seconds": 0,
+    "quality_check": {
+      "executed": true,
+      "method": "manual_review",
+      "result": "PASS",
+      "dimensions": {
+        "completeness": {"passed": true, "issues": []},
+        "granularity": {"passed": true, "issues": []},
+        "dependencies": {"passed": true, "issues": []},
+        "convergence_criteria": {"passed": true, "issues": []},
+        "implementation_steps": {"passed": true, "issues": []},
+        "constraint_compliance": {"passed": true, "issues": []}
+      },
+      "summary": {"critical_issues": 0, "minor_issues": 0},
+      "recommendation": "PASS",
+      "notes": "All requirements covered across 4 tasks. No circular dependencies. Quantified convergence criteria. Follows architecture constraints (layer separation, stateless services, async/await, Pydantic, SQLAlchemy ORM)."
+    }
+  }
+}
