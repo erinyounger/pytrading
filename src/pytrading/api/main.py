@@ -1781,13 +1781,272 @@ async def get_market_top(type: str):
                 "change_pct": float(r['涨跌幅']) if r['涨跌幅'] else None,
                 "amount": float(r['成交额']) if r['成交额'] else None,
             })
-        
+
         return {"data": result}
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取排行失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取排行失败: {str(e)}")
+
+
+# ==================== AI股票分析 API ====================
+
+@app.get("/api/ai/analysis/{symbol}")
+async def get_ai_analysis(symbol: str, analysis_date: Optional[str] = None, force_refresh: bool = False):
+    """获取单只股票的AI分析结果
+
+    Args:
+        symbol: 股票代码 (如 SHSE.600000)
+        analysis_date: 可选，指定分析日期 (YYYY-MM-DD)
+        force_refresh: 是否强制刷新（重新分析）
+    """
+    result = None
+    session = None
+    try:
+        from pytrading.schemas.ai_analysis import AIAnalysisResponse, EventSignal
+        from pytrading.db.mysql import AIAnalysisResult
+        from pytrading.service.analysis_engine import AnalysisEngine
+
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        query = session.query(AIAnalysisResult).filter(AIAnalysisResult.symbol == symbol)
+
+        if analysis_date:
+            from datetime import datetime as dt
+            query = query.filter(AIAnalysisResult.analysis_date == dt.strptime(analysis_date, '%Y-%m-%d').date())
+        else:
+            query = query.order_by(AIAnalysisResult.analysis_date.desc())
+
+        result = query.first()
+
+        # 如果没有结果或强制刷新，则运行新分析
+        if not result or force_refresh:
+            logger.info(f"[AI分析API] {'强制刷新' if force_refresh else '暂无数据'}，开始分析 {symbol}")
+            # 关闭当前session，避免 AnalysisEngine 重复创建
+            if session:
+                session.close()
+                session = None
+
+            # 创建新的引擎实例进行分析
+            engine = AnalysisEngine()
+            # 直接调用异步方法（已在事件循环中）
+            await engine.analyze_stock(symbol)
+
+            # 重新查询结果
+            db_client2 = get_db_client()
+            session2 = db_client2.get_session()
+            try:
+                result = session2.query(AIAnalysisResult).filter(
+                    AIAnalysisResult.symbol == symbol
+                ).order_by(AIAnalysisResult.analysis_date.desc()).first()
+            finally:
+                session2.close()
+
+            if not result:
+                raise HTTPException(status_code=500, detail="分析完成但未找到结果")
+
+        if not result:
+            raise HTTPException(status_code=404, detail=f"暂无 {symbol} 的分析数据")
+
+        event_signals = []
+        if result.event_signals:
+            for signal in result.event_signals:
+                event_signals.append(EventSignal(**signal))
+
+        return AIAnalysisResponse(
+            id=result.id,
+            symbol=result.symbol,
+            recommendation=result.recommendation,
+            confidence=float(result.confidence),
+            sentiment_score=float(result.sentiment_score),
+            technical_score=float(result.technical_score),
+            event_signals=event_signals,
+            news_impact=float(result.news_impact),
+            risk_level=result.risk_level,
+            analysis_date=result.analysis_date.strftime('%Y-%m-%d') if result.analysis_date else "",
+            created_at=result.created_at.isoformat() if result.created_at else "",
+            llm_insight=result.llm_insight,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取AI分析失败: {symbol}, {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取AI分析失败: {str(e)}")
+    finally:
+        if session:
+            session.close()
+
+
+@app.post("/api/ai/batch-analysis")
+async def start_batch_analysis(request: dict):
+    """启动批量股票AI分析任务
+
+    Args:
+        request: 包含 symbols (股票代码列表), start_date, end_date
+    """
+    try:
+        from pytrading.schemas.ai_analysis import BatchAnalysisResponse
+        from pytrading.db.mysql import BatchAnalysisTask
+
+        symbols = request.get("symbols", [])
+        if not symbols:
+            raise HTTPException(status_code=400, detail="symbols不能为空")
+
+        if len(symbols) > 100:
+            raise HTTPException(status_code=400, detail="最多支持100只股票")
+
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            # 生成任务ID
+            task_id = f"batch_ai_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+            # 创建批量任务记录
+            task = BatchAnalysisTask(
+                task_id=task_id,
+                symbols=symbols,
+                status='pending',
+                progress=0,
+                completed_count=0,
+                total_count=len(symbols),
+            )
+            session.add(task)
+            session.commit()
+
+            # TODO: 实际异步任务执行由后台调度器处理
+            # BackgroundTasks会被添加到这里
+
+            return BatchAnalysisResponse(
+                task_id=task_id,
+                status="pending",
+                total_count=len(symbols),
+                message=f"批量分析任务已创建，等待执行"
+            )
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"启动批量分析失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"启动批量分析失败: {str(e)}")
+
+
+@app.get("/api/ai/analysis/status/{task_id}")
+async def get_analysis_status(task_id: str):
+    """获取批量分析任务状态
+
+    Args:
+        task_id: 批量分析任务ID
+    """
+    try:
+        from pytrading.schemas.ai_analysis import AnalysisStatusResponse
+        from pytrading.db.mysql import BatchAnalysisTask
+
+        db_client = get_db_client()
+        session = db_client.get_session()
+
+        try:
+            task = session.query(BatchAnalysisTask).filter(BatchAnalysisTask.task_id == task_id).first()
+
+            if not task:
+                raise HTTPException(status_code=404, detail="任务不存在")
+
+            return AnalysisStatusResponse(
+                task_id=task.task_id,
+                status=task.status,
+                progress=task.progress,
+                completed_count=task.completed_count,
+                total_count=task.total_count,
+                error_message=task.error_message,
+            )
+        finally:
+            session.close()
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"获取分析状态失败: {task_id}, {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取分析状态失败: {str(e)}")
+
+
+@app.get("/api/ai/market-sentiment")
+async def get_market_sentiment():
+    """获取市场整体情绪
+
+    Returns:
+        MarketSentimentResponse: 市场情绪数据
+    """
+    try:
+        from pytrading.schemas.ai_analysis import MarketSentimentResponse
+        from pytrading.service.sentiment_analyzer import SentimentAnalyzer
+
+        analyzer = SentimentAnalyzer()
+        result = await analyzer.get_market_sentiment()
+
+        return MarketSentimentResponse(
+            sentiment=result.sentiment,
+            score=result.score,
+            description=result.description,
+            sector_sentiments=result.sector_sentiments if hasattr(result, 'sector_sentiments') else []
+        )
+
+    except Exception as e:
+        logger.warning(f"获取市场情绪失败，使用默认数据: {str(e)}")
+        # 返回默认数据而不是抛出错误，避免阻塞整个AI分析面板
+        return MarketSentimentResponse(
+            sentiment="neutral",
+            score=0.0,
+            description="市场情绪数据获取失败",
+            sector_sentiments=[]
+        )
+
+
+@app.get("/api/ai/company-events/{symbol}")
+async def get_company_events(symbol: str, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    """获取公司事件（公告、分红、回购等）
+
+    Args:
+        symbol: 股票代码
+        start_date: 开始日期 (YYYY-MM-DD)
+        end_date: 结束日期 (YYYY-MM-DD)
+    """
+    try:
+        from pytrading.schemas.ai_analysis import CompanyEventsResponse, EventSignal
+        from pytrading.service.event_processor import EventProcessor
+
+        processor = EventProcessor()
+
+        # 计算天数
+        days = 30
+        if start_date and end_date:
+            from datetime import datetime as dt
+            days = (dt.strptime(end_date, '%Y-%m-%d') - dt.strptime(start_date, '%Y-%m-%d')).days
+
+        result = processor.process_events(symbol, days)
+
+        events = []
+        for signal in result.get("event_signals", []):
+            events.append(EventSignal(
+                event_type=signal.event_type,
+                description=signal.description,
+                severity=signal.severity,
+                date=signal.date
+            ))
+
+        return CompanyEventsResponse(
+            symbol=symbol,
+            events=events,
+            total_count=result.get("event_count", 0),
+        )
+
+    except Exception as e:
+        logger.error(f"获取公司事件失败: {symbol}, {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取公司事件失败: {str(e)}")
 
 
 if __name__ == "__main__":

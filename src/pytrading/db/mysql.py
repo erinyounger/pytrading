@@ -242,3 +242,49 @@ class WatchlistItem(Base):
     )
 
 
+class AIAnalysisResult(Base):
+    """AI股票分析结果表
+
+    存储AI辅助投资分析的结果，包含技术面、市场情绪、公司事件、新闻舆情等多个维度的评分
+    """
+    __tablename__ = 'ai_analysis_results'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
+    symbol = Column(String(20), nullable=False, comment='股票代码', index=True)
+    recommendation = Column(String(10), nullable=False, comment='推荐操作: 买入/持有/卖出/观望')
+    confidence = Column(Float, nullable=False, comment='置信度 (0-1)')
+    sentiment_score = Column(Float, nullable=False, comment='情绪评分 (-1 to 1)')
+    technical_score = Column(Float, nullable=False, comment='技术评分 (0-100)')
+    event_signals = Column(JSON, comment='事件信号列表 (JSON数组)')
+    news_impact = Column(Float, nullable=False, comment='新闻影响 (-1 to 1)')
+    risk_level = Column(String(10), nullable=False, comment='风险等级: 高/中/低')
+    analysis_date = Column(Date, nullable=False, comment='分析日期', index=True)
+    created_at = Column(DateTime, default=datetime.now, comment='创建时间', index=True)
+    task_id = Column(String(255), comment='关联的任务ID (用于批量分析)')
+    llm_insight = Column(Text, comment='LLM生成的投顾建议')
+
+    __table_args__ = (
+        Index('idx_symbol_analysis_date', 'symbol', 'analysis_date'),
+    )
+
+
+class BatchAnalysisTask(Base):
+    """批量分析任务表
+
+    存储批量股票分析任务的状态和进度
+    """
+    __tablename__ = 'batch_analysis_tasks'
+
+    id = Column(Integer, primary_key=True, autoincrement=True, comment='主键ID')
+    task_id = Column(String(255), nullable=False, unique=True, comment='任务唯一标识', index=True)
+    symbols = Column(JSON, nullable=False, comment='股票代码列表')
+    status = Column(SQLEnum('pending', 'running', 'completed', 'failed', name='batch_task_status_enum'),
+                    default='pending', comment='任务状态')
+    progress = Column(Integer, default=0, comment='进度百分比')
+    completed_count = Column(Integer, default=0, comment='已完成数量')
+    total_count = Column(Integer, nullable=False, comment='总数量')
+    error_message = Column(Text, comment='错误信息')
+    created_at = Column(DateTime, default=datetime.now, comment='创建时间')
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
+
+

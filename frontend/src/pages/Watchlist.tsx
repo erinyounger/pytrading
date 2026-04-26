@@ -23,11 +23,13 @@ import {
   StarOutlined,
   ThunderboltOutlined,
   FileTextOutlined,
+  RobotOutlined,
 } from '@ant-design/icons';
 import { apiService } from '../services/api';
 import type { WatchlistItem, TradeRecord } from '../types';
 import { darkTheme, globalDarkStyles } from '../styles/darkTheme';
 import StockChart from '../components/StockChart';
+import { AIAnalysisPanel } from '../components/ai_analysis';
 
 const { Option } = Select;
 
@@ -54,6 +56,11 @@ const Watchlist: React.FC = () => {
   const [autoBacktestEnabled, setAutoBacktestEnabled] = useState(false);
   const [autoBacktestTime, setAutoBacktestTime] = useState('17:00');
   const [backtestLoading, setBacktestLoading] = useState(false);
+
+  // AI分析相关状态
+  const [aiAnalysisVisible, setAiAnalysisVisible] = useState(false);
+  const [aiAnalysisSymbol, setAiAnalysisSymbol] = useState('');
+  const [aiAnalysisName, setAiAnalysisName] = useState('');
 
   const fetchWatchlist = useCallback(async () => {
     try {
@@ -369,9 +376,21 @@ const Watchlist: React.FC = () => {
       title: '操作',
       key: 'action',
       fixed: 'right' as const,
-      width: 120,
+      width: 150,
       render: (_: any, record: WatchlistItem) => (
         <Space size={4}>
+          <Tooltip title="AI分析">
+            <Button
+              type="text"
+              icon={<RobotOutlined />}
+              onClick={() => {
+                setAiAnalysisSymbol(record.symbol);
+                setAiAnalysisName(record.name || record.symbol);
+                setAiAnalysisVisible(true);
+              }}
+              size="small"
+            />
+          </Tooltip>
           {record.type_changed && (
             <Tooltip title="标记已读">
               <Button
@@ -585,6 +604,14 @@ const Watchlist: React.FC = () => {
           background: rgba(250, 173, 20, 0.2) !important;
         }
       `}</style>
+
+      {/* AI分析面板 */}
+      <AIAnalysisPanel
+        symbol={aiAnalysisSymbol}
+        name={aiAnalysisName}
+        isOpen={aiAnalysisVisible}
+        onClose={() => setAiAnalysisVisible(false)}
+      />
     </div>
   );
 };
