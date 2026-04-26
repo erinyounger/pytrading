@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Drawer, Spin, message, Empty, Button } from 'antd';
+import { Modal, Spin, message, Empty, Button } from 'antd';
 import { aiAnalysisApi, AIAnalysisResult } from '../../services/aiAnalysisApi';
 import RecommendationCard from './RecommendationCard';
 import MarketSentimentBadge from './MarketSentimentBadge';
 import AIFactorsList from './AIFactorsList';
+import { darkTheme } from '../../styles/darkTheme';
 
 interface AIAnalysisPanelProps {
   symbol: string;
@@ -92,41 +93,48 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({
   }, [isOpen, symbol, fetchAnalysis, fetchMarketSentiment]);
 
   return (
-    <Drawer
+    <Modal
       title={
         <div>
           <span>AI 分析 - {symbol}</span>
-          {name && <span style={{ color: '#999', marginLeft: 8 }}>({name})</span>}
+          {name && <span style={{ color: darkTheme.textMuted, marginLeft: 8 }}>({name})</span>}
         </div>
       }
-      placement="right"
-      width={400}
       open={isOpen}
-      onClose={onClose}
-      extra={
-        <Button type="link" size="small" onClick={handleAnalyze}>
+      onCancel={onClose}
+      width={900}
+      footer={
+        <Button type="primary" onClick={handleAnalyze} loading={loading}>
           重新分析
         </Button>
       }
+      bodyStyle={{ padding: 16, background: darkTheme.cardBackground }}
+      styles={{
+        header: { background: darkTheme.cardBackground },
+        body: { padding: 16, background: darkTheme.cardBackground },
+        footer: { background: darkTheme.cardBackground, borderTop: `1px solid ${darkTheme.border}` }
+      }}
+      transitionName=""
+      maskTransitionName=""
     >
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}>
           <Spin size="large" />
-          <div style={{ marginTop: 16, color: '#999' }}>正在分析...</div>
+          <div style={{ marginTop: 16, color: darkTheme.textMuted }}>正在分析...</div>
         </div>
       ) : analysis ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* 市场情绪 */}
           {marketSentiment && (
             <div>
-              <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: darkTheme.textMuted, marginBottom: 8 }}>
                 市场情绪
               </div>
               <MarketSentimentBadge
                 sentiment={marketSentiment.sentiment}
                 score={marketSentiment.score}
               />
-              <div style={{ fontSize: 12, marginTop: 4, color: '#666' }}>
+              <div style={{ fontSize: 12, marginTop: 4, color: darkTheme.textMuted }}>
                 {marketSentiment.description}
               </div>
             </div>
@@ -137,14 +145,14 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({
 
           {/* 关键因素 */}
           <div>
-            <div style={{ fontSize: 12, color: '#999', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, color: darkTheme.textMuted, marginBottom: 8 }}>
               关键驱动因素
             </div>
             <AIFactorsList factors={analysis.event_signals || []} />
           </div>
 
           {/* 分析时间 */}
-          <div style={{ fontSize: 11, color: '#999', textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: darkTheme.textMuted, textAlign: 'center' }}>
             分析时间: {analysis.created_at?.replace('T', ' ').substring(0, 19)}
           </div>
         </div>
@@ -153,10 +161,10 @@ const AIAnalysisPanel: React.FC<AIAnalysisPanelProps> = ({
           description="暂无分析数据"
           image={Empty.PRESENTED_IMAGE_SIMPLE}
         >
-          <Button type="link" onClick={handleAnalyze}>立即分析</Button>
+          <Button type="primary" onClick={handleAnalyze}>立即分析</Button>
         </Empty>
       )}
-    </Drawer>
+    </Modal>
   );
 };
 

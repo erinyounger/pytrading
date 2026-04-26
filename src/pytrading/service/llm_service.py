@@ -56,9 +56,10 @@ class LLMService:
         event_desc = ""
         if event_signals:
             for i, event in enumerate(event_signals[:5], 1):  # 最多5个事件
-                event_type = event.get("event_type", "未知")
-                description = event.get("description", "")
-                severity = event.get("severity", 0)
+                # CompanyEvent 是 Pydantic 模型，使用属性访问
+                event_type = getattr(event, 'event_type', '未知')
+                description = getattr(event, 'description', '')
+                severity = getattr(event, 'severity', 0)
                 direction = "正面" if severity > 0 else "负面" if severity < 0 else "中性"
                 event_desc += f"{i}. [{event_type}] {description} ({direction})\n"
 
@@ -126,7 +127,12 @@ class LLMService:
         except Exception as e:
             elapsed = time.time() - start_time
             logger.error(f"[LLM] {symbol} LLM调用失败, 耗时: {elapsed:.2f}秒, error: {str(e)}")
-            return f"基于系统分析，{symbol}建议{analysis_data.get('recommendation', '观望')}（置信度{analysis_data.get('confidence', 0):.0%}）。技术面评分{analysis_data.get('technical_score', 0):.1f}，情绪评分{analysis_data.get('sentiment_score', 0):.2f}。"
+            # 使用安全的属性访问
+            rec = getattr(analysis_data, 'recommendation', '观望') if hasattr(analysis_data, 'recommendation') else analysis_data.get('recommendation', '观望')
+            conf = getattr(analysis_data, 'confidence', 0) if hasattr(analysis_data, 'confidence') else analysis_data.get('confidence', 0)
+            tech = getattr(analysis_data, 'technical_score', 0) if hasattr(analysis_data, 'technical_score') else analysis_data.get('technical_score', 0)
+            sent = getattr(analysis_data, 'sentiment_score', 0) if hasattr(analysis_data, 'sentiment_score') else analysis_data.get('sentiment_score', 0)
+            return f"基于系统分析，{symbol}建议{rec}（置信度{conf:.0%}）。技术面评分{tech:.1f}，情绪评分{sent:.2f}。"
 
     def validate_response(self, response: str) -> bool:
         """验证LLM响应是否有效

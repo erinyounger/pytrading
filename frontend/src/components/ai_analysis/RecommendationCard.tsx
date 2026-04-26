@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Tag, Progress, Tooltip } from 'antd';
+import { darkTheme } from '../../styles/darkTheme';
 import {
   RiseOutlined,
   FallOutlined,
@@ -74,10 +75,26 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
     return '#ff4d4f';
   };
 
+  // 权重配置
+  const scoreWeights = {
+    technical: { label: '技术面', weight: '35%' },
+    sentiment: { label: '情绪面', weight: '25%' },
+    event: { label: '事件驱动', weight: '25%' },
+    news: { label: '新闻舆情', weight: '15%' },
+  };
+
   const recommendationColor = getRecommendationColor(analysis.recommendation);
 
   return (
-    <Card size="small" title="AI 推荐" styles={{ body: { padding: 12 } }}>
+    <Card
+      size="small"
+      title={<span style={{ color: darkTheme.textPrimary }}>AI 推荐</span>}
+      styles={{
+        body: { padding: 12, background: darkTheme.cardBackgroundAlt },
+        header: { background: darkTheme.cardBackground, borderBottom: `1px solid ${darkTheme.border}` }
+      }}
+      style={{ background: darkTheme.cardBackground, border: `1px solid ${darkTheme.border}` }}
+    >
       {/* 推荐标签 */}
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
         <Tag
@@ -102,7 +119,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
             size={80}
             strokeColor={recommendationColor}
             format={(percent) => (
-              <span style={{ fontSize: 18, fontWeight: 500 }}>
+              <span style={{ fontSize: 18, fontWeight: 500, color: darkTheme.textPrimary }}>
                 {percent}%
               </span>
             )}
@@ -122,7 +139,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
         {/* 技术评分 */}
         <div style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span>技术面</span>
+            <span>{scoreWeights.technical.label} <span style={{ color: '#888', fontSize: 11 }}>({scoreWeights.technical.weight})</span></span>
             <span>{analysis.technical_score.toFixed(1)}</span>
           </div>
           <Progress
@@ -136,7 +153,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
         {/* 情绪评分 */}
         <div style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span>情绪面</span>
+            <span>{scoreWeights.sentiment.label} <span style={{ color: '#888', fontSize: 11 }}>({scoreWeights.sentiment.weight})</span></span>
             <span>{analysis.sentiment_score.toFixed(2)}</span>
           </div>
           <Progress
@@ -150,7 +167,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
         {/* 事件评分 */}
         <div style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span>事件驱动</span>
+            <span>{scoreWeights.event.label} <span style={{ color: '#888', fontSize: 11 }}>({scoreWeights.event.weight})</span></span>
             <span>{analysis.event_score?.toFixed(2) || '0.00'}</span>
           </div>
           <Progress
@@ -164,7 +181,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
         {/* 新闻影响 */}
         <div style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-            <span>新闻舆情</span>
+            <span>{scoreWeights.news.label} <span style={{ color: '#888', fontSize: 11 }}>({scoreWeights.news.weight})</span></span>
             <span>{analysis.news_impact.toFixed(2)}</span>
           </div>
           <Progress
@@ -182,14 +199,15 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ analysis }) => 
           style={{
             marginTop: 12,
             padding: 8,
-            background: '#f5f5f5',
+            background: darkTheme.cardBackground,
+            border: `1px solid ${darkTheme.border}`,
             borderRadius: 4,
             fontSize: 12,
             lineHeight: 1.6,
           }}
         >
-          <strong>AI 见解:</strong>
-          <p style={{ margin: '4px 0 0 0' }}>{analysis.llm_insight}</p>
+          <strong style={{ color: darkTheme.textPrimary }}>AI 见解:</strong>
+          <p style={{ margin: '4px 0 0 0', color: darkTheme.textSecondary }}>{analysis.llm_insight}</p>
         </div>
       )}
     </Card>

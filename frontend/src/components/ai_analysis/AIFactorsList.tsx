@@ -94,8 +94,8 @@ const AIFactorsList: React.FC<AIFactorsListProps> = ({
                     </span>
                   )}
                 </div>
-                <div style={{ fontSize: 12, marginTop: 2 }}>
-                  {factor.description}
+                <div style={{ fontSize: 12, marginTop: 2, color: '#b8b8c8' }}>
+                  {factor.description || '暂无详细描述'}
                 </div>
               </div>
             </div>

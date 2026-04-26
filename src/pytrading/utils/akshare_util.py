@@ -155,11 +155,20 @@ class AkShareUtil:
                 return []
 
             result = []
+            seen_descriptions = set()  # 去重
             for _, row in df.iterrows():
                 # 分红通常被视为正面事件
+                desc = row.get('方案', '')
+                # 如果方案为空，跳过或使用默认值
+                if not desc:
+                    desc = f"分红 ({row.get('分红金额(亿元)', 'N/A')}亿元)"
+                # 去重
+                if desc in seen_descriptions:
+                    continue
+                seen_descriptions.add(desc)
                 result.append({
                     "event_type": "dividend",
-                    "description": f"分红: {row.get('方案', '')}",
+                    "description": desc,
                     "date": str(row.get('除权除息日', '')),
                     "severity": 0.3,
                     "amount": row.get('分红金额(亿元)', None),

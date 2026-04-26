@@ -154,7 +154,7 @@ class SentimentAnalyzer:
             return MarketSentimentData(
                 sentiment="neutral",
                 score=0.0,
-                description=f"获取失败: {str(e)}",
+                description="市场情绪数据获取失败，请稍后重试",
                 timestamp="",
             )
 
