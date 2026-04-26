@@ -1817,7 +1817,8 @@ async def get_ai_analysis(symbol: str, analysis_date: Optional[str] = None, forc
             from datetime import datetime as dt
             query = query.filter(AIAnalysisResult.analysis_date == dt.strptime(analysis_date, '%Y-%m-%d').date())
         else:
-            query = query.order_by(AIAnalysisResult.analysis_date.desc())
+            # 按创建时间倒序，确保获取最新分析结果
+            query = query.order_by(AIAnalysisResult.created_at.desc())
 
         result = query.first()
 
