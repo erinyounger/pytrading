@@ -40,12 +40,17 @@ class Strategy(Base):
 class StockSymbol(Base):
     """股票池表模型"""
     __tablename__ = 'symbols'
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True, comment='股票ID')
     symbol = Column(String(20), nullable=False, unique=True, comment='股票代码')
     name = Column(String(255), nullable=False, comment='股票名称')
     market = Column(String(10), default='A', comment='市场类型')
     industry = Column(String(50), comment='所属行业')
+    industry_sw = Column(String(50), comment='申万行业分类')
+    industry_csrc = Column(String(100), comment='证监会行业分类')
+    concept_boards = Column(JSON, comment='概念板块列表')
+    list_date = Column(Date, comment='上市日期')
+    data_updated_at = Column(DateTime, comment='数据更新时间')
     is_active = Column(Boolean, default=True, comment='是否启用')
     created_at = Column(DateTime, default=datetime.now, comment='创建时间')
     updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now, comment='更新时间')
