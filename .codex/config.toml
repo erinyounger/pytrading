@@ -1,0 +1,6 @@
+[mcp_servers.maestro-tools]
+command = "maestro-mcp"
+args = []
+
+[mcp_servers.maestro-tools.env]
+MAESTRO_ENABLED_TOOLS = "write_file,edit_file,read_file,read_many_files,team_msg,store_knowhow"

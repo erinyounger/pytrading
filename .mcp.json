@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "maestro-tools": {
+      "command": "maestro-mcp",
+      "args": [],
+      "env": {
+        "MAESTRO_ENABLED_TOOLS": "write_file,edit_file,read_file,read_many_files,team_msg,store_knowhow"
+      }
+    }
+  }
+}
